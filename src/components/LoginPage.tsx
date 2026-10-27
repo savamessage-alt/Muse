@@ -14,6 +14,9 @@ export default function LoginPage() {
   const [manual, setManual] = useState('')
   const [showManual, setShowManual] = useState(false)
 
+  // Диагностика: почему показан экран входа (был ли сохранён токен)
+  const stored = tokenManager.getToken()
+
   const start = async () => {
     setErr(null)
     setStatusText('Получаем код входа…')
@@ -33,13 +36,20 @@ export default function LoginPage() {
   useEffect(() => {
     if (step !== 'waiting' || !code) return
     let alive = true
+    let attempts = 0
     setStatusText('Ожидаем подтверждения входа…')
     pollDeviceToken(
       code.deviceCode,
       code.interval,
       code.expiresIn,
       (poll) => {
-        if (alive && poll !== 'authorization_pending') setStatusText('Ожидаем подтверждения… (' + poll + ')')
+        if (!alive) return
+        if (poll === 'authorization_pending') {
+          attempts++
+          setStatusText(`Ждём, пока вы подтвердите вход на Яндексе… (проверка №${attempts})`)
+        } else {
+          setStatusText('Ожидаем подтверждения… (' + poll + ')')
+        }
       },
     )
       .then(async (tok) => {
@@ -110,6 +120,22 @@ export default function LoginPage() {
                   Сохранить
                 </button>
               </div>
+            )}
+            {stored && (
+              <p className="hint token-diag">
+                Найден сохранённый токен в этом браузере:{' '}
+                <b>{stored.accessToken.slice(0, 6)}…</b>
+                {stored.expiresAt
+                  ? ` истекает ${new Date(stored.expiresAt).toLocaleString()}`
+                  : ' без срока'}
+                {stored.refreshToken ? ' · есть refresh' : ' · без refresh'}
+              </p>
+            )}
+            {!stored && (
+              <p className="hint token-diag">
+                Сохранённого токена в этом браузере нет. Вход производится отдельно для каждого адреса
+                (localhost и 192.168… — разные) и для каждого устройства.
+              </p>
             )}
           </>
         )}

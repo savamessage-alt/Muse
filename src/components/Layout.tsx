@@ -37,12 +37,12 @@ export default function Layout() {
               <IconList size={16} /> Мои плейлисты
             </div>
             <div className="playlist-list">
-              {playlists.slice(0, 30).map((pl) => (
+              {Array.isArray(playlists) && playlists.slice(0, 30).map((pl) => (
                 <NavLink key={pl.kind} to={`/playlist/${pl.kind}`} className="pl-link">
                   {pl.title || 'Без названия'}
                 </NavLink>
               ))}
-              {playlists.length === 0 && <span className="muted small">Пока пусто</span>}
+              {(!Array.isArray(playlists) || playlists.length === 0) && <span className="muted small">Пока пусто</span>}
             </div>
           </div>
           <div className="sidebar-bottom">

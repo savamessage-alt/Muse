@@ -112,12 +112,20 @@ export async function pollDeviceToken(
 ): Promise<OAuthTokenData> {
   const deadline = Date.now() + maxSeconds * 1000
   let pollInterval = Math.max(interval, 3) // сек
+  let attempt = 0
+
+  // Подсказка: HTTP 400 на /oauth/token до подтверждения — это штатное поведение Device Flow
+  console.info(
+    '[YM Player] Ожидаем подтверждение входа на Яндекс. Ошибки 400 (authorization_pending) в консоли — это нормальный опрос, а не сбой.',
+  )
 
   while (Date.now() < deadline) {
     await sleep(pollInterval * 1000)
+    attempt++
     const token = await pollOnce(deviceCode)
     if (token) return token
     onPollError?.('authorization_pending')
+    console.info(`[YM Player] ...проверка №${attempt} — вход ещё не подтверждён`)
   }
 
   throw new Error('Время ожидания входа истекло')

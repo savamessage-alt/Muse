@@ -143,6 +143,9 @@ export interface User {
   sex?: string
   verified?: boolean
   coverUri?: string
+  region?: number
+  regionCode?: string
+  fullName?: string
 }
 
 export interface AccountStatus {
@@ -196,6 +199,20 @@ export interface Feed {
   pager?: unknown
   days?: { day?: string; events?: FeedEvent[] }[]
   canGetMoreEvents?: boolean
+  generatedPlaylists?: {
+    type?: string
+    ready?: boolean
+    notify?: boolean
+    data?: {
+      owner?: { uid?: number; login?: string }
+      kind?: number
+      title?: string
+      description?: string
+      cover?: { uri?: string }
+      ogImage?: string
+      trackCount?: number
+    }
+  }[]
 }
 
 export interface FileDownloadInfo {
@@ -203,6 +220,9 @@ export interface FileDownloadInfo {
   bitrateInKbps?: number
   directLink?: string
   url?: string
+  /** XML-ссылка на параметры загрузки (источник для подписи get-mp3) */
+  downloadInfoUrl?: string
+  direct?: boolean
   restriction?: unknown
   init?: { fileName?: string }
 }

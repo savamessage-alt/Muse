@@ -55,21 +55,76 @@ declare global {
 /** Публичный CORS-прокси из переменной окружения (настраивается при сборке) */
 const envCorsProxy = (import.meta as { env?: Record<string, string> }).env?.VITE_CORS_PROXY
 
+/**
+ * Получить XML по абсолютной ссылке (download_info_url → host/path/ts/s).
+ * XML-хосты Яндекса не отдают CORS, поэтому:
+ *  - браузер dev: через серверный помощник /__xml (Vite-middleware)
+ *  - браузер prod: через публичный CORS-прокси
+ *  - Electron/Capacitor: напрямую (CORS там не нужен)
+ */
+export async function ymFetchXml(url: string): Promise<string> {
+  if (window.ymElectronAPI) {
+    const res = await window.ymElectronAPI.request(url, { method: 'GET' })
+    if (!res.ok) throw new YmApiError('Ссылка на XML трека недоступна (HTTP ' + res.status + ')', res.status)
+    return res.body
+  }
+  if (isCapacitorNative()) {
+    const mod = await import('@capacitor/core')
+    const res = await mod.CapacitorHttp.request({ url, method: 'GET' })
+    return String(res.data ?? '')
+  }
+  const dev = (import.meta as { env?: Record<string, string> }).env?.DEV
+  if (dev) {
+    const r = await fetch('/__xml?u=' + encodeURIComponent(url))
+    if (!r.ok) throw new YmApiError('XML трека не загрузился (HTTP ' + r.status + ')', r.status)
+    return r.text()
+  }
+  const proxy: string | undefined = envCorsProxy || CORS_PROXY_BASE
+  if (proxy) {
+    const sep = proxy.endsWith('/') ? '' : '/'
+    const r = await fetch(proxy + sep + url.replace(/^https?:\/\//, ''))
+    if (!r.ok) throw new YmApiError('XML трека не загрузился через CORS-прокси (HTTP ' + r.status + ')', r.status)
+    return r.text()
+  }
+  throw new YmApiError('Нет способа получить XML трека', 0)
+}
+
+/** Достать значение тега из простого XML (без внешних библиотек) */
+export function xmlTag(xml: string, tag: string): string | null {
+  const open = '<' + tag + '>'
+  const close = '</' + tag + '>'
+  const i = xml.indexOf(open)
+  if (i < 0) return null
+  const j = xml.indexOf(close, i + open.length)
+  if (j < 0) return null
+  return xml.slice(i + open.length, j).trim()
+}
+
 function resolveUrl(url: string): string {
   const absolute = /^https?:\/\//.test(url)
-  // Относительный путь: подменяем префиксы под адаптер
+
+  // Полный абсолютный URL — используем как есть.
+  // Относительный — нормализуем под нужный хост:
+  //   '/oauth/token'           → https://oauth.yandex.ru/token
+  //   '/api/feed' / 'feed'     → https://api.music.yandex.net/feed
   const target = absolute
     ? url
     : url.startsWith('/oauth/')
-      ? OAUTH_BASE + url.slice(6)
-      : API_BASE + url.slice(4)
+      ? OAUTH_BASE + url.slice('/oauth'.length)
+      : url.startsWith('/api/')
+        ? API_BASE + url.slice('/api'.length)
+        : API_BASE + (url.startsWith('/') ? url : '/' + url)
 
-  // Нативные среды: CORS не применяется, идём напрямую
+  // Нативные среды: CORS не применяется, идём по абсолютному адресу
   if (window.ymElectronAPI || isCapacitorNative()) return target
 
-  // Браузер в dev-режиме: оставляем относительный путь → Vite-прокси
+  // Браузер в dev-режиме: возвращаем относительный путь С префиксом /api/,
+  // чтобы его подхватил Vite-прокси (иначе SPA-fallback отдаст index.html!)
   const dev = (import.meta as { env?: Record<string, string> }).env?.DEV
-  if (!absolute && dev) return url
+  if (!absolute && dev) {
+    if (url.startsWith('/oauth/') || url.startsWith('/api/')) return url
+    return '/api' + (url.startsWith('/') ? url : '/' + url)
+  }
 
   // Браузер в собранной веб-версии: внешний CORS-прокси
   const proxy: string | undefined = envCorsProxy || CORS_PROXY_BASE
@@ -98,6 +153,28 @@ function parseBody(text: string) {
   }
 }
 
+/** Таймаут сети: Яндекс-API может зависнуть (VPN/прокси) — не даём запросу висеть вечно */
+const FETCH_TIMEOUT_MS = 20000
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(
+      () => reject(new YmApiError('Сеть не отвечает (таймаут 20 сек)', 0, 'timeout')),
+      ms,
+    )
+    promise.then(
+      (v) => {
+        clearTimeout(timer)
+        resolve(v)
+      },
+      (e) => {
+        clearTimeout(timer)
+        reject(e)
+      },
+    )
+  })
+}
+
 export async function ymFetch<T = unknown>(url: string, init: YmRequestInit = {}): Promise<T> {
   const method = init.method ?? 'GET'
   const headers: Record<string, string> = { ...init.headers }
@@ -107,55 +184,66 @@ export async function ymFetch<T = unknown>(url: string, init: YmRequestInit = {}
     headers['Content-Type'] = 'application/json;charset=utf-8'
   }
 
-  // 1) Electron: запрос через main-процесс
-  if (window.ymElectronAPI) {
-    const res = await window.ymElectronAPI.request(resolveUrl(url), {
-      method,
-      headers,
-      body: init.body !== undefined ? (hasRawBody ? (init.body as string) : JSON.stringify(init.body)) : undefined,
-    })
-    const data = parseBody(res.body)
-    if (!res.ok) throw new YmApiError(apiMessage(data, res.status), res.status)
-    return data as T
-  }
-
-  // 2) Capacitor: нативный HTTP
-  if (isCapacitorNative()) {
-    // Динамический импорт, чтобы не тянуть @capacitor/core в веб-сборку
-    try {
-      const mod = await import('@capacitor/core')
-      const res = await mod.CapacitorHttp.request({
-        url: resolveUrl(url),
+  const run = async (): Promise<T> => {
+    // 1) Electron: запрос через main-процесс
+    if (window.ymElectronAPI) {
+      const res = await window.ymElectronAPI.request(resolveUrl(url), {
         method,
         headers,
-        // CapacitorHttp отправляет body как string/object сам
-        ...(init.body !== undefined ? { data: init.body } : {}),
+        body: init.body !== undefined ? (hasRawBody ? (init.body as string) : JSON.stringify(init.body)) : undefined,
       })
-      const data = res.data as T
-      const status = res.status ?? 200
-      if (status < 200 || status >= 300) throw new YmApiError(apiMessage(data, status), status)
-      return data
-    } catch (e) {
-      if (e instanceof YmApiError) throw e
-      // Плагин недоступен — падаем с понятной ошибкой
-      throw new YmApiError('Нативный HTTP-плагин Capacitor недоступен', 0)
+      const data = parseBody(res.body)
+      if (!res.ok) throw new YmApiError(apiMessage(data, res.status), res.status)
+      return data as T
+    }
+
+    // 2) Capacitor: нативный HTTP
+    if (isCapacitorNative()) {
+      // Динамический импорт, чтобы не тянуть @capacitor/core в веб-сборку
+      try {
+        const mod = await import('@capacitor/core')
+        const res = await mod.CapacitorHttp.request({
+          url: resolveUrl(url),
+          method,
+          headers,
+          // CapacitorHttp отправляет body как string/object сам
+          ...(init.body !== undefined ? { data: init.body } : {}),
+        })
+        const data = res.data as T
+        const status = res.status ?? 200
+        if (status < 200 || status >= 300) throw new YmApiError(apiMessage(data, status), status)
+        return data
+      } catch (e) {
+        if (e instanceof YmApiError) throw e
+        // Плагин недоступен — падаем с понятной ошибкой
+        throw new YmApiError('Нативный HTTP-плагин Capacitor недоступен', 0)
+      }
+    }
+
+    // 3) Браузер
+    const finalUrl = resolveUrl(url)
+    const controller = new AbortController()
+    const abortTimer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
+    try {
+      const res = await fetch(finalUrl, {
+        method,
+        headers,
+        body: init.body !== undefined ? (hasRawBody ? (init.body as string) : JSON.stringify(init.body)) : undefined,
+        signal: controller.signal,
+      })
+      const text = await res.text()
+      const data = parseBody(text)
+      if (!res.ok) throw new YmApiError(apiMessage(data, res.status), res.status)
+      return data as T
+    } finally {
+      clearTimeout(abortTimer)
     }
   }
 
-  // 3) Браузер
-  const finalUrl = resolveUrl(url)
-  const res = await fetch(finalUrl, {
-    method,
-    headers,
-    body: init.body !== undefined ? (hasRawBody ? (init.body as string) : JSON.stringify(init.body)) : undefined,
-  })
-  const text = await res.text()
-  const data = parseBody(text)
-  if (!res.ok) throw new YmApiError(apiMessage(data, res.status), res.status)
-  return data as T
+  return withTimeout(run(), FETCH_TIMEOUT_MS)
 }
 
-function apiMessage(data: unknown, status: number): string {
+export function apiMessage(data: unknown, status: number): string {
   const d = data as Record<string, unknown>
   const err = d?.error
   if (typeof err === 'string') {

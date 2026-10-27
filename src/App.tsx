@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { HashRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { useApp } from './state/store'
@@ -16,18 +16,36 @@ import HistoryPage from './components/HistoryPage'
 import RadioPage from './components/RadioPage'
 import SettingsPage from './components/SettingsPage'
 import Toasts from './components/Toasts'
+import ErrorBoundary from './components/ErrorBoundary'
 
 function BootGate({ children }: { children: ReactNode }) {
   const booted = useApp((s) => s.booted)
+  const forceBoot = useApp((s) => s.forceBoot)
+  const [slow, setSlow] = useState(false)
+  useEffect(() => {
+    const t = setTimeout(() => setSlow(true), 12000)
+    return () => clearTimeout(t)
+  }, [])
   if (!booted) {
     return (
       <div className="bootscreen">
         <div className="spinner large" />
-        <p>Запуск плеера…</p>
+        <p>{slow ? 'Загрузка затянулась. Можно открыть плеер без фоновых данных.' : 'Запуск плеера…'}</p>
+        {slow && (
+          <button className="btn" onClick={forceBoot}>
+            Продолжить вручную
+          </button>
+        )}
       </div>
     )
   }
   return <>{children}</>
+}
+
+function LoginGate() {
+  const authenticated = useApp((s) => s.authenticated)
+  if (authenticated) return <Navigate to="/" replace />
+  return <LoginPage />
 }
 
 function ReauthWatcher() {
@@ -50,27 +68,29 @@ export default function App() {
   }, [booted])
 
   return (
-    <HashRouter>
-      <BootGate>
-        <ReauthWatcher />
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route element={<Layout />}>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/search" element={<SearchPage />} />
-            <Route path="/playlists" element={<PlaylistsPage />} />
-            <Route path="/playlist/:kind" element={<PlaylistPage />} />
-            <Route path="/album/:id" element={<AlbumPage />} />
-            <Route path="/artist/:id" element={<ArtistPage />} />
-            <Route path="/likes" element={<LikesPage />} />
-            <Route path="/history" element={<HistoryPage />} />
-            <Route path="/radio" element={<RadioPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
-          </Route>
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-        <Toasts />
-      </BootGate>
-    </HashRouter>
+    <ErrorBoundary>
+      <HashRouter>
+        <BootGate>
+          <ReauthWatcher />
+          <Routes>
+            <Route path="/login" element={<LoginGate />} />
+            <Route element={<Layout />}>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/search" element={<SearchPage />} />
+              <Route path="/playlists" element={<PlaylistsPage />} />
+              <Route path="/playlist/:kind" element={<PlaylistPage />} />
+              <Route path="/album/:id" element={<AlbumPage />} />
+              <Route path="/artist/:id" element={<ArtistPage />} />
+              <Route path="/likes" element={<LikesPage />} />
+              <Route path="/history" element={<HistoryPage />} />
+              <Route path="/radio" element={<RadioPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+            </Route>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+          <Toasts />
+        </BootGate>
+      </HashRouter>
+    </ErrorBoundary>
   )
 }

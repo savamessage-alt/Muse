@@ -36,16 +36,21 @@ function createWindow() {
 
 // Запросы из рендера → net.fetch в main-процессе (обход CORS)
 ipcMain.handle('ym-request', async (_event, url, init) => {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), 25000)
   try {
     const res = await net.fetch(url, {
       method: init && init.method ? init.method : 'GET',
       headers: init && init.headers ? init.headers : {},
       body: init && init.body !== undefined ? init.body : undefined,
+      signal: controller.signal,
     })
     const body = await res.text()
     return { ok: res.ok, status: res.status, body }
   } catch (err) {
     return { ok: false, status: 0, body: JSON.stringify({ error: String(err) }) }
+  } finally {
+    clearTimeout(timer)
   }
 })
 

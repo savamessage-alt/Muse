@@ -81,6 +81,22 @@ class Player {
       this.error = 'Не удалось воспроизвести трек (сервис или регион недоступны)'
       this.buffering = false
       this.emit()
+      // Телеметрия: какая именно ошибка аудио и на какой ссылке
+      try {
+        const mediaError = this.audio.error
+        void fetch('/__diag', {
+          method: 'POST',
+          body: JSON.stringify({
+            fact: 'audio-error',
+            href: location.href,
+            code: mediaError ? String(mediaError.code) : '?',
+            msg: mediaError ? String(mediaError.message) : '',
+            src: String(this.audio.currentSrc ?? this.audio.src ?? '').slice(0, 120),
+          }),
+        }).catch(() => {})
+      } catch {
+        /* ignore */
+      }
     })
 
     // Медиа-клавиши и системный интерфейс (Media Session)
@@ -232,7 +248,9 @@ class Player {
 
   private async loadAndPlay(item: PlayableTrack): Promise<boolean> {
     try {
+      const t0 = Date.now()
       const choice = await resolveStreamUrl(item.track)
+      void this.diagPlay('resolve-ok ' + (Date.now() - t0) + 'ms url=' + (choice?.url ?? 'NULL').slice(0, 110))
       if (!choice) {
         this.failTrack('Не удалось получить ссылку на аудио')
         return false
@@ -243,12 +261,31 @@ class Player {
       this.buffering = true
       this.error = null
       this.emit()
-      await this.audio.play()
-      this.sendRadioFeedback('trackStarted')
-      return true
+      try {
+        await this.audio.play()
+        void this.diagPlay('playing-ok ' + item.track.id)
+        this.sendRadioFeedback('trackStarted')
+        return true
+      } catch (p) {
+        void this.diagPlay('play-reject ' + String((p as Error)?.name ?? p) + ' | ' + String((p as Error)?.message ?? '').slice(0, 80))
+        this.failTrack('Браузер отказал в воспроизведении: ' + ((p as Error)?.message || 'play()'))
+        return false
+      }
     } catch (e) {
+      void this.diagPlay('resolve-fail ' + String((e as Error)?.message ?? e).slice(0, 120))
       this.failTrack((e as Error).message || 'Ошибка воспроизведения')
       return false
+    }
+  }
+
+  private diagPlay(msg: string): void {
+    try {
+      void fetch('/__diag', {
+        method: 'POST',
+        body: JSON.stringify({ fact: 'play', href: location.href, msg: msg.slice(0, 160) }),
+      }).catch(() => {})
+    } catch {
+      /* ignore */
     }
   }
 

@@ -8,6 +8,7 @@
 
 import type { OAuthTokenData } from './auth'
 import { refreshOAuthToken } from './auth'
+import { diag } from './diag'
 
 const STORAGE_KEY = 'ym.oauth'
 
@@ -35,6 +36,7 @@ class TokenManager {
     } catch {
       this.token = null
     }
+    diag('boot-load', this.token)
   }
 
   /** сохранить токен после любого способа входа */
@@ -48,7 +50,9 @@ class TokenManager {
     this.token = stored
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(stored))
+      diag('save', stored)
     } catch {
+      diag('save-failed-localstorage', stored)
       /* нет доступа к localStorage — работаем в памяти */
     }
     this.emit('set')
@@ -60,6 +64,7 @@ class TokenManager {
     this.refreshing = null
     try {
       localStorage.removeItem(STORAGE_KEY)
+      diag('cleared', null)
     } catch {
       /* ignore */
     }

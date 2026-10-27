@@ -26,6 +26,8 @@ interface AppState {
   busy: boolean
 
   boot: () => Promise<void>
+  /** Принудительно открыть плеер, не дожидаясь загрузки данных */
+  forceBoot: () => void
   refreshUser: () => Promise<void>
   refreshLikes: () => Promise<void>
   refreshPlaylists: () => Promise<void>
@@ -51,25 +53,79 @@ export const useApp = create<AppState>((set, get) => ({
 
   boot: async () => {
     tokenManager.load()
-    if (!tokenManager.isAuthenticated()) {
+    // Токен есть, но истёк и нечем обновить — не пускаем в плеер, нужен вход
+    const stored = tokenManager.getToken()
+    if (stored && stored.expiresAt > 0 && stored.expiresAt <= Date.now() && !stored.refreshToken) {
+      console.warn('[YM Player] Сохранённый токен истёк и не имеет refresh_token — требуется новый вход')
+      tokenManager.clear()
       set({ booted: true, authenticated: false })
       return
     }
+    if (!tokenManager.isAuthenticated()) {
+      console.info('[YM Player] Токена нет — показываем экран входа')
+      set({ booted: true, authenticated: false })
+      return
+    }
+    // Токен есть — пускаем в плеер сразу, данные грузим параллельно
+    set({ authenticated: true })
     try {
-      await get().refreshUser()
-      await get().refreshLikes()
-      await get().refreshPlaylists()
-      set({ authenticated: true })
-    } catch (e) {
-      set({ authenticated: false })
+      // Максимум 25 секунд на фоновую загрузку (профиль, лайки, плейлисты);
+      // даже если часть запросов упадёт или зависнет — плеер уже открыт
+      const results = await Promise.race([
+        Promise.allSettled([get().refreshUser(), get().refreshLikes(), get().refreshPlaylists()]),
+        new Promise((r) => setTimeout(r, 25000)),
+      ])
+      if (Array.isArray(results)) {
+        const [u, l, p] = results
+        if (u.status === 'rejected') {
+          const msg = (u.reason as Error | undefined)?.message
+          get().showToast('Профиль не загрузился: ' + (msg ?? 'сетевая ошибка'), 'error')
+        }
+        if (l.status === 'rejected') get().showToast('«Мне нравится» не загрузились', 'error')
+        if (p.status === 'rejected') get().showToast('Плейлисты не загрузились', 'error')
+      }
     } finally {
       set({ booted: true })
     }
   },
 
+  forceBoot: () => set({ booted: true, authenticated: tokenManager.isAuthenticated() }),
+
   refreshUser: async () => {
-    const [me, status] = await Promise.all([ymClient.me(), ymClient.accountStatus()])
-    set({ user: me.account ?? null, status })
+    // Загружаем профиль и статус независимо: одна ошибка не валит другую
+    const results = await Promise.allSettled([ymClient.me().then((m) => m.account), ymClient.accountStatus()])
+    const acc = results[0].status === 'fulfilled' ? results[0].value : null
+    const st = results[1].status === 'fulfilled' ? results[1].value : null
+    if (!acc) {
+      const reason = results[0].status === 'rejected' ? (results[0].reason as Error) : null
+      const msg = reason ? `${reason.message}` : 'нет данных'
+      console.error('[YM Player] Не загрузился профиль:', reason)
+      get().showToast('Профиль не загрузился: ' + msg.slice(0, 120), 'error')
+      // отправить отладчику подробности (статус/код ошибки)
+      try {
+        void fetch('/__diag', {
+          method: 'POST',
+          body: JSON.stringify({ fact: 'profile-error', href: location.href, message: msg.slice(0, 300) }),
+        }).catch(() => {})
+      } catch {
+        /* ignore */
+      }
+    }
+    if (!st) {
+      const reason = results[1].status === 'rejected' ? (results[1].reason as Error) : null
+      console.error('[YM Player] Не загрузился статус аккаунта:', reason)
+      if (reason) {
+        try {
+          void fetch('/__diag', {
+            method: 'POST',
+            body: JSON.stringify({ fact: 'status-error', href: location.href, message: reason.message.slice(0, 300) }),
+          }).catch(() => {})
+        } catch {
+          /* ignore */
+        }
+      }
+    }
+    set({ user: acc, status: st })
   },
 
   refreshLikes: async () => {
@@ -79,7 +135,7 @@ export const useApp = create<AppState>((set, get) => ({
 
   refreshPlaylists: async () => {
     const playlists = await ymClient.playlistsList()
-    set({ playlists: playlists ?? [] })
+    set({ playlists: Array.isArray(playlists) ? playlists : [] })
   },
 
   toggleLike: async (track: Track) => {

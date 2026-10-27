@@ -13,6 +13,7 @@ import type {
   BriefInfo,
   DownloadInfo,
   Feed,
+  FileDownloadInfo,
   Playlist,
   Queue,
   RadioStation,
@@ -92,14 +93,11 @@ class YandexMusicClient {
     this.uid = null
     this.uidPromise = null
   }
-  /** Информация об аккаунте (с фолбэком на /account/status) */
+  /** Информация об аккаунте. Внимание: эндпоинта /me в API нет —
+   *  используем /account/status, который возвращает и аккаунт, и подписку */
   async me(): Promise<{ account: User; permissions?: unknown }> {
-    try {
-      return await this.req<{ account: User; permissions?: unknown }>('/me')
-    } catch {
-      const status = await this.accountStatus()
-      return { account: status.account ?? {} }
-    }
+    const status = await this.accountStatus()
+    return { account: status.account ?? {}, permissions: status.permissions }
   }
   accountStatus(): Promise<AccountStatus> {
     return this.req('/account/status')
@@ -110,7 +108,32 @@ class YandexMusicClient {
     return this.req('/tracks', { method: 'POST', body: { 'track-ids': ids, 'with-positions': true } })
   }
   trackDownloadInfo(trackKey: string): Promise<DownloadInfo> {
-    return this.req(`/tracks/${encodeURIComponent(trackKey)}/download-info`)
+    const bare = String(trackKey).split(':')[0]
+    // API возвращает в result ПРЯМО МАССИВ файлов: [{codec, ...}]
+    // (req() уже развернул result). Fallback на голый id — если ключ id:album не сработал.
+    const normalize = (arr: unknown[]): FileDownloadInfo[] =>
+      arr.map((it) => {
+        const r = it as Record<string, unknown>
+        return {
+          codec: r.codec as string | undefined,
+          // API непоследователен: bitrate_in_kbps (snake), но downloadInfoUrl (camel) — читаем оба
+          bitrateInKbps: (r.bitrate_in_kbps ?? r.bitrateInKbps) as number | undefined,
+          directLink: (r.direct_link ?? r.directLink) as string | undefined,
+          url: (r.url ?? r.url) as string | undefined,
+          downloadInfoUrl: (r.download_info_url ?? r.downloadInfoUrl) as string | undefined,
+          direct: !!(r.direct ?? r.direct),
+          gain: !!(r.gain ?? r.gain),
+          preview: !!(r.preview ?? r.preview),
+          restriction: r.restriction,
+        }
+      })
+    const req = (key: string) =>
+      this.req<unknown>(`/tracks/${key}/download-info`).then((res) => {
+        const arr = Array.isArray(res) ? (res as unknown[]) : ((res as { items?: unknown[] })?.items ?? [])
+        return { items: normalize(arr) }
+      })
+    // Сначала с ключом id:album (формат библиотеки), при пустом ответе — с голым id
+    return req(trackKey).then((d) => (d.items?.length ? d : req(bare)))
   }
   supplement(trackId: string): Promise<Supplement> {
     return this.req(`/tracks/${encodeURIComponent(trackId)}/supplement`)
@@ -146,13 +169,27 @@ class YandexMusicClient {
   // ---------- Плейлисты ----------
   async playlistsList(uid?: number): Promise<Playlist[]> {
     const u = uid ?? (await this.getUid())
-    const res = await this.req<Playlist[]>(`/users/${u}/playlists/list`)
-    return res ?? []
+    const res = await this.req<Playlist[] | { playlists?: Playlist[] }>(`/users/${u}/playlists/list`)
+    // API может вернуть как массив, так и обёртку {playlists: [...]} — выравниваем
+    if (Array.isArray(res)) return res
+    if (res && typeof res === 'object' && Array.isArray((res as { playlists?: unknown }).playlists)) {
+      return (res as { playlists: Playlist[] }).playlists
+    }
+    return []
   }
   async playlist(kind: string, uid?: number): Promise<Playlist | null> {
     const u = uid ?? (await this.getUid())
     const res = await this.req<Playlist | null>(`/users/${u}/playlists/${encodeURIComponent(kind)}?withTracks=true`)
     return res ?? null
+  }
+  /** Треки чужого (системного) плейлиста, например «Премьера» из ленты */
+  async playlistTracks(ownerUid: number, kind: string | number): Promise<Track[]> {
+    const res = await this.req<{ tracks?: { id?: string | number; track?: Track | null }[] }>(
+      `/users/${ownerUid}/playlists/${encodeURIComponent(String(kind))}?withTracks=true`,
+    )
+    return ((res?.tracks ?? []) as { track?: Track | null }[])
+      .map((t) => t.track ?? null)
+      .filter((t): t is Track => !!t?.id)
   }
   async playlistCreate(title: string, uid?: number): Promise<Playlist> {
     const u = uid ?? (await this.getUid())
@@ -188,7 +225,14 @@ class YandexMusicClient {
 
   // ---------- Поиск ----------
   search(text: string, type: SearchType = 'all', page = 0): Promise<SearchResult> {
-    const params = new URLSearchParams({ text, type, page: String(page) })
+    // Параметры строго как в библиотеке (nocorrect, playlist-in-best обязательны для полного ответа)
+    const params = new URLSearchParams({
+      text,
+      nocorrect: 'false',
+      type,
+      page: String(page),
+      'playlist-in-best': 'true',
+    })
     return this.req(`/search?${params.toString()}`)
   }
   searchSuggest(text: string): Promise<{ suggestions?: string[] }> {
@@ -248,7 +292,8 @@ class YandexMusicClient {
 
   // ---------- История ----------
   musicHistory(): Promise<unknown> {
-    return this.req('/music-history')
+    // Параметр fullModelsCount обязателен (иначе API: "Parameter value is not set")
+    return this.req('/music-history?fullModelsCount=20')
   }
 
   // ---------- Очередь (для Ynison) ----------
