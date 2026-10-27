@@ -1,0 +1,19 @@
+# зависимости
+node_modules/
+
+# сборки
+dist/
+release/
+
+# Android-генерация
+android/
+
+# тестовые копии исходников
+.research-marshalx/
+
+# редакторы и ОС
+.vscode/
+.idea/
+*.log
+.DS_Store
+Thumbs.db

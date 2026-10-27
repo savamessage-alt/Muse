@@ -1,0 +1,127 @@
+import { useEffect, useState } from 'react'
+import { useApp } from '../state/store'
+import { tokenManager } from '../core/tokenManager'
+import { player } from '../core/player'
+import { coverUrl, PLACEHOLDER_COVER } from '../core/format'
+import YnisonPanel from './YnisonPanel'
+
+export default function SettingsPage() {
+  const user = useApp((s) => s.user)
+  const status = useApp((s) => s.status)
+  const logout = useApp((s) => s.logout)
+  const showToast = useApp((s) => s.showToast)
+
+  const token = tokenManager.getToken()
+  const [quality, setQuality] = useState(() => localStorage.getItem('ym.quality') ?? 'mp3-320')
+
+  const setQualityLocal = (q: string) => {
+    localStorage.setItem('ym.quality', q)
+    setQuality(q)
+    void player.reloadCurrent()
+    showToast('Качество сохранено' + (player.snapshot().current ? ' — текущий трек перезапущен' : ''))
+  }
+
+  const refreshNow = async () => {
+    try {
+      await tokenManager.getAccessToken(true)
+      showToast('Токен обновлён')
+    } catch (e) {
+      showToast('Не удалось обновить токен: ' + (e as Error).message, 'error')
+    }
+  }
+
+  const sub = status?.subscription
+  const hasPlus = !!status?.plus?.hasPlus || !!status?.account?.hasPlus || !sub?.expired
+
+  return (
+    <div>
+      <h1 className="page-title">Настройки</h1>
+
+      <section className="settings-card">
+        <h2>Аккаунт</h2>
+        <div className="settings-row">
+          <img
+            className="user-avatar large"
+            src={coverUrl(user?.coverUri, '120x120') ?? PLACEHOLDER_COVER}
+            alt=""
+            onError={(e) => ((e.target as HTMLImageElement).src = PLACEHOLDER_COVER)}
+          />
+          <div>
+            <div className="settings-name">{user?.displayName ?? user?.login ?? '—'}</div>
+            <div className="muted small">Логин: {user?.login ?? '—'} · UID: {user?.uid ?? '—'}</div>
+            <div className="muted small">Регион API: {status?.region ?? '—'}</div>
+          </div>
+          <span className={'badge' + (hasPlus ? ' plus' : '')}>{hasPlus ? 'Яндекс Плюс' : 'Без подписки'}</span>
+        </div>
+        {sub && (
+          <div className="muted small">
+            Подписка: {(sub.product?.productId ?? sub.productId ?? '—')}
+            {sub.end ? ' · действует до ' + new Date(sub.end).toLocaleDateString('ru-RU') : ''}
+          </div>
+        )}
+      </section>
+
+      <section className="settings-card">
+        <h2>Токен и авторизация</h2>
+        <div className="muted small">
+          {token?.accessToken ? (
+            <>
+              Токен сохранён
+              {token.expiresAt
+                ? ' · истекает: ' + new Date(token.expiresAt).toLocaleString('ru-RU')
+                : ' (без срока)'}
+              {tokenManager.isExpiringSoon() && ' · скоро обновится автоматически'}
+            </>
+          ) : (
+            'Токен не найден'
+          )}
+        </div>
+        <div className="settings-actions">
+          <button className="btn" onClick={() => void refreshNow()}>
+            Обновить токен сейчас
+          </button>
+          <button className="btn danger" onClick={logout}>
+            Выйти из аккаунта
+          </button>
+        </div>
+        <p className="hint">Access-токен живёт ограниченное время. При истечении плеер автоматически обновляет его по refresh-токену; если Яндекс отозвал доступ — появится экран повторного входа.</p>
+      </section>
+
+      <section className="settings-card">
+        <h2>Качество воспроизведения</h2>
+        {(
+          [
+            ['mp3-320', 'MP3 320 кбит/с (максимум, рекомендуется)'],
+            ['mp3-192', 'MP3 192 кбит/с'],
+            ['mp3-128', 'MP3 128 кбит/с (экономия трафика)'],
+          ] as const
+        ).map(([val, label]) => (
+          <label key={val} className="radio-row">
+            <input
+              type="radio"
+              name="quality"
+              checked={quality === val}
+              onChange={() => setQualityLocal(val)}
+            />
+            <span>{label}</span>
+          </label>
+        ))}
+        <p className="hint">Изменение применится к новому треку; текущий трек будет перезапущен в новом качестве.</p>
+      </section>
+
+      <section className="settings-card">
+        <h2>Синхронизация устройств (Ynison)</h2>
+        <YnisonPanel />
+      </section>
+
+      <section className="settings-card">
+        <h2>Об приложении</h2>
+        <p className="muted small">
+          YM Player — неофициальный клиент Яндекс Музыки на TypeScript (React + Vite). Интерфейс на русском.
+          Сборки: веб → Windows (.exe, Electron) → Android (.apk, Capacitor). На основе OpenAPI-спецификации
+          проекта MarshalX/yandex-music-api.
+        </p>
+      </section>
+    </div>
+  )
+}

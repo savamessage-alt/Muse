@@ -1,0 +1,209 @@
+import { useEffect, useState } from 'react'
+import { player, type PlayerSnapshot } from '../core/player'
+import { ymClient } from '../core/client'
+import { useApp } from '../state/store'
+import { coverUrl, formatMs, PLACEHOLDER_COVER, artistNames } from '../core/format'
+import {
+  IconPlay,
+  IconPause,
+  IconPrev,
+  IconNext,
+  IconHeart,
+  IconHeartFilled,
+  IconVolume,
+  IconRepeat,
+  IconShuffle,
+  IconQueue,
+  IconLyrics,
+  IconX,
+} from './icons'
+
+function useSnapshot(): PlayerSnapshot {
+  const [snap, setSnap] = useState<PlayerSnapshot>(() => player.snapshot())
+  useEffect(() => player.onChange(setSnap), [])
+  return snap
+}
+
+export default function PlayerBar() {
+  const snap = useSnapshot()
+  const isLiked = useApp((s) => s.isLiked)
+  const toggleLike = useApp((s) => s.toggleLike)
+  const showToast = useApp((s) => s.showToast)
+  const [lyricsOpen, setLyricsOpen] = useState(false)
+  const [lyrics, setLyrics] = useState<string | null>(null)
+  const [lyricsLoading, setLyricsLoading] = useState(false)
+  const [lyricsError, setLyricsError] = useState('')
+  const [lyricsTrackId, setLyricsTrackId] = useState('')
+
+  const cur = snap.current
+  const liked = cur ? isLiked(cur.track) : false
+  const duration = snap.durationMs || 0
+  const position = snap.positionMs
+
+  const onSeek = (ms: number) => player.seek(ms)
+
+  const togglePlay = async () => {
+    if (!snap.current && snap.queue.length === 0) {
+      showToast('Очередь пуста — выберите трек')
+      return
+    }
+    await player.toggle()
+  }
+
+  const queueOpen = () => {
+    showToast(`В очереди: ${snap.queue.length} треков`)
+  }
+
+  const toggleLyrics = () => {
+    if (lyricsOpen) {
+      setLyricsOpen(false)
+      return
+    }
+    if (!cur) {
+      showToast('Сначала выберите трек')
+      return
+    }
+    setLyricsOpen(true)
+    if (cur.track.id === lyricsTrackId && lyrics) return // уже загружено
+    setLyricsLoading(true)
+    setLyricsError('')
+    void ymClient
+      .trackLyrics(cur.track.id)
+      .then((res) => {
+        setLyrics(res.lyric ?? '')
+        setLyricsTrackId(cur.track.id)
+        setLyricsLoading(false)
+      })
+      .catch((e) => {
+        setLyricsError('Тексты недоступны: ' + (e instanceof Error ? e.message : String(e)))
+        setLyricsLoading(false)
+      })
+  }
+
+  // закрыть тексты, если трек сменился на другой
+  useEffect(() => {
+    if (cur && lyricsOpen && cur.track.id !== lyricsTrackId && lyrics) {
+      setLyricsOpen(false)
+    }
+  }, [cur, lyricsOpen, lyricsTrackId, lyrics])
+
+  // без таймкодов: [00:12.34] → чисто
+  const cleanLyrics = (lyrics ?? '').replace(/\[\d{2}:\d{2}(\.\d+)?\]/g, '').trim()
+
+  return (
+    <footer className="playerbar">
+      <div className="pb-track">
+        {cur ? (
+          <>
+            <img
+              src={coverUrl(cur.track.coverUri, '120x120') ?? PLACEHOLDER_COVER}
+              className="pb-cover"
+              alt=""
+              onError={(e) => ((e.target as HTMLImageElement).src = PLACEHOLDER_COVER)}
+            />
+            <div className="pb-meta">
+              <div className="pb-title" title={cur.track.title}>{cur.track.title}</div>
+              <div className="pb-artist" title={artistNames(cur.track.artists)}>
+                {artistNames(cur.track.artists)}
+              </div>
+            </div>
+            <button
+              className={'icon-btn' + (liked ? ' liked' : '')}
+              onClick={() => cur && void toggleLike(cur.track)}
+              title={liked ? 'Убрать из «Мне нравится»' : 'В «Мне нравится»'}
+            >
+              {liked ? <IconHeartFilled /> : <IconHeart />}
+            </button>
+          </>
+        ) : (
+          <div className="pb-meta muted">Выберите трек</div>
+        )}
+      </div>
+
+      <div className="pb-center">
+        <div className="pb-controls">
+          <button
+            className={'icon-btn' + (snap.shuffle ? ' active' : '')}
+            onClick={() => player.setShuffle(!snap.shuffle)}
+            title="Перемешать"
+          >
+            <IconShuffle size={18} />
+          </button>
+          <button className="icon-btn" onClick={() => void player.prev()} title="Предыдущий">
+            <IconPrev size={22} />
+          </button>
+          <button className="pb-play" onClick={() => void togglePlay()} title={snap.playing ? 'Пауза' : 'Играть'}>
+            {snap.playing ? <IconPause size={24} /> : <IconPlay size={24} />}
+          </button>
+          <button className="icon-btn" onClick={() => void player.next()} title="Следующий">
+            <IconNext size={22} />
+          </button>
+          <button
+            className={'icon-btn' + (snap.repeat !== 'off' ? ' active' : '')}
+            onClick={() => player.setRepeat(snap.repeat === 'off' ? 'all' : snap.repeat === 'all' ? 'one' : 'off')}
+            title="Повтор: off / все / один"
+          >
+            <IconRepeat size={18} />
+          </button>
+        </div>
+        <div className="pb-seek">
+          <span className="pb-time">{formatMs(position)}</span>
+          <input
+            type="range"
+            className="range"
+            min={0}
+            max={Math.max(duration, 1)}
+            value={Math.min(position, Math.max(duration, 1))}
+            onChange={(e) => onSeek(Number(e.target.value))}
+            disabled={!cur}
+            aria-label="Перемотка"
+          />
+          <span className="pb-time">{formatMs(duration)}</span>
+        </div>
+      </div>
+
+      <div className="pb-right">
+        {snap.buffering && <span className="buffering" title="Буферизация">…</span>}
+        {snap.error && <span className="pb-error" title={snap.error}>⚠</span>}
+        <button
+          className={'icon-btn' + (lyricsOpen ? ' active' : '')}
+          onClick={toggleLyrics}
+          title="Текст песни"
+        >
+          <IconLyrics size={18} />
+        </button>
+        <button className="icon-btn" onClick={queueOpen} title="Очередь">
+          <IconQueue size={20} />
+          {snap.queue.length > 0 && <span className="queue-badge">{snap.queue.length}</span>}
+        </button>
+        <IconVolume size={18} className="pb-vol-icon" />
+        <input
+          type="range"
+          className="range thin"
+          min={0}
+          max={1}
+          step={0.01}
+          value={snap.muted ? 0 : snap.volume}
+          onChange={(e) => player.setVolume(Number(e.target.value))}
+          aria-label="Громкость"
+        />
+      </div>
+
+      {lyricsOpen && (
+        <div className="pb-lyrics">
+          <div className="pb-lyrics-head">
+            <b>Текст песни</b>
+            <button className="icon-btn" onClick={() => setLyricsOpen(false)} title="Закрыть">
+              <IconX size={16} />
+            </button>
+          </div>
+          <div className="pb-lyrics-body">
+            {lyricsLoading && <div className="muted">Загружаем текст…</div>}
+            {!lyricsLoading && lyricsError && <div className="muted">{lyricsError}</div>}
+            {!lyricsLoading && !lyricsError && <pre className="lyrics-text">{cleanLyrics || 'Текст недоступен'}</pre>}
+          </div>
+        </div>
+      )}
+    </footer>
+  )
+}
