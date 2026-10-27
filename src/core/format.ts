@@ -27,10 +27,13 @@ export function trackKey(track: Pick<Track, 'id' | 'albums' | 'albumId'>): strin
   return `${track.id}:${albumId}`
 }
 
-/** URL обложки по размеру */
+/** URL обложки по размеру (поддерживает относительные и абсолютные URI) */
 export function coverUrl(uri: string | undefined | null, size = '200x200'): string | undefined {
   if (!uri) return undefined
-  return `https://${uri.replace(/%%/g, size)}`
+  let u = uri.trim()
+  if (u.startsWith('//')) u = 'https:' + u
+  else if (!/^https?:\/\//i.test(u)) u = 'https://' + u
+  return u.replace(/%%/g, size)
 }
 
 /** Плейсхолдер-обложка */

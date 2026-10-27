@@ -14,6 +14,7 @@ import type {
   DownloadInfo,
   Feed,
   FileDownloadInfo,
+  HistoryItem,
   Playlist,
   Queue,
   RadioStation,
@@ -152,8 +153,10 @@ class YandexMusicClient {
   // ---------- Лайки ----------
   async usersLikesTracks(uid?: number): Promise<TrackShort[]> {
     const u = uid ?? (await this.getUid())
-    const res = await this.req<{ library?: { tracks?: { items?: TrackShort[] } } }>(`/users/${u}/likes/tracks`)
-    return res?.library?.tracks?.items ?? []
+    const res = await this.req<unknown>(`/users/${u}/likes/tracks`)
+    if (Array.isArray(res)) return res as TrackShort[]
+    const lib = (res as { library?: { tracks?: { items?: TrackShort[] } } } | null)?.library?.tracks?.items
+    return lib ?? []
   }
   async likesAddTracks(ids: string[], uid?: number): Promise<boolean> {
     const u = uid ?? (await this.getUid())
@@ -291,9 +294,16 @@ class YandexMusicClient {
   }
 
   // ---------- История ----------
-  musicHistory(): Promise<unknown> {
+  async musicHistory(): Promise<HistoryItem[]> {
     // Параметр fullModelsCount обязателен (иначе API: "Parameter value is not set")
-    return this.req('/music-history?fullModelsCount=20')
+    // API отдаёт result.history КАК МАССИВ (иногда {items}) — выравниваем
+    const res = await this.req<{ history?: unknown }>('/music-history?fullModelsCount=20')
+    const h = res?.history
+    if (Array.isArray(h)) return h as HistoryItem[]
+    if (h && typeof h === 'object' && Array.isArray((h as { items?: unknown }).items)) {
+      return (h as { items: HistoryItem[] }).items
+    }
+    return []
   }
 
   // ---------- Очередь (для Ynison) ----------

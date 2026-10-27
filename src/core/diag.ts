@@ -17,13 +17,13 @@ function sanitize(token: StoredToken | null): Record<string, unknown> | null {
   }
 }
 
-export function diag(fact: string, token: StoredToken | null): void {
+export function diag(fact: string, token?: StoredToken | null): void {
   try {
     const payload = JSON.stringify({
       fact,
       href: location.href,
       ua: navigator.userAgent.slice(0, 120),
-      token: sanitize(token),
+      token: token ? sanitize(token) : null,
       t: Date.now(),
     })
     void fetch('/__diag', { method: 'POST', body: payload }).catch(() => {})

@@ -3,6 +3,7 @@ import { ymClient } from '../core/client'
 import { expandTracks } from '../core/tracks'
 import type { Track, TrackShort } from '../core/types'
 import TrackList, { playTracks } from './TrackList'
+import { diag } from '../core/diag'
 
 export default function LikesPage() {
   const [tracks, setTracks] = useState<Track[]>([])
@@ -12,10 +13,14 @@ export default function LikesPage() {
     ymClient
       .usersLikesTracks()
       .then(async (shorts) => {
+        diag('likes: записей=' + shorts.length + ' первая=' + JSON.stringify(shorts[0] ?? {}).slice(0, 100))
         const full = await expandTracks(shorts as (Track | TrackShort)[])
         setTracks(full)
       })
-      .catch((e) => setErr('Не удалось загрузить: ' + (e as Error).message))
+      .catch((e) => {
+        diag('likes: ОШИБКА ' + String((e as Error)?.message ?? e).slice(0, 120))
+        setErr('Не удалось загрузить: ' + (e as Error).message)
+      })
   }, [])
 
   return (

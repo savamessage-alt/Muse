@@ -174,6 +174,8 @@ function base64url(bytes: Uint8Array, stripPadding = false): string {
   let bin = ''
   for (const b of bytes) bin += String.fromCharCode(b)
   let b64 = btoa(bin)
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
   if (stripPadding) b64 = b64.replace(/=+$/, '')
   return b64
 }

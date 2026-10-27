@@ -2,19 +2,9 @@ import { useEffect, useState } from 'react'
 import { ymClient } from '../core/client'
 import { useApp } from '../state/store'
 import { player } from '../core/player'
-import { coverUrl, PLACEHOLDER_COVER } from '../core/format'
-import type { Album, Feed, Playlist, Track } from '../core/types'
-import TrackList from './TrackList'
-import { AlbumCard, Grid, PlaylistCard, Section } from './cards'
-
-interface Premiere {
-  kind: number
-  ownerUid: number
-  title: string
-  cover?: string
-  trackCount?: number
-  description?: string
-}
+import { artistNames, coverUrl, formatMs, PLACEHOLDER_COVER } from '../core/format'
+import type { Track } from '../core/types'
+import { IconHeart, IconHeartFilled, IconNext, IconPause, IconPlay } from './icons'
 
 interface Wave {
   type: string
@@ -24,45 +14,16 @@ interface Wave {
 }
 
 export default function HomePage() {
-  const [feed, setFeed] = useState<Feed | null>(null)
-  const [err, setErr] = useState<string | null>(null)
-  const ownPlaylists = useApp((s) => s.playlists)
-  const [recommended, setRecommended] = useState<Track[]>([])
-  const [premieres, setPremieres] = useState<Premiere[]>([])
-  const [loadingPl, setLoadingPl] = useState<number | null>(null)
   const [wave, setWave] = useState<Wave | null>(null)
   const [loadingWave, setLoadingWave] = useState(false)
   const showToast = useApp((s) => s.showToast)
+  const isLiked = useApp((s) => s.isLiked)
+  const toggleLike = useApp((s) => s.toggleLike)
+  const [snap, setSnap] = useState(() => player.snapshot())
+  useEffect(() => player.onChange(setSnap), [])
 
+  // Найти «Мою волну» (персональную станцию user:onyourwave) в дашборде радио
   useEffect(() => {
-    ymClient
-      .feed()
-      .then((f) => {
-        setFeed(f)
-        const tracks = (f.days ?? [])
-          .flatMap((d) => d.events ?? [])
-          .map((e) => e.track)
-          .filter((t): t is Track => !!t?.id)
-        setRecommended(tracks.slice(0, 50))
-        // «Премьеры» из ленты — готовые плейлисты с треками (для быстрого прослушивания)
-        const pls: Premiere[] = []
-        for (const g of f.generatedPlaylists ?? []) {
-          if (g.data?.kind !== undefined && g.data?.owner?.uid !== undefined) {
-            pls.push({
-              kind: g.data.kind,
-              ownerUid: g.data.owner.uid,
-              title: g.data.title ?? 'Плейлист',
-              cover: g.data.cover?.uri ?? g.data.ogImage,
-              trackCount: g.data.trackCount,
-              description: g.data.description,
-            })
-          }
-        }
-        setPremieres(pls)
-      })
-      .catch((e) => setErr('Не удалось загрузить ленту: ' + (e as Error).message))
-
-    // «Моя волна» — персональная станция (user:onyourwave), ищем в дашборде радио
     ymClient
       .radioDashboard()
       .then((r) => {
@@ -85,7 +46,7 @@ export default function HomePage() {
         }
       })
       .catch(() => {
-        /* радио недоступно — просто не показываем карточку */
+        /* радио недоступно — показываем фон-заглушку */
       })
   }, [])
 
@@ -114,116 +75,92 @@ export default function HomePage() {
     }
   }
 
-  const playPremiere = async (p: Premiere) => {
-    setLoadingPl(p.kind)
-    try {
-      const tracks = await ymClient.playlistTracks(p.ownerUid, p.kind)
-      if (tracks.length) void player.playQueue(tracks.map((t) => ({ track: t, source: 'playlist' })), 0)
-    } finally {
-      setLoadingPl(null)
+  const onHeroPlay = async () => {
+    if (snap.current && snap.queue.length) {
+      await player.toggle()
+      return
     }
+    await playWave()
   }
 
-  const albums = (feed?.days ?? [])
-    .flatMap((d) => d.events ?? [])
-    .map((e) => e.album)
-    .filter((a): a is Album => !!a?.id)
-  const uniqAlbums = [...new Map(albums.map((a) => [a.id, a])).values()].slice(0, 20)
+  const cur = snap.current
+  const playing = snap.playing && !!cur
+  const liked = cur ? isLiked(cur.track) : false
 
-  const eventPlaylists = (feed?.days ?? [])
-    .flatMap((d) => d.events ?? [])
-    .map((e) => e.playlist)
-    .filter((p): p is Playlist => !!p?.kind)
-  const uniqPlaylists = [...new Map(eventPlaylists.map((p) => [p.kind, p])).values()].slice(0, 12)
+  // фон: обложка играющего трека (или значка волны) — размытая и анимированная на весь экран
+  const heroBg = cur?.track.coverUri
+    ? coverUrl(cur.track.coverUri, '1000x1000')
+    : wave?.icon
+      ? coverUrl(wave.icon, '600x600')
+      : undefined
 
   return (
-    <div>
-      <h1 className="page-title">Добро пожаловать!</h1>
-      {err && <div className="error-box"><p>{err}</p></div>}
+    <div className={'wave' + (heroBg ? '' : ' wave--fallback')}>
+      {heroBg && <div className="wave-bg" style={{ backgroundImage: `url(${heroBg})` }} />}
+      <div className="wave-glow" />
+      <div className="wave-main">
+        <div className="wave-label">МОЯ ВОЛНА</div>
 
-      {wave && (
         <button
-          className="wave-card"
-          onClick={() => void playWave()}
+          className="wave-disc"
+          onClick={() => void onHeroPlay()}
           disabled={loadingWave}
+          title={playing ? 'Пауза' : 'Слушать Мою волну'}
         >
-          <span className="wave-icon">
-            {wave.icon ? (
-              <img src={coverUrl(wave.icon, '200x200') ?? PLACEHOLDER_COVER} alt="" onError={(e) => ((e.target as HTMLImageElement).src = PLACEHOLDER_COVER)} />
-            ) : (
-              <span className="wave-emoji">🌊</span>
-            )}
+          <img
+            src={coverUrl(cur?.track.coverUri ?? wave?.icon, '400x400') ?? PLACEHOLDER_COVER}
+            alt=""
+            className={playing ? 'spin' : ''}
+            onError={(e) => ((e.target as HTMLImageElement).src = PLACEHOLDER_COVER)}
+          />
+          <span className="wave-disc-glass" />
+          <span className="wave-disc-center">
+            {loadingWave ? '…' : playing ? <IconPause size={30} /> : <IconPlay size={30} />}
           </span>
-          <span className="wave-info">
-            <span className="wave-title">Моя волна</span>
-            <span className="muted small">Персональное радио — бесконечный поток под ваш вкус</span>
-          </span>
-          <span className="wave-play">{loadingWave ? '…' : '▶ Слушать'}</span>
         </button>
-      )}
 
-      {uniqPlaylists.length > 0 && (
-        <Section title="Плейлисты дня">
-          <Grid>
-            {uniqPlaylists.map((p) => (
-              <PlaylistCard key={p.kind} playlist={p} />
-            ))}
-          </Grid>
-        </Section>
-      )}
+        {cur ? (
+          <>
+            <div className="wave-track-title">{cur.track.title}</div>
+            <div className="wave-track-artist">{artistNames(cur.track.artists)}</div>
+            <div className="wave-progress">
+              <span className="wave-time">{formatMs(snap.positionMs)}</span>
+              <input
+                type="range"
+                className="range"
+                min={0}
+                max={Math.max(snap.durationMs, 1)}
+                value={Math.min(snap.positionMs, Math.max(snap.durationMs, 1))}
+                onChange={(e) => player.seek(Number(e.target.value))}
+                aria-label="Перемотка"
+              />
+              <span className="wave-time">{formatMs(snap.durationMs)}</span>
+            </div>
+          </>
+        ) : (
+          <div className="wave-track-artist">Бесконечный поток под ваш вкус — нажмите на диск</div>
+        )}
 
-      {uniqAlbums.length > 0 && (
-        <Section title="Новинки">
-          <Grid>
-            {uniqAlbums.map((a) => (
-              <AlbumCard key={a.id} album={a} />
-            ))}
-          </Grid>
-        </Section>
-      )}
-
-      {ownPlaylists.length > 0 && (
-        <Section title="Мои плейлисты">
-          <Grid>
-            {ownPlaylists.slice(0, 12).map((p) => (
-              <PlaylistCard key={p.kind} playlist={p} />
-            ))}
-          </Grid>
-        </Section>
-      )}
-
-      {premieres.length > 0 && (
-        <Section title="Новинки и Премьеры">
-          <div className="premieres">
-            {premieres.map((p) => (
-              <button
-                key={p.kind}
-                className="premiere-card"
-                onClick={() => void playPremiere(p)}
-                disabled={loadingPl === p.kind}
-              >
-                <img
-                  src={coverUrl(p.cover) ?? PLACEHOLDER_COVER}
-                  alt=""
-                  className="premiere-cover"
-                  onError={(e) => ((e.target as HTMLImageElement).src = PLACEHOLDER_COVER)}
-                />
-                <span className="premiere-info">
-                  <span className="premiere-title">{p.title ?? 'Плейлист'}</span>
-                  <span className="muted small">
-                    {p.trackCount ? `${p.trackCount} треков` : ''} · нажмите, чтобы слушать
-                  </span>
-                </span>
-                <span className="premiere-play">{loadingPl === p.kind ? '…' : '▶ Слушать'}</span>
-              </button>
-            ))}
-          </div>
-        </Section>
-      )}
-
-      <Section title="Рекомендуем">
-        <TrackList tracks={recommended} />
-      </Section>
+        <div className="wave-controls">
+          {cur && (
+            <button
+              className={'wave-ctl' + (liked ? ' on' : '')}
+              onClick={() => void toggleLike(cur.track)}
+              title={liked ? 'Убрать из «Мне нравится»' : 'В «Мне нравится»'}
+            >
+              {liked ? <IconHeartFilled size={26} /> : <IconHeart size={26} />}
+            </button>
+          )}
+          <button className="wave-playbig" onClick={() => void onHeroPlay()} disabled={loadingWave}>
+            {loadingWave ? '…' : playing ? <IconPause size={28} /> : <IconPlay size={28} />}
+          </button>
+          {cur?.source === 'radio' && (
+            <button className="wave-ctl" onClick={() => void player.next()} title="Дальше">
+              <IconNext size={26} />
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

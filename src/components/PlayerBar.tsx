@@ -3,6 +3,7 @@ import { player, type PlayerSnapshot } from '../core/player'
 import { ymClient } from '../core/client'
 import { useApp } from '../state/store'
 import { coverUrl, formatMs, PLACEHOLDER_COVER, artistNames } from '../core/format'
+import { diag } from '../core/diag'
 import {
   IconPlay,
   IconPause,
@@ -67,15 +68,26 @@ export default function PlayerBar() {
     if (cur.track.id === lyricsTrackId && lyrics) return // уже загружено
     setLyricsLoading(true)
     setLyricsError('')
+    let did = false
+    const timer = window.setTimeout(() => {
+      if (!did) void fetch('/__diag', { method: 'POST', body: JSON.stringify({ fact: 'lyrics', href: location.href, msg: 'загрузка >10с' }) }).catch(() => {})
+    }, 10000)
     void ymClient
       .trackLyrics(cur.track.id)
       .then((res) => {
+        did = true
+        window.clearTimeout(timer)
+        diag('lyrics: OK len=' + String(res.lyric ?? '').length)
         setLyrics(res.lyric ?? '')
         setLyricsTrackId(cur.track.id)
         setLyricsLoading(false)
       })
       .catch((e) => {
-        setLyricsError('Тексты недоступны: ' + (e instanceof Error ? e.message : String(e)))
+        did = true
+        window.clearTimeout(timer)
+        const msg = e instanceof Error ? e.message : String(e)
+        diag('lyrics: ОШИБКА ' + msg.slice(0, 120))
+        setLyricsError('Тексты недоступны: ' + msg)
         setLyricsLoading(false)
       })
   }

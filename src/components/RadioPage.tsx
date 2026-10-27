@@ -5,6 +5,16 @@ import { coverUrl, PLACEHOLDER_COVER } from '../core/format'
 import type { RadioStation, Track } from '../core/types'
 import { useApp } from '../state/store'
 import { IconRadio } from './icons'
+import { Section } from './cards'
+
+interface Premiere {
+  kind: number
+  ownerUid: number
+  title: string
+  cover?: string
+  trackCount?: number
+  description?: string
+}
 
 export default function RadioPage() {
   const [stations, setStations] = useState<RadioStation[]>([])
@@ -12,13 +22,48 @@ export default function RadioPage() {
   const [busy, setBusy] = useState(false)
   const [currentStation, setCurrentStation] = useState<{ type: string; tag: string; name: string } | null>(null)
   const showToast = useApp((s) => s.showToast)
+  const [premieres, setPremieres] = useState<Premiere[]>([])
+  const [loadingPl, setLoadingPl] = useState<number | null>(null)
 
   useEffect(() => {
     ymClient
       .radioDashboard()
       .then((r) => setStations(r.stations ?? []))
       .catch((e) => setErr('Не удалось загрузить радио: ' + (e as Error).message))
+
+    // «Новинки и Премьеры» из ленты — готовые плейлисты с треками
+    ymClient
+      .feed()
+      .then((f) => {
+        const pls: Premiere[] = []
+        for (const g of f.generatedPlaylists ?? []) {
+          if (g.data?.kind !== undefined && g.data?.owner?.uid !== undefined) {
+            pls.push({
+              kind: g.data.kind,
+              ownerUid: g.data.owner.uid,
+              title: g.data.title ?? 'Плейлист',
+              cover: g.data.cover?.uri ?? g.data.ogImage,
+              trackCount: g.data.trackCount,
+              description: g.data.description,
+            })
+          }
+        }
+        setPremieres(pls)
+      })
+      .catch(() => {
+        /* лента недоступна — не показываем премьеры */
+      })
   }, [])
+
+  const playPremiere = async (p: Premiere) => {
+    setLoadingPl(p.kind)
+    try {
+      const tracks = await ymClient.playlistTracks(p.ownerUid, p.kind)
+      if (tracks.length) void player.playQueue(tracks.map((t) => ({ track: t, source: 'playlist' })), 0)
+    } finally {
+      setLoadingPl(null)
+    }
+  }
 
   const playStation = async (s: RadioStation) => {
     const type = s.station?.id?.type ?? s.id?.type ?? ''
@@ -85,6 +130,35 @@ export default function RadioPage() {
           )
         })}
       </div>
+
+      {premieres.length > 0 && (
+        <Section title="Новинки и Премьеры">
+          <div className="premieres">
+            {premieres.map((p) => (
+              <button
+                key={p.kind}
+                className="premiere-card"
+                onClick={() => void playPremiere(p)}
+                disabled={loadingPl === p.kind}
+              >
+                <img
+                  src={coverUrl(p.cover) ?? PLACEHOLDER_COVER}
+                  alt=""
+                  className="premiere-cover"
+                  onError={(e) => ((e.target as HTMLImageElement).src = PLACEHOLDER_COVER)}
+                />
+                <span className="premiere-info">
+                  <span className="premiere-title">{p.title ?? 'Плейлист'}</span>
+                  <span className="muted small">
+                    {p.trackCount ? `${p.trackCount} треков` : ''} · нажмите, чтобы слушать
+                  </span>
+                </span>
+                <span className="premiere-play">{loadingPl === p.kind ? '…' : '▶ Слушать'}</span>
+              </button>
+            ))}
+          </div>
+        </Section>
+      )}
     </div>
   )
 }

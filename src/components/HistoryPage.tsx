@@ -5,6 +5,7 @@ import { artistNames, coverUrl, formatMs, PLACEHOLDER_COVER } from '../core/form
 import type { HistoryItem, Track } from '../core/types'
 import { playTracks } from './TrackList'
 import { IconPlay } from './icons'
+import { diag } from '../core/diag'
 
 interface Row {
   item: HistoryItem
@@ -19,20 +20,23 @@ export default function HistoryPage() {
   useEffect(() => {
     ymClient
       .musicHistory()
-      .then(async (res) => {
-        const raw = (res as { history?: { items?: HistoryItem[] } }).history?.items ?? []
-        const trackItems = raw.filter((i) => i.type === 'track' && i.id?.trackId)
-        const shorts = trackItems.map((i) => ({ id: i.id!.trackId!, albumId: i.id!.albumId ?? '' }))
+      .then(async (itemsRaw) => {
+        diag('history: записей=' + itemsRaw.length + ' первая=' + JSON.stringify(itemsRaw[0] ?? {}).slice(0, 120))
+        const raw = itemsRaw.filter((i) => i.type === 'track' && i.id?.trackId)
+        const shorts = raw.map((i) => ({ id: i.id!.trackId!, albumId: i.id!.albumId ?? '' }))
         const full = await expandTracks(shorts)
         setRows(
-          trackItems.map((item, k) => ({
+          raw.map((item, k) => ({
             item,
             track: full[k] ?? null,
             ts: item.timestamp ? new Date(item.timestamp).getTime() : 0,
           })),
         )
       })
-      .catch((e) => setErr('Не удалось загрузить историю: ' + (e as Error).message))
+      .catch((e) => {
+        diag('history: ОШИБКА ' + String((e as Error)?.message ?? e).slice(0, 120))
+        setErr('Не удалось загрузить историю: ' + (e as Error).message)
+      })
   }, [])
 
   if (err) return <div className="error-box"><p>{err}</p></div>
