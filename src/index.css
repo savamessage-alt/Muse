@@ -389,6 +389,29 @@ button { font-family: inherit; }
 }
 
 /* ---------- премьеры на главной ---------- */
+.wave-card {
+  display: flex; align-items: center; gap: 16px; width: 100%;
+  margin-bottom: 6px;
+  background: linear-gradient(100deg, rgba(255,51,51,.22), rgba(255,130,51,.10) 60%, rgba(255,51,51,.06));
+  border: 1px solid rgba(255,51,51,.45);
+  border-radius: 18px; padding: 16px 18px; cursor: pointer; text-align: left;
+  transition: border-color .15s, transform .1s;
+}
+.wave-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+.wave-card:disabled { opacity: .65; cursor: wait; }
+.wave-icon {
+  width: 68px; height: 68px; border-radius: 50%; overflow: hidden; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,51,51,.18); border: 1px solid rgba(255,120,120,.35);
+}
+.wave-icon img { width: 100%; height: 100%; object-fit: cover; }
+.wave-emoji { font-size: 34px; }
+.wave-info { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; }
+.wave-title { font-weight: 700; font-size: 19px; }
+.wave-play {
+  flex-shrink: 0; background: var(--accent); color: #fff;
+  border-radius: 999px; padding: 9px 18px; font-weight: 600; font-size: 14px;
+}
 .premieres { display: flex; flex-direction: column; gap: 10px; }
 .premiere-card {
   display: flex; align-items: center; gap: 14px; width: 100%;

@@ -16,6 +16,13 @@ interface Premiere {
   description?: string
 }
 
+interface Wave {
+  type: string
+  tag: string
+  name: string
+  icon?: string
+}
+
 export default function HomePage() {
   const [feed, setFeed] = useState<Feed | null>(null)
   const [err, setErr] = useState<string | null>(null)
@@ -23,6 +30,9 @@ export default function HomePage() {
   const [recommended, setRecommended] = useState<Track[]>([])
   const [premieres, setPremieres] = useState<Premiere[]>([])
   const [loadingPl, setLoadingPl] = useState<number | null>(null)
+  const [wave, setWave] = useState<Wave | null>(null)
+  const [loadingWave, setLoadingWave] = useState(false)
+  const showToast = useApp((s) => s.showToast)
 
   useEffect(() => {
     ymClient
@@ -51,7 +61,58 @@ export default function HomePage() {
         setPremieres(pls)
       })
       .catch((e) => setErr('Не удалось загрузить ленту: ' + (e as Error).message))
+
+    // «Моя волна» — персональная станция (user:onyourwave), ищем в дашборде радио
+    ymClient
+      .radioDashboard()
+      .then((r) => {
+        const list = r.stations ?? []
+        const mine =
+          list.find((s) => s.station?.id?.type === 'user' && s.station?.id?.tag === 'onyourwave') ??
+          list.find((s) => s.station?.id?.type === 'user') ??
+          list[0]
+        if (mine) {
+          const tp = mine.station?.id?.type ?? mine.id?.type ?? ''
+          const tg = mine.station?.id?.tag ?? mine.id?.tag ?? ''
+          if (tp && tg) {
+            setWave({
+              type: tp,
+              tag: tg,
+              name: mine.station?.name ?? 'Моя волна',
+              icon: mine.station?.icon?.uri,
+            })
+          }
+        }
+      })
+      .catch(() => {
+        /* радио недоступно — просто не показываем карточку */
+      })
   }, [])
+
+  const playWave = async () => {
+    if (!wave || loadingWave) return
+    setLoadingWave(true)
+    try {
+      const res = await ymClient.radioStationTracks(wave.type, wave.tag)
+      const tracks = (res.sequence ?? [])
+        .filter((x) => x.type === 'track' && x.track)
+        .map((x) => x.track as Track)
+      if (!tracks.length) {
+        showToast('Моя волна не вернула треки (возможно, нужна подписка)', 'error')
+        return
+      }
+      await player.playQueue(
+        tracks.map((track) => ({ track, source: 'radio' as const })),
+        0,
+        { type: wave.type, tag: wave.tag },
+      )
+      showToast('🎵 Моя волна — играет')
+    } catch (e) {
+      showToast('Ошибка Моей волны: ' + (e as Error).message, 'error')
+    } finally {
+      setLoadingWave(false)
+    }
+  }
 
   const playPremiere = async (p: Premiere) => {
     setLoadingPl(p.kind)
@@ -79,6 +140,27 @@ export default function HomePage() {
     <div>
       <h1 className="page-title">Добро пожаловать!</h1>
       {err && <div className="error-box"><p>{err}</p></div>}
+
+      {wave && (
+        <button
+          className="wave-card"
+          onClick={() => void playWave()}
+          disabled={loadingWave}
+        >
+          <span className="wave-icon">
+            {wave.icon ? (
+              <img src={coverUrl(wave.icon, '200x200') ?? PLACEHOLDER_COVER} alt="" onError={(e) => ((e.target as HTMLImageElement).src = PLACEHOLDER_COVER)} />
+            ) : (
+              <span className="wave-emoji">🌊</span>
+            )}
+          </span>
+          <span className="wave-info">
+            <span className="wave-title">Моя волна</span>
+            <span className="muted small">Персональное радио — бесконечный поток под ваш вкус</span>
+          </span>
+          <span className="wave-play">{loadingWave ? '…' : '▶ Слушать'}</span>
+        </button>
+      )}
 
       {uniqPlaylists.length > 0 && (
         <Section title="Плейлисты дня">
