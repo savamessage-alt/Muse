@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { useApp } from '../state/store'
 import PlayerBar from './PlayerBar'
+import ResumePosition from './ResumePosition'
 import { IconHome, IconSearch, IconRadio, IconHeart, IconHistory, IconSettings, IconList } from './icons'
 import { PLACEHOLDER_COVER, coverUrl } from '../core/format'
 
@@ -68,6 +69,7 @@ export default function Layout() {
         </main>
       </div>
       <PlayerBar />
+      <ResumePosition />
     </div>
   )
 }

@@ -4,6 +4,7 @@ import { ymClient } from '../core/client'
 import { useApp } from '../state/store'
 import { coverUrl, formatMs, PLACEHOLDER_COVER, artistNames } from '../core/format'
 import { diag } from '../core/diag'
+import QueuePanel from './QueuePanel'
 import {
   IconPlay,
   IconPause,
@@ -35,6 +36,7 @@ export default function PlayerBar() {
   const [lyricsLoading, setLyricsLoading] = useState(false)
   const [lyricsError, setLyricsError] = useState('')
   const [lyricsTrackId, setLyricsTrackId] = useState('')
+  const [queueOpen, setQueueOpen] = useState(false)
 
   const cur = snap.current
   const liked = cur ? isLiked(cur.track) : false
@@ -51,7 +53,7 @@ export default function PlayerBar() {
     await player.toggle()
   }
 
-  const queueOpen = () => {
+  const queueOpenFn = () => {
     showToast(`В очереди: ${snap.queue.length} треков`)
   }
 
@@ -184,7 +186,7 @@ export default function PlayerBar() {
         >
           <IconLyrics size={18} />
         </button>
-        <button className="icon-btn" onClick={queueOpen} title="Очередь">
+        <button className={'icon-btn' + (queueOpen ? ' active' : '')} onClick={() => setQueueOpen((v) => !v)} title="Очередь">
           <IconQueue size={20} />
           {snap.queue.length > 0 && <span className="queue-badge">{snap.queue.length}</span>}
         </button>
@@ -202,7 +204,7 @@ export default function PlayerBar() {
       </div>
 
       {lyricsOpen && (
-        <div className="pb-lyrics">
+          <div className="pb-lyrics">
           <div className="pb-lyrics-head">
             <b>Текст песни</b>
             <button className="icon-btn" onClick={() => setLyricsOpen(false)} title="Закрыть">
@@ -216,6 +218,8 @@ export default function PlayerBar() {
           </div>
         </div>
       )}
+
+      {queueOpen && <QueuePanel onClose={() => setQueueOpen(false)} />}
     </footer>
   )
 }

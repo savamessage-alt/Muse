@@ -69,7 +69,7 @@ export default function HistoryPage() {
               title="Играть"
             >
               <img
-                src={coverUrl(t.coverUri, '64x64') ?? PLACEHOLDER_COVER}
+                src={coverUrl(t.coverUri, '80x80') ?? PLACEHOLDER_COVER}
                 alt=""
                 onError={(e) => ((e.target as HTMLImageElement).src = PLACEHOLDER_COVER)}
               />

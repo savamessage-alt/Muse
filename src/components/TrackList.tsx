@@ -62,7 +62,7 @@ export default function TrackList({ tracks, onPlay, showAlbum = true, showLikes 
             </span>
             <span className="tc-title">
               <img
-                src={coverUrl(t.coverUri, '64x64') ?? PLACEHOLDER_COVER}
+                src={coverUrl(t.coverUri, '80x80') ?? PLACEHOLDER_COVER}
                 className="tc-cover"
                 alt=""
                 onError={(e) => ((e.target as HTMLImageElement).src = PLACEHOLDER_COVER)}

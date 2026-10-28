@@ -94,11 +94,38 @@ export default defineConfig({
         target: 'https://api.music.yandex.net',
         changeOrigin: true,
         rewrite: (p) => p.replace(/^\/api/, ''),
+        configure: (proxy) => {
+          // Яндекс-API может резать POST (записи) с чужого Origin/Referer —
+          // снимаем их (браузер шлёт Origin: localhost даже при same-origin POST)
+          proxy.on('proxyReq', (proxyReq, req) => {
+            proxyReq.removeHeader('origin')
+            proxyReq.removeHeader('referer')
+            // отладка: что реально уходит в POST-запросах лайков
+            if (req.method === 'POST' && String(req.url).includes('likes')) {
+              let body = ''
+              req.on('data', (c: Buffer) => (body += c.toString()))
+              req.on('end', () => console.log('[PROXY]', req.method, req.url, 'body=', body))
+            }
+          })
+          proxy.on('proxyRes', (proxyRes, req) => {
+            if (req.method === 'POST' && String(req.url).includes('likes')) {
+              let body = ''
+              proxyRes.on('data', (c: Buffer) => (body += c.toString()))
+              proxyRes.on('end', () => console.log('[PROXY-RES]', proxyRes.statusCode, body.slice(0, 300)))
+            }
+          })
+        },
       },
       '/oauth/': {
         target: 'https://oauth.yandex.ru',
         changeOrigin: true,
         rewrite: (p) => p.replace(/^\/oauth/, ''),
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq) => {
+            proxyReq.removeHeader('origin')
+            proxyReq.removeHeader('referer')
+          })
+        },
       },
     },
   },

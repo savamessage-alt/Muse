@@ -496,6 +496,45 @@ button { font-family: inherit; }
 .wave-playbig:hover { transform: scale(1.06); box-shadow: 0 12px 44px rgba(255,51,51,.62); }
 .wave-playbig:disabled { opacity: .6; cursor: wait; }
 
+/* ---------- панель «Очередь» ---------- */
+.queue-badge {
+  position: absolute; top: -4px; right: -6px; min-width: 16px; height: 16px;
+  padding: 0 4px; border-radius: 999px; font-size: 10px; line-height: 16px;
+  background: var(--accent); color: #fff;
+}
+.playerbar .icon-btn, .pb-controls .icon-btn { position: relative; }
+.queue-overlay {
+  position: fixed; inset: 0; z-index: 60;
+  background: rgba(0, 0, 0, .45);
+  display: flex; align-items: flex-end; justify-content: center;
+  backdrop-filter: blur(3px);
+}
+.queue-panel {
+  width: min(640px, 96vw); max-height: 64vh;
+  margin-bottom: 84px; border-radius: 20px;
+  background: var(--bg2, #191921); border: 1px solid rgba(255, 255, 255, .10);
+  box-shadow: 0 -10px 50px rgba(0, 0, 0, .6);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.queue-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; border-bottom: 1px solid rgba(255, 255, 255, .08);
+}
+.queue-title { font-weight: 800; font-size: 15px; }
+.queue-list { overflow-y: auto; padding: 6px; }
+.queue-row {
+  display: flex; align-items: center; gap: 12px; padding: 8px 10px;
+  border-radius: 12px; cursor: pointer;
+}
+.queue-row:hover { background: rgba(255, 255, 255, .07); }
+.queue-row.current { background: rgba(255, 51, 51, .14); }
+.queue-row img { width: 40px; height: 40px; border-radius: 10px; object-fit: cover; flex: none; }
+.queue-meta { min-width: 0; flex: 1; }
+.queue-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.queue-artist { font-size: 12.5px; color: var(--muted, #a6a6b1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.queue-remove { flex: none; opacity: .7; }
+.queue-remove:hover { opacity: 1; }
+
 /* ---------- премьеры (на странице «Радио») ---------- */
 .premieres { display: flex; flex-direction: column; gap: 10px; }
 .premiere-card {

@@ -6,6 +6,7 @@
 import { ymFetch, YmApiError, YM_CLIENT_HEADER } from './transport'
 import { tokenManager } from './tokenManager'
 import { signRequest } from './sign'
+import { diag } from './diag'
 import type {
   AccountStatus,
   Album,
@@ -60,7 +61,6 @@ class YandexMusicClient {
       return (data?.result ?? data) as T
     } catch (e) {
       if (e instanceof YmApiError && (e.status === 401 || e.code === 'Unauthorized')) {
-        // токен устарел — пробуем обновить и повторить один раз
         const token2 = await tokenManager.getAccessToken(true)
         const data2 = await ymFetch<ApiResponse<T>>(path, {
           ...init,
@@ -71,6 +71,8 @@ class YandexMusicClient {
         }
         return (data2?.result ?? data2) as T
       }
+      // Телеметрия ошибок запросов (403 и пр.) — видим точный ответ API
+      diag('req-err: ' + path + ' | ' + (e instanceof Error ? e.message : String(e)).slice(0, 160))
       throw e
     }
   }
@@ -106,7 +108,13 @@ class YandexMusicClient {
 
   // ---------- Треки ----------
   tracks(ids: string[]): Promise<Track[]> {
-    return this.req('/tracks', { method: 'POST', body: { 'track-ids': ids, 'with-positions': true } })
+    // API принимает ТОЛЬКО form-urlencoded (JSON отклоняется с 400)
+    const body = ids.map((id) => 'track-ids=' + encodeURIComponent(id)).join('&') + '&with-positions=true'
+    return this.req('/tracks', {
+      method: 'POST',
+      body,
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8' },
+    })
   }
   trackDownloadInfo(trackKey: string): Promise<DownloadInfo> {
     const bare = String(trackKey).split(':')[0]
@@ -155,17 +163,33 @@ class YandexMusicClient {
     const u = uid ?? (await this.getUid())
     const res = await this.req<unknown>(`/users/${u}/likes/tracks`)
     if (Array.isArray(res)) return res as TrackShort[]
-    const lib = (res as { library?: { tracks?: { items?: TrackShort[] } } } | null)?.library?.tracks?.items
-    return lib ?? []
+    // API отдаёт library.tracks ПРЯМО МАССИВОМ (иногда {items}) — выравниваем, как в истории
+    const lib = (res as { library?: { tracks?: unknown } } | null)?.library?.tracks
+    if (Array.isArray(lib)) return lib as TrackShort[]
+    if (lib && typeof lib === 'object' && Array.isArray((lib as { items?: unknown }).items)) {
+      return (lib as { items: TrackShort[] }).items
+    }
+    return []
   }
   async likesAddTracks(ids: string[], uid?: number): Promise<boolean> {
     const u = uid ?? (await this.getUid())
-    await this.req(`/users/${u}/likes/tracks/add-multiple`, { method: 'POST', body: { 'track-ids': ids } })
+    // API Яндекса принимает лайки ТОЛЬКО как form-urlencoded тело (JSON отклоняется)
+    const body = ids.map((id) => 'track-ids=' + encodeURIComponent(id)).join('&')
+    await this.req(`/users/${u}/likes/tracks/add-multiple`, {
+      method: 'POST',
+      body,
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8' },
+    })
     return true
   }
   async likesRemoveTracks(ids: string[], uid?: number): Promise<boolean> {
     const u = uid ?? (await this.getUid())
-    await this.req(`/users/${u}/likes/tracks/remove-multiple`, { method: 'POST', body: { 'track-ids': ids } })
+    const body = ids.map((id) => 'track-ids=' + encodeURIComponent(id)).join('&')
+    await this.req(`/users/${u}/likes/tracks/remove`, {
+      method: 'POST',
+      body,
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8' },
+    })
     return true
   }
 
@@ -196,16 +220,22 @@ class YandexMusicClient {
   }
   async playlistCreate(title: string, uid?: number): Promise<Playlist> {
     const u = uid ?? (await this.getUid())
+    // form-urlencoded, как требует API (JSON → 400)
     return this.req(`/users/${u}/playlists/create`, {
       method: 'POST',
-      body: { title, visibility: 'public' },
+      body: 'title=' + encodeURIComponent(title) + '&visibility=public',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8' },
     })
   }
   async playlistChange(kind: string, diff: Record<string, PlaylistOp>, uid?: number): Promise<Playlist> {
     const u = uid ?? (await this.getUid())
+    // form {kind, revision, diff: json-строка} — как в эталонной библиотеке
+    const body =
+      'kind=' + encodeURIComponent(kind) + '&revision=1&diff=' + encodeURIComponent(JSON.stringify(diff))
     return this.req(`/users/${u}/playlists/${encodeURIComponent(kind)}/change`, {
       method: 'POST',
-      body: { diff },
+      body,
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8' },
     })
   }
 
@@ -227,7 +257,7 @@ class YandexMusicClient {
   }
 
   // ---------- Поиск ----------
-  search(text: string, type: SearchType = 'all', page = 0): Promise<SearchResult> {
+  async search(text: string, type: SearchType = 'all', page = 0): Promise<SearchResult> {
     // Параметры строго как в библиотеке (nocorrect, playlist-in-best обязательны для полного ответа)
     const params = new URLSearchParams({
       text,
@@ -236,7 +266,25 @@ class YandexMusicClient {
       page: String(page),
       'playlist-in-best': 'true',
     })
-    return this.req(`/search?${params.toString()}`)
+    const res = await this.req<{
+      tracks?: { total?: number; items?: unknown[]; results?: unknown[] }
+      albums?: { total?: number; items?: unknown[]; results?: unknown[] }
+      artists?: { total?: number; items?: unknown[]; results?: unknown[] }
+      playlists?: { total?: number; items?: unknown[]; results?: unknown[] }
+      best?: unknown
+      misspell?: unknown
+    }>(`/search?${params.toString()}`)
+    // API отдаёт секции с полем `results` (не `items`) — выравниваем
+    const fix = (s?: { total?: number; items?: unknown[]; results?: unknown[] }) =>
+      s ? { total: s.total, items: (s.items ?? s.results ?? []) as unknown[] } : undefined
+    return {
+      tracks: fix(res.tracks),
+      albums: fix(res.albums),
+      artists: fix(res.artists),
+      playlists: fix(res.playlists),
+      best: res.best,
+      misspell: res.misspell,
+    } as unknown as SearchResult
   }
   searchSuggest(text: string): Promise<{ suggestions?: string[] }> {
     const params = new URLSearchParams({ part: text })
@@ -286,10 +334,15 @@ class YandexMusicClient {
     tag: string,
     feedback: RadioFeedback,
     timestamp: string,
+    trackId?: string,
+    totalPlayedSeconds?: number,
     from?: string,
   ): Promise<{ status?: string }> {
     const body: Record<string, unknown> = { type: feedback, timestamp }
+    if (trackId) body.trackId = trackId
+    if (totalPlayedSeconds !== undefined) body.totalPlayedSeconds = totalPlayedSeconds
     if (from) body.from = from
+    // radio-feedback принимает JSON (в отличие от лайков) — trackId обязателен
     return this.req(`/rotor/station/${type}:${tag}/feedback`, { method: 'POST', body })
   }
 

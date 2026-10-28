@@ -4,7 +4,7 @@ import { useApp } from '../state/store'
 import { player } from '../core/player'
 import { artistNames, coverUrl, formatMs, PLACEHOLDER_COVER } from '../core/format'
 import type { Track } from '../core/types'
-import { IconHeart, IconHeartFilled, IconNext, IconPause, IconPlay } from './icons'
+import { IconDislike, IconHeart, IconHeartFilled, IconNext, IconPause, IconPlay, IconShuffle } from './icons'
 
 interface Wave {
   type: string
@@ -51,10 +51,30 @@ export default function HomePage() {
   }, [])
 
   const playWave = async () => {
-    if (!wave || loadingWave) return
+    if (loadingWave) return
     setLoadingWave(true)
     try {
-      const res = await ymClient.radioStationTracks(wave.type, wave.tag)
+      // если станция ещё не определена (dashboard грузится) — дождёмся её
+      let target = wave
+      if (!target) {
+        const r = await ymClient.radioDashboard()
+        const list = r.stations ?? []
+        const mine =
+          list.find((s) => s.station?.id?.type === 'user' && s.station?.id?.tag === 'onyourwave') ??
+          list.find((s) => s.station?.id?.type === 'user') ??
+          list[0]
+        const tp = mine?.station?.id?.type ?? mine?.id?.type ?? ''
+        const tg = mine?.station?.id?.tag ?? mine?.id?.tag ?? ''
+        if (tp && tg) {
+          target = { type: tp, tag: tg, name: mine?.station?.name ?? 'Моя волна', icon: mine?.station?.icon?.uri }
+          setWave(target)
+        }
+      }
+      if (!target) {
+        showToast('Моя волна пока недоступна (радио не ответило)', 'error')
+        return
+      }
+      const res = await ymClient.radioStationTracks(target.type, target.tag)
       const tracks = (res.sequence ?? [])
         .filter((x) => x.type === 'track' && x.track)
         .map((x) => x.track as Track)
@@ -65,7 +85,7 @@ export default function HomePage() {
       await player.playQueue(
         tracks.map((track) => ({ track, source: 'radio' as const })),
         0,
-        { type: wave.type, tag: wave.tag },
+        { type: target.type, tag: target.tag },
       )
       showToast('🎵 Моя волна — играет')
     } catch (e) {
@@ -81,6 +101,11 @@ export default function HomePage() {
       return
     }
     await playWave()
+  }
+
+  // «Не нравится» в радио: фидбек станции и пропуск трека
+  const dislikeWave = async () => {
+    await player.dislikeCurrent()
   }
 
   const cur = snap.current
@@ -151,6 +176,15 @@ export default function HomePage() {
               {liked ? <IconHeartFilled size={26} /> : <IconHeart size={26} />}
             </button>
           )}
+          {cur?.source === 'radio' && (
+            <button
+              className="wave-ctl"
+              onClick={() => void dislikeWave()}
+              title="Не нравится — пропустить"
+            >
+              <IconDislike size={26} />
+            </button>
+          )}
           <button className="wave-playbig" onClick={() => void onHeroPlay()} disabled={loadingWave}>
             {loadingWave ? '…' : playing ? <IconPause size={28} /> : <IconPlay size={28} />}
           </button>
@@ -159,6 +193,13 @@ export default function HomePage() {
               <IconNext size={26} />
             </button>
           )}
+          <button
+            className={'wave-ctl' + (snap.shuffle ? ' on' : '')}
+            onClick={() => player.setShuffle(!snap.shuffle)}
+            title={snap.shuffle ? 'Перемешивание выключено' : 'Перемешивание включено'}
+          >
+            <IconShuffle size={26} />
+          </button>
         </div>
       </div>
     </div>

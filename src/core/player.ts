@@ -163,6 +163,32 @@ class Player {
     this.emit()
   }
 
+  /** Играть трек из очереди по индексу (прыжок в очереди) */
+  async playIndex(i: number): Promise<boolean> {
+    if (i < 0 || i >= this.queue.length) return false
+    this.index = i
+    this.emit()
+    return this.loadAndPlay(this.queue[i])
+  }
+
+  /** Убрать трек из очереди (текущий не трогаем, при удалении текущего играем следующий) */
+  removeIndex(i: number): void {
+    if (i < 0 || i >= this.queue.length) return
+    const wasCurrent = i === this.index
+    this.queue.splice(i, 1)
+    if (wasCurrent) {
+      this.index = Math.min(i, Math.max(this.queue.length - 1, -1))
+      if (this.index >= 0) {
+        void this.loadAndPlay(this.queue[this.index])
+      } else {
+        this.stop()
+      }
+    } else if (i < this.index) {
+      this.index--
+    }
+    this.emit()
+  }
+
   async toggle(): Promise<boolean> {
     if (this.audio.paused) return this.audio.play().then(() => true).catch(() => false)
     this.audio.pause()
@@ -366,9 +392,22 @@ class Player {
     if (!this.radio) return
     const cur = this.queue[this.index]
     if (!cur) return
+    const played = this.audio && !isNaN(this.audio.currentTime) ? Math.round(this.audio.currentTime) : undefined
     void ymClient
-      .radioFeedback(this.radio.type, this.radio.tag, kind, new Date().toISOString(), cur.track.id)
+      .radioFeedback(this.radio.type, this.radio.tag, kind, new Date().toISOString(), cur.track.id, played)
       .catch(() => {})
+  }
+
+  /** «Не нравится» в радио: фидбек станции + переход к следующему треку */
+  async dislikeCurrent(): Promise<boolean> {
+    const cur = this.queue[this.index]
+    if (this.radio && cur) {
+      const played = this.audio && !isNaN(this.audio.currentTime) ? Math.round(this.audio.currentTime) : undefined
+      void ymClient
+        .radioFeedback(this.radio.type, this.radio.tag, 'dislike', new Date().toISOString(), cur.track.id, played)
+        .catch(() => {})
+    }
+    return this.next()
   }
 
   private updateMediaSession(item: PlayableTrack): void {
