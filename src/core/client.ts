@@ -306,8 +306,15 @@ class YandexMusicClient {
   album(id: string): Promise<Album> {
     return this.req(`/albums/${encodeURIComponent(id)}`)
   }
-  albumWithTracks(id: string): Promise<Album> {
-    return this.req(`/albums/${encodeURIComponent(id)}/with-tracks`)
+  async albumWithTracks(id: string): Promise<Album> {
+    // with-tracks отдаёт треки в result.volumes (на верхнем уровне), а не result.tracks.volumes —
+    // приводим к единому виду Album.tracks.volumes
+    const res = await this.req<Album & { volumes?: Track[][] }>(`/albums/${encodeURIComponent(id)}/with-tracks`)
+    void diag('album: ' + id + ' volumes=' + String(res.volumes?.length) + ' tracks=' + (res.tracks ? 'yes' : 'no'))
+    if (!res.tracks && Array.isArray(res.volumes)) {
+      return { ...res, tracks: { volumes: res.volumes } }
+    }
+    return res
   }
   artistBriefInfo(id: string): Promise<BriefInfo> {
     return this.req(`/artists/${encodeURIComponent(id)}/brief-info`)
