@@ -20,10 +20,22 @@ export default function PlaylistPage() {
       .playlist(kind)
       .then(async (pl) => {
         setPlaylist(pl)
-        if (pl?.tracks) {
-          const full = await expandTracks(pl.tracks as (Track | TrackShort)[])
-          setTracks(full)
-        }
+        // API может вернуть записи двух видов: плоские {id, albumId} или
+        // с вложенным полным треком {id, track}. Нормализуем оба.
+        const raw = (pl?.tracks ?? []) as unknown as {
+          track?: Track | TrackShort | null
+          id?: string | number
+          albumId?: string | number
+        }[]
+        const normalized: (Track | TrackShort)[] = raw
+          .map((r) => {
+            if (r?.track) return r.track
+            if (r?.id != null) return { id: String(r.id), albumId: r.albumId != null ? String(r.albumId) : '' }
+            return null
+          })
+          .filter((x): x is Track | TrackShort => !!x)
+        const full = await expandTracks(normalized)
+        setTracks(full)
       })
       .catch((e) => setErr('Не удалось загрузить плейлист: ' + (e as Error).message))
   }, [kind])

@@ -28,7 +28,8 @@ export async function expandTracks(input: (Track | TrackShort)[], chunkSize = 50
     const slice = shortIdx.slice(off, off + chunkSize)
     const keys = slice.map((i) => {
       const s = input[i] as TrackShort
-      return `${s.id}:${s.albumId}`
+      // трек без albumId — отправляем голый id (ключ с пустым albumId API отклоняет)
+      return s.albumId ? `${s.id}:${s.albumId}` : String(s.id)
     })
     try {
       const tracks = await ymClient.tracks(keys)
