@@ -1,4 +1,4 @@
-﻿/* ============================================================
+/* ============================================================
    Muse — тёмная тема в духе Яндекс Музыки
    ============================================================ */
 
@@ -1111,3 +1111,22 @@ button { font-family: inherit; }
   text-shadow: 0 2px 18px rgba(0, 0, 0, .45);
 }
 .wave-greet-sub { font-size: 13.5px; color: rgba(255, 255, 255, .62); letter-spacing: .02em; }
+
+/* плавный «вход» на главный экран после заставки: диск всплывает, приветствие поднимается */
+.wave { animation: waveIn .6s cubic-bezier(.2, .8, .3, 1) .05s both; }
+@keyframes waveIn {
+  from { opacity: 0; transform: scale(.965) translateY(16px); }
+  to   { opacity: 1; transform: none; }
+}
+.wave-greet-hello,
+.wave-greet-sub,
+.wave-label { animation: greetIn .55s cubic-bezier(.2, .8, .3, 1) .18s both; }
+.wave-disc { animation: discIn .7s cubic-bezier(.2, .9, .3, 1.05) .12s both; }
+@keyframes greetIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes discIn {
+  from { opacity: 0; transform: scale(.82) rotate(-14deg); }
+  to   { opacity: 1; transform: none; }
+}

@@ -27,21 +27,29 @@ def radial_circle(size, c1, c2, radius):
 
 
 def draw_note(img, scale=1.0, color=WHITE):
-    """Двойная нота ♫ (головки + стержни + перекладина)."""
+    """Одиночная восьмая нота ♪: головка + стержень + флажок, выровнена по центру."""
     d = ImageDraw.Draw(img)
-    w = lambda v: int(round(v * scale))
+    s = scale
+    w = lambda v: int(round(v * s))
     cx = cy = S / 2.0
-    ox = lambda v: int(round(cx + v * scale))
-    oy = lambda v: int(round(cy + v * scale))
-    d.ellipse([ox(-126), oy(26), ox(10), oy(146)], fill=color)
-    d.ellipse([ox(14), oy(26), ox(150), oy(146)], fill=color)
-    sw = max(1, w(44))
-    d.line([ox(8), oy(116), ox(8), oy(-168)], fill=color, width=sw)
-    d.line([ox(148), oy(116), ox(148), oy(-168)], fill=color, width=sw)
-    d.polygon(
-        [(ox(-26), oy(-156)), (ox(176), oy(-216)), (ox(176), oy(-146)), (ox(-26), oy(-86))],
+    ox = lambda v: int(round(cx + v * s))
+    oy = lambda v: int(round(cy + v * s))
+    # головка (эллипс слева-внизу от стержня)
+    d.ellipse([ox(-133), oy(32), ox(23), oy(148)], fill=color)
+    # стержень (вертикальная толстая линия со скруглением)
+    d.line([ox(30), oy(96), ox(30), oy(-160)], fill=color, width=max(1, w(52)), joint="curve")
+    # флажок (толстая дуга вправо от вершины стержня)
+    d.line(
+        [(ox(30), oy(-152)), (ox(186), oy(-120)), (ox(232), oy(-28))],
         fill=color,
+        width=max(1, w(42)),
+        joint="curve",
     )
+    # тонкое белое кольцо по краю будущего диска (подчёркивает круг)
+    ring = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    ImageDraw.Draw(ring).ellipse([cx - 296, cy - 296, cx + 296, cy + 296],
+                                 outline=(255, 255, 255, 42), width=max(1, w(7)))
+    img.alpha_composite(ring)
     return img
 
 
