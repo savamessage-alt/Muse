@@ -183,7 +183,7 @@ export default function PlayerBar() {
             <button
               className={'icon-btn' + (liked ? ' liked' : '')}
               onClick={() => cur && void toggleLike(cur.track)}
-              title={liked ? 'Убрать из «Мне нравится»' : 'В «Мне нравится»'}
+              title={liked ? 'Убрать из «Избранное»' : 'В «Избранное»'}
             >
               {liked ? <IconHeartFilled /> : <IconHeart />}
             </button>

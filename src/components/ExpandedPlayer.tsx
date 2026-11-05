@@ -120,7 +120,7 @@ export default function ExpandedPlayer({ onClose, onLyrics, onQueue, onSimilar }
           <button
             className={'icon-btn' + (liked ? ' liked' : '')}
             onClick={() => cur && void toggleLike(cur.track)}
-            title={liked ? 'Убрать из «Мне нравится»' : 'В «Мне нравится»'}
+            title={liked ? 'Убрать из «Избранное»' : 'В «Избранное»'}
           >
             {liked ? <IconHeartFilled size={20} /> : <IconHeart size={20} />}
           </button>

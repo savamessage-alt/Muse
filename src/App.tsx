@@ -12,7 +12,7 @@ import PlaylistsPage from './components/PlaylistsPage'
 import PlaylistPage from './components/PlaylistPage'
 import AlbumPage from './components/AlbumPage'
 import ArtistPage from './components/ArtistPage'
-import LikesPage from './components/LikesPage'
+import FavoritesPage from './components/FavoritesPage'
 import HistoryPage from './components/HistoryPage'
 import RadioPage from './components/RadioPage'
 import SettingsPage from './components/SettingsPage'
@@ -130,7 +130,7 @@ export default function App() {
               <Route path="/playlist/:kind" element={<PlaylistPage />} />
               <Route path="/album/:id" element={<AlbumPage />} />
               <Route path="/artist/:id" element={<ArtistPage />} />
-              <Route path="/likes" element={<LikesPage />} />
+              <Route path="/likes" element={<FavoritesPage />} />
               <Route path="/history" element={<HistoryPage />} />
               <Route path="/radio" element={<RadioPage />} />
               <Route path="/settings" element={<SettingsPage />} />

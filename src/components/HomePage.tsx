@@ -189,7 +189,7 @@ export default function HomePage() {
             <button
               className={'wave-ctl' + (liked ? ' on' : '')}
               onClick={() => void toggleLike(cur.track)}
-              title={liked ? 'Убрать из «Мне нравится»' : 'В «Мне нравится»'}
+              title={liked ? 'Убрать из «Избранное»' : 'В «Избранное»'}
             >
               {liked ? <IconHeartFilled size={26} /> : <IconHeart size={26} />}
             </button>

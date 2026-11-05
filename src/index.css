@@ -1147,3 +1147,17 @@ button { font-family: inherit; }
 @media (max-width: 768px) {
   .wave-quick { display: flex; justify-content: center; }
 }
+
+/* «Избранное»: лента плейлистов сверху (горизонтальный скролл без полосы) */
+.fav-row {
+  display: flex; gap: 14px; overflow-x: auto;
+  scrollbar-width: none; padding: 2px 2px 12px;
+}
+.fav-row::-webkit-scrollbar { display: none; }
+.fav-row .card { flex: 0 0 150px; width: 150px; }
+.fav-row .card-title {
+  font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.fav-row .card-sub {
+  font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}

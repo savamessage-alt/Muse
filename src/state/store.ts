@@ -1,4 +1,4 @@
-﻿// ============================================================
+// ============================================================
 // Глобальное состояние UI: пользователь, лайки, плейлисты, тосты
 // ============================================================
 
@@ -81,7 +81,7 @@ export const useApp = create<AppState>((set, get) => ({
           const msg = (u.reason as Error | undefined)?.message
           get().showToast('Профиль не загрузился: ' + (msg ?? 'сетевая ошибка'), 'error')
         }
-        if (l.status === 'rejected') get().showToast('«Мне нравится» не загрузились', 'error')
+        if (l.status === 'rejected') get().showToast('«Избранное» не загрузилось', 'error')
         if (p.status === 'rejected') get().showToast('Плейлисты не загрузились', 'error')
       }
     } finally {

@@ -13,7 +13,7 @@ export default function Layout() {
     { to: '/', label: 'Главная', icon: IconHome, end: true },
     { to: '/search', label: 'Поиск', icon: IconSearch },
     { to: '/radio', label: 'Радио', icon: IconRadio },
-    { to: '/likes', label: 'Мне нравится', icon: IconHeart },
+    { to: '/likes', label: 'Избранное', icon: IconHeart },
     { to: '/history', label: 'История', icon: IconHistory },
   ]
 
@@ -65,10 +65,7 @@ export default function Layout() {
       </div>
       <PlayerBar />
       <nav className="mobile-nav">
-        {[
-          ...nav.map((n) => (n.to === '/likes' ? { ...n, label: 'Лайки' } : n)),
-          { to: '/settings', label: 'Настройки', icon: IconSettings },
-        ].map(({ to, label, icon: Icon, end }) => (
+        {[...nav, { to: '/settings', label: 'Настройки', icon: IconSettings }].map(({ to, label, icon: Icon, end }) => (
           <NavLink key={to} to={to} end={end} className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')}>
             <Icon size={20} />
             <span>{label}</span>
