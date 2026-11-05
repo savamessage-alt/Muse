@@ -22,8 +22,8 @@ export default function WelcomePage() {
           <br />
           Волны, лайки, плейлисты и тексты песен — всё в одном месте.
         </p>
-        <button className="primary-btn welcome-cta" onClick={goLogin}>
-          Войти в аккаунт
+        <button className="primary-btn cta-gradient welcome-cta" onClick={goLogin}>
+          Авторизоваться
         </button>
         <button className="link-btn" onClick={goLogin}>
           У меня уже есть токен

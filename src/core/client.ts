@@ -195,6 +195,74 @@ class YandexMusicClient {
     return true
   }
 
+  // ---------- Лайки исполнителей и альбомов ----------
+  /** id лайкнутых исполнителей */
+  async usersLikesArtists(): Promise<Set<string>> {
+    const u = await this.getUid()
+    const res = await this.req<unknown>(`/users/${u}/likes/artists`)
+    const likes = (res as { likes?: unknown } | null)?.likes ?? (Array.isArray(res) ? res : [])
+    const out = new Set<string>()
+    for (const l of Array.isArray(likes) ? likes : []) {
+      const rec = l as Record<string, unknown>
+      const v = rec.artistId ?? rec.artist_id ?? rec.id
+      if (v !== undefined && v !== null) out.add(String(v))
+    }
+    return out
+  }
+  async artistsLikeAdd(ids: string[]): Promise<boolean> {
+    const u = await this.getUid()
+    const body = ids.map((id) => 'artist-ids=' + encodeURIComponent(id)).join('&')
+    await this.req(`/users/${u}/likes/artists/add-multiple`, {
+      method: 'POST',
+      body,
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8' },
+    })
+    return true
+  }
+  async artistsLikeRemove(ids: string[]): Promise<boolean> {
+    const u = await this.getUid()
+    const body = ids.map((id) => 'artist-ids=' + encodeURIComponent(id)).join('&')
+    await this.req(`/users/${u}/likes/artists/remove`, {
+      method: 'POST',
+      body,
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8' },
+    })
+    return true
+  }
+  /** id лайкнутых альбомов */
+  async usersLikesAlbums(): Promise<Set<string>> {
+    const u = await this.getUid()
+    const res = await this.req<unknown>(`/users/${u}/likes/albums`)
+    const likes = (res as { likes?: unknown } | null)?.likes ?? (Array.isArray(res) ? res : [])
+    const out = new Set<string>()
+    for (const l of Array.isArray(likes) ? likes : []) {
+      const rec = l as Record<string, unknown>
+      const v = rec.albumId ?? rec.album_id ?? rec.id
+      if (v !== undefined && v !== null) out.add(String(v))
+    }
+    return out
+  }
+  async albumsLikeAdd(ids: string[]): Promise<boolean> {
+    const u = await this.getUid()
+    const body = ids.map((id) => 'album-ids=' + encodeURIComponent(id)).join('&')
+    await this.req(`/users/${u}/likes/albums/add-multiple`, {
+      method: 'POST',
+      body,
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8' },
+    })
+    return true
+  }
+  async albumsLikeRemove(ids: string[]): Promise<boolean> {
+    const u = await this.getUid()
+    const body = ids.map((id) => 'album-ids=' + encodeURIComponent(id)).join('&')
+    await this.req(`/users/${u}/likes/albums/remove`, {
+      method: 'POST',
+      body,
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8' },
+    })
+    return true
+  }
+
   // ---------- Плейлисты ----------
   async playlistsList(uid?: number): Promise<Playlist[]> {
     const u = uid ?? (await this.getUid())

@@ -4,17 +4,23 @@ import { ymClient } from '../core/client'
 import { artistNames, coverUrl, PLACEHOLDER_COVER } from '../core/format'
 import type { Album, Track } from '../core/types'
 import TrackList, { playTracks } from './TrackList'
+import { IconHeart, IconHeartFilled } from './icons'
 
 export default function AlbumPage() {
   const { id } = useParams<{ id: string }>()
   const [album, setAlbum] = useState<Album | null>(null)
   const [tracks, setTracks] = useState<Track[]>([])
   const [err, setErr] = useState<string | null>(null)
+  const [liked, setLiked] = useState(false)
+  const [likedReady, setLikedReady] = useState(false)
+  const [likeBusy, setLikeBusy] = useState(false)
 
   useEffect(() => {
     if (!id) return
     setAlbum(null)
     setTracks([])
+    setLiked(false)
+    setLikedReady(false)
     ymClient
       .albumWithTracks(id)
       .then((a) => {
@@ -27,7 +33,30 @@ export default function AlbumPage() {
         }
       })
       .catch((e) => setErr('Не удалось загрузить альбом: ' + (e as Error).message))
+    // лайкнут ли альбом (новое API /likes/albums)
+    ymClient
+      .usersLikesAlbums()
+      .then((s) => {
+        setLiked(s.has(String(id)))
+        setLikedReady(true)
+      })
+      .catch(() => setLikedReady(true))
   }, [id])
+
+  const toggleAlbumLike = async () => {
+    if (likeBusy || !id) return
+    setLikeBusy(true)
+    const next = !liked
+    setLiked(next) // оптимистично
+    try {
+      if (next) await ymClient.albumsLikeAdd([id])
+      else await ymClient.albumsLikeRemove([id])
+    } catch {
+      setLiked(!next)
+    } finally {
+      setLikeBusy(false)
+    }
+  }
 
   if (err) return <div className="error-box"><p>{err}</p></div>
   if (!album) return <div className="spinner" />
@@ -49,11 +78,23 @@ export default function AlbumPage() {
             {album.year ? ' · ' + album.year : ''}
             {tracks.length ? ' · ' + tracks.length + ' треков' : ''}
           </div>
-          {tracks.length > 0 && (
-            <button className="primary-btn" onClick={() => playTracks(tracks, 0, 'queue')}>
-              ▶ Играть
-            </button>
-          )}
+          <div className="entity-actions">
+            {tracks.length > 0 && (
+              <button className="primary-btn" onClick={() => playTracks(tracks, 0, 'queue')}>
+                ▶ Играть
+              </button>
+            )}
+            {likedReady && (
+              <button
+                className={'icon-btn liked-outline' + (liked ? ' on' : '')}
+                onClick={() => void toggleAlbumLike()}
+                disabled={likeBusy}
+                title={liked ? 'Убрать лайк с альбома' : 'Лайкнуть альбом'}
+              >
+                {liked ? <IconHeartFilled size={20} /> : <IconHeart size={20} />}
+              </button>
+            )}
+          </div>
         </div>
       </div>
       <TrackList tracks={tracks} emptyText="Треки недоступны" />

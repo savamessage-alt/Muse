@@ -117,7 +117,7 @@ button { font-family: inherit; }
 .content::-webkit-scrollbar { width: 10px; }
 .content::-webkit-scrollbar-thumb { background: #333; border-radius: 6px; }
 
-.page-title { margin: 4px 0 18px; font-size: 26px; font-weight: 800; }
+.page-title { margin: 4px 0 18px; font-size: clamp(20px, 4vw, 26px); font-weight: 800; }
 .page-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 .now-station { color: var(--accent); font-weight: 700; }
 
@@ -131,6 +131,17 @@ button { font-family: inherit; }
 .primary-btn:hover { transform: scale(1.03); }
 .primary-btn:disabled { opacity: .5; cursor: default; transform: none; }
 .primary-btn.small { padding: 7px 16px; font-size: 14px; border-radius: 18px; }
+
+/* действия в шапке сущности (альбом/артист): кнопки лайков */
+.entity-actions { display: flex; align-items: center; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+.liked-outline {
+  display: inline-grid; place-items: center;
+  width: 42px; height: 42px; border-radius: 50%;
+  border: 1px solid var(--border); background: var(--bg-panel);
+  color: var(--text-dim); cursor: pointer; transition: color .15s, background .15s, border-color .15s;
+}
+.liked-outline:hover { color: var(--text); background: var(--bg-hover); }
+.liked-outline.on { color: var(--accent); border-color: var(--accent); background: rgba(255,51,51,.08); }
 
 .btn {
   background: var(--bg-card); color: var(--text); border: 1px solid var(--border);
@@ -262,7 +273,7 @@ button { font-family: inherit; }
 .entity-cover.round { border-radius: 50%; }
 .entity-info { flex: 1; min-width: 240px; }
 .entity-type { color: var(--text-faint); font-size: 12.5px; text-transform: uppercase; letter-spacing: .6px; }
-.entity-title { margin: 6px 0 10px; font-size: 38px; font-weight: 900; line-height: 1.05; }
+.entity-title { margin: 6px 0 10px; font-size: clamp(22px, 6vw, 38px); font-weight: 900; line-height: 1.05; overflow-wrap: anywhere; }
 .entity-sub { color: var(--text-dim); margin-bottom: 18px; }
 
 /* ---------- история ---------- */
@@ -283,7 +294,7 @@ button { font-family: inherit; }
 .playerbar {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) minmax(360px, 2fr) minmax(180px, 1fr);
+  grid-template-columns: minmax(130px, 1fr) minmax(0, 2fr) auto;
   align-items: center; gap: 18px;
   background: var(--bg-panel); border-top: 1px solid var(--border);
   padding: 0 18px;
@@ -293,7 +304,7 @@ button { font-family: inherit; }
 .pb-meta { flex: 1; min-width: 0; }
 .pb-title { font-weight: 700; font-size: 14.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pb-artist { color: var(--text-dim); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pb-center { display: flex; flex-direction: column; gap: 2px; }
+.pb-center { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .pb-controls { display: flex; align-items: center; justify-content: center; gap: 4px; }
 .pb-play {
   width: 44px; height: 44px; border-radius: 50%; border: none;
@@ -301,7 +312,8 @@ button { font-family: inherit; }
   display: grid; place-items: center; margin: 0 8px;
 }
 .pb-play:hover { transform: scale(1.05); }
-.pb-seek { display: flex; align-items: center; gap: 10px; }
+.pb-seek { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+.pb-seek input[type="range"] { flex: 1; min-width: 0; width: 100%; }
 .pb-time { font-size: 12px; color: var(--text-faint); min-width: 40px; text-align: center; }
 .pb-right { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
 .pb-vol-icon { color: var(--text-faint); }
@@ -341,7 +353,7 @@ button { font-family: inherit; }
 
 /* ---------- секции ---------- */
 .section { margin-bottom: 30px; }
-.section-title { font-size: 20px; font-weight: 800; margin: 0 0 14px; }
+.section-title { font-size: clamp(16px, 3.6vw, 20px); font-weight: 800; margin: 0 0 14px; }
 
 /* ---------- настройки ---------- */
 .settings-card {
@@ -360,37 +372,86 @@ button { font-family: inherit; }
 
 /* ---------- вход ---------- */
 .login-wrap {
-  min-height: 100vh; display: grid; place-items: center;
-  background: radial-gradient(1200px 600px at 20% -10%, #2a1212 0%, var(--bg) 55%);
-  padding: 20px;
+  min-height: 100dvh; min-height: 100vh;
+  display: grid; place-items: center;
+  padding: clamp(16px, 4vw, 32px); box-sizing: border-box;
+  position: relative; overflow: hidden;
+  background:
+    radial-gradient(1200px 700px at 18% -10%, rgba(255, 51, 51, .20), transparent 58%),
+    radial-gradient(900px 600px at 95% 108%, rgba(255, 122, 0, .16), transparent 60%),
+    radial-gradient(700px 500px at 70% 20%, rgba(120, 80, 255, .12), transparent 55%),
+    var(--bg);
+}
+/* живые «полосы» света на обоих экранах входа */
+.welcome::before, .welcome::after, .login-wrap::before, .login-wrap::after {
+  content: ''; position: absolute; border-radius: 50%;
+  filter: blur(72px); opacity: .5; pointer-events: none;
+  animation: auroraDrift 14s ease-in-out infinite alternate;
+}
+.welcome::before, .login-wrap::before {
+  width: 46vmax; height: 46vmax; left: -14vmax; top: -10vmax;
+  background: radial-gradient(circle, rgba(255, 51, 51, .5), transparent 62%);
+}
+.welcome::after, .login-wrap::after {
+  width: 42vmax; height: 42vmax; right: -16vmax; bottom: -14vmax;
+  background: radial-gradient(circle, rgba(255, 122, 0, .42), transparent 62%);
+  animation-delay: -7s;
+}
+@keyframes auroraDrift {
+  from { transform: translate3d(0, 0, 0) rotate(0deg); }
+  to   { transform: translate3d(4vmax, -3vmax, 0) rotate(14deg); }
 }
 .login-card {
-  width: 440px; max-width: 100%;
-  background: var(--bg-panel); border: 1px solid var(--border);
-  border-radius: 18px; padding: 34px;
-  display: flex; flex-direction: column; gap: 14px;
+  position: relative; z-index: 1;
+  width: min(460px, 100%);
+  background: linear-gradient(160deg, rgba(42, 42, 52, .72), rgba(22, 22, 28, .88));
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: clamp(18px, 3vw, 26px);
+  padding: clamp(22px, 5.5vw, 38px);
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, .55);
+  display: flex; flex-direction: column; gap: 14px; text-align: center;
 }
 .login-logo {
-  display: flex; align-items: center; gap: 8px;
-  font-weight: 800; font-size: 17px; margin-bottom: 6px;
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+  font-weight: 800; font-size: clamp(16px, 4.6vw, 18px); margin-bottom: 4px;
 }
-.login-card h1 { font-size: 24px; margin: 0; }
-.code-box { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+.logo-dot {
+  width: 11px; height: 11px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  box-shadow: 0 0 12px rgba(255, 60, 0, .6);
+}
+.login-card h1 { font-size: clamp(22px, 6vw, 27px); margin: 0; }
+.login-card .muted { margin: 0 auto; max-width: 380px; }
+.code-box { display: flex; flex-direction: column; align-items: center; gap: 11px; text-align: center; }
 .code-display {
-  font-size: 42px; font-weight: 900; letter-spacing: 6px;
-  padding: 10px 24px; border-radius: 14px;
+  font-size: clamp(28px, 13vw, 44px); font-weight: 900;
+  letter-spacing: .16em; max-width: 100%; overflow-wrap: anywhere;
+  padding: clamp(10px, 3vw, 14px) clamp(16px, 5vw, 30px);
+  border-radius: clamp(12px, 2vw, 16px);
   background: var(--bg); border: 1px dashed var(--border);
 }
 .code-url {
-  display: flex; align-items: center; gap: 8px;
-  color: var(--text-dim); font-size: 13.5px; word-break: break-all;
+  display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px;
+  color: var(--text-dim); font-size: clamp(12.5px, 3.6vw, 13.5px); word-break: break-all;
 }
 .status-text { color: var(--text-dim); }
 .error-box {
-  background: rgba(240,80,110,.12); border: 1px solid var(--danger);
+  background: rgba(240, 80, 110, .12); border: 1px solid var(--danger);
   color: #ffb3c0; border-radius: 10px; padding: 12px 16px;
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  text-align: left;
 }
+/* большая градиентная кнопка «Авторизоваться» — на welcome и на входе */
+.primary-btn.cta-gradient {
+  background: linear-gradient(120deg, var(--accent), var(--accent-2));
+  color: #fff; border-radius: 26px;
+  box-shadow: 0 14px 38px rgba(255, 60, 0, .35);
+  transition: transform .12s, box-shadow .18s;
+}
+.primary-btn.cta-gradient:hover { transform: translateY(-1px) scale(1.02); box-shadow: 0 18px 46px rgba(255, 60, 0, .45); }
+.primary-btn.cta-gradient:disabled { opacity: .5; transform: none; }
 
 /* ---------- «Моя волна» — весь главный экран ---------- */
 .wave {
@@ -662,6 +723,8 @@ button { font-family: inherit; }
   .sidebar-bottom { width: 100%; align-items: center; }
   .user-chip { padding: 6px 0; justify-content: center; }
   .content { padding: 20px 22px 36px; }
+  /* на узких экранах ползунок громкости в плеере вылезает за край — без него */
+  .playerbar .pb-right input[type="range"] { display: none; }
 }
 
 /* ---------- телефон: нижняя навигация, плеер сверху неё ---------- */
@@ -673,8 +736,7 @@ button { font-family: inherit; }
   .sidebar { display: none; }
 
   .content { padding: 14px 12px 26px; }
-  .page-title { font-size: 20px; margin: 2px 0 14px; }
-  .section-title { font-size: 17px; }
+  .page-title { margin: 2px 0 14px; }
 
   /* нижняя навигация */
   .mobile-nav {
@@ -739,7 +801,6 @@ button { font-family: inherit; }
   .entity-head { gap: 14px; align-items: center; }
   .entity-cover { width: 120px; height: 120px; }
   .entity-info { min-width: 0; }
-  .entity-title { font-size: 20px; }
 
   /* «Моя волна» */
   .wave { min-height: calc(100vh - var(--player-h) - var(--nav-h) - 30px); padding: 14px 10px; border-radius: 20px; }
@@ -879,33 +940,51 @@ button { font-family: inherit; }
    ЭКРАН-ПРИВЕТСТВИЕ (нет токена): лого-диск, слоган, вход
    ============================================================ */
 .welcome {
-  min-height: 100vh;
+  min-height: 100dvh; min-height: 100vh;
   display: flex; align-items: center; justify-content: center;
-  padding: 28px 24px; box-sizing: border-box;
+  padding: clamp(20px, 5vw, 40px); box-sizing: border-box;
+  position: relative; overflow: hidden;
   background:
-    radial-gradient(1100px 560px at 50% -12%, rgba(255, 51, 51, .14), transparent 60%),
-    radial-gradient(800px 460px at 88% 112%, rgba(255, 122, 0, .10), transparent 60%),
+    radial-gradient(1200px 700px at 18% -10%, rgba(255, 51, 51, .20), transparent 58%),
+    radial-gradient(900px 600px at 95% 108%, rgba(255, 122, 0, .16), transparent 60%),
+    radial-gradient(700px 500px at 70% 20%, rgba(120, 80, 255, .12), transparent 55%),
     var(--bg);
 }
-.welcome-inner { width: 100%; max-width: 400px; text-align: center; }
-.welcome-logo { margin-bottom: 24px; }
+.welcome-inner { position: relative; z-index: 1; width: 100%; max-width: 440px; text-align: center; }
+.welcome-logo { margin-bottom: clamp(16px, 5vh, 28px); }
 .welcome-disc {
-  width: 104px; height: 104px; margin: 0 auto; border-radius: 50%;
-  padding: 9px; box-sizing: border-box;
+  width: clamp(92px, 34vw, 150px); height: clamp(92px, 34vw, 150px);
+  margin: 0 auto; border-radius: 50%;
+  padding: clamp(8px, 2.6vw, 12px); box-sizing: border-box;
   background: conic-gradient(from 200deg, var(--accent), var(--accent-2), #ffd28a, var(--accent));
-  box-shadow: 0 16px 46px rgba(255, 60, 0, .32);
+  box-shadow: 0 18px 52px rgba(255, 60, 0, .34);
   animation: welcome-spin 26s linear infinite;
 }
 .welcome-disc-core {
   width: 100%; height: 100%; border-radius: 50%;
-  background: radial-gradient(circle at 32% 28%, #23232a, #131318 72%);
-  display: grid; place-items: center; color: rgba(255, 255, 255, .9);
+  background: radial-gradient(circle at 32% 28%, #26262e, #121217 72%);
+  display: grid; place-items: center; color: rgba(255, 255, 255, .92);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14);
 }
 @keyframes welcome-spin { to { transform: rotate(360deg); } }
-.welcome-title { font-size: 33px; font-weight: 800; letter-spacing: .4px; margin: 0 0 10px; }
-.welcome-tag { font-size: 15px; line-height: 1.55; color: var(--text-dim); margin: 0 0 30px; }
-.welcome-cta { width: 100%; padding: 14px 18px; font-size: 15.5px; }
-.welcome-hint { margin: 26px auto 0; max-width: 330px; }
+.welcome-title {
+  margin: 0 0 clamp(10px, 3vh, 14px);
+  font-size: clamp(38px, 13vw, 62px); font-weight: 800; letter-spacing: .4px;
+  background: linear-gradient(180deg, #ffffff, #b9b9c8);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.welcome-tag {
+  font-size: clamp(14px, 4.2vw, 16px); line-height: 1.55;
+  color: var(--text-dim); margin: 0 0 clamp(22px, 6vh, 34px);
+}
+.welcome-cta {
+  width: 100%; max-width: 340px; margin: 0 auto;
+  display: flex; align-items: center; justify-content: center;
+  padding: clamp(13px, 3.8vw, 16px) 22px;
+  font-size: clamp(15px, 4.6vw, 17px);
+}
+.welcome-hint { margin: clamp(20px, 5vh, 28px) auto 0; max-width: 330px; }
 
 /* ============================================================
    РАЗВЁРНУТЫЙ ПЛЕЕР (bottom-sheet, паттерн spotube/nuclear)

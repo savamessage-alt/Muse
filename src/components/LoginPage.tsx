@@ -99,8 +99,8 @@ export default function LoginPage() {
 
         {step === 'idle' && (
           <>
-            <button className="primary-btn" onClick={() => void start()}>
-              Войти в аккаунт
+            <button className="primary-btn cta-gradient" onClick={() => void start()}>
+              Авторизоваться
             </button>
             <button className="link-btn" onClick={() => setShowManual((v) => !v)}>
               {showManual ? 'Скрыть ручной ввод' : 'У меня уже есть токен'}
