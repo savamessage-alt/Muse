@@ -8,19 +8,27 @@ import { diag } from '../core/diag'
 export default function LikesPage() {
   const [tracks, setTracks] = useState<Track[]>([])
   const [err, setErr] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    let alive = true
     ymClient
       .usersLikesTracks()
       .then(async (shorts) => {
         diag('likes: записей=' + shorts.length + ' первая=' + JSON.stringify(shorts[0] ?? {}).slice(0, 100))
         const full = await expandTracks(shorts as (Track | TrackShort)[])
-        setTracks(full)
+        if (alive) setTracks(full)
       })
       .catch((e) => {
         diag('likes: ОШИБКА ' + String((e as Error)?.message ?? e).slice(0, 120))
-        setErr('Не удалось загрузить: ' + (e as Error).message)
+        if (alive) setErr('Не удалось загрузить: ' + (e as Error).message)
       })
+      .finally(() => {
+        if (alive) setLoading(false)
+      })
+    return () => {
+      alive = false
+    }
   }, [])
 
   return (
@@ -38,7 +46,7 @@ export default function LikesPage() {
         </div>
       </div>
       {err && <div className="error-box"><p>{err}</p></div>}
-      <TrackList tracks={tracks} emptyText="Пока нет понравившихся треков" />
+      <TrackList tracks={tracks} loading={loading} emptyText="Пока нет понравившихся треков" />
     </div>
   )
 }

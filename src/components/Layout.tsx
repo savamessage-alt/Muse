@@ -2,8 +2,8 @@ import { NavLink, Outlet } from 'react-router-dom'
 import { useApp } from '../state/store'
 import PlayerBar from './PlayerBar'
 import ResumePosition from './ResumePosition'
+import UserAvatar from './UserAvatar'
 import { IconHome, IconSearch, IconRadio, IconHeart, IconHistory, IconSettings, IconList } from './icons'
-import { PLACEHOLDER_COVER, coverUrl } from '../core/format'
 
 export default function Layout() {
   const user = useApp((s) => s.user)
@@ -53,12 +53,7 @@ export default function Layout() {
             </NavLink>
             {user && (
               <div className="user-chip" title={String(user.login ?? user.uid ?? '')}>
-                <img
-                  src={coverUrl(user.coverUri) ?? PLACEHOLDER_COVER}
-                  alt=""
-                  className="user-avatar"
-                  onError={(e) => ((e.target as HTMLImageElement).src = PLACEHOLDER_COVER)}
-                />
+                <UserAvatar user={user} />
                 <span>{user.displayName ?? user.login ?? 'Аккаунт'}</span>
               </div>
             )}

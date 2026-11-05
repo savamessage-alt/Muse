@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // Глобальное состояние UI: пользователь, лайки, плейлисты, тосты
 // ============================================================
 
@@ -56,13 +56,13 @@ export const useApp = create<AppState>((set, get) => ({
     // Токен есть, но истёк и нечем обновить — не пускаем в плеер, нужен вход
     const stored = tokenManager.getToken()
     if (stored && stored.expiresAt > 0 && stored.expiresAt <= Date.now() && !stored.refreshToken) {
-      console.warn('[YM Player] Сохранённый токен истёк и не имеет refresh_token — требуется новый вход')
+      console.warn('[Muse] Сохранённый токен истёк и не имеет refresh_token — требуется новый вход')
       tokenManager.clear()
       set({ booted: true, authenticated: false })
       return
     }
     if (!tokenManager.isAuthenticated()) {
-      console.info('[YM Player] Токена нет — показываем экран входа')
+      console.info('[Muse] Токена нет — показываем экран входа')
       set({ booted: true, authenticated: false })
       return
     }
@@ -99,7 +99,7 @@ export const useApp = create<AppState>((set, get) => ({
     if (!acc) {
       const reason = results[0].status === 'rejected' ? (results[0].reason as Error) : null
       const msg = reason ? `${reason.message}` : 'нет данных'
-      console.error('[YM Player] Не загрузился профиль:', reason)
+      console.error('[Muse] Не загрузился профиль:', reason)
       get().showToast('Профиль не загрузился: ' + msg.slice(0, 120), 'error')
       // отправить отладчику подробности (статус/код ошибки)
       try {
@@ -113,7 +113,7 @@ export const useApp = create<AppState>((set, get) => ({
     }
     if (!st) {
       const reason = results[1].status === 'rejected' ? (results[1].reason as Error) : null
-      console.error('[YM Player] Не загрузился статус аккаунта:', reason)
+      console.error('[Muse] Не загрузился статус аккаунта:', reason)
       if (reason) {
         try {
           void fetch('/__diag', {

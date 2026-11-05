@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // OAuth Яндекс: Device Flow + обновление токена
 // Точная логика — по исходникам MarshalX/yandex-music-api
 // (yandex_music/_client/device_auth.py)
@@ -116,7 +116,7 @@ export async function pollDeviceToken(
 
   // Подсказка: HTTP 400 на /oauth/token до подтверждения — это штатное поведение Device Flow
   console.info(
-    '[YM Player] Ожидаем подтверждение входа на Яндекс. Ошибки 400 (authorization_pending) в консоли — это нормальный опрос, а не сбой.',
+    '[Muse] Ожидаем подтверждение входа на Яндекс. Ошибки 400 (authorization_pending) в консоли — это нормальный опрос, а не сбой.',
   )
 
   while (Date.now() < deadline) {
@@ -125,7 +125,7 @@ export async function pollDeviceToken(
     const token = await pollOnce(deviceCode)
     if (token) return token
     onPollError?.('authorization_pending')
-    console.info(`[YM Player] ...проверка №${attempt} — вход ещё не подтверждён`)
+    console.info(`[Muse] ...проверка №${attempt} — вход ещё не подтверждён`)
   }
 
   throw new Error('Время ожидания входа истекло')

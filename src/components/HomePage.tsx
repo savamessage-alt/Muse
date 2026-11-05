@@ -19,8 +19,11 @@ export default function HomePage() {
   const showToast = useApp((s) => s.showToast)
   const isLiked = useApp((s) => s.isLiked)
   const toggleLike = useApp((s) => s.toggleLike)
+  const user = useApp((s) => s.user)
   const [snap, setSnap] = useState(() => player.snapshot())
   useEffect(() => player.onChange(setSnap), [])
+
+  const firstName = user?.firstName ?? (user?.displayName ?? user?.name ?? '').split(/\s+/)[0] ?? user?.login ?? ''
 
   // Найти «Мою волну» (персональную станцию user:onyourwave) в дашборде радио
   useEffect(() => {
@@ -124,6 +127,12 @@ export default function HomePage() {
       {heroBg && <div className="wave-bg" style={{ backgroundImage: `url(${heroBg})` }} />}
       <div className="wave-glow" />
       <div className="wave-main">
+        {!cur && (
+          <div className="wave-greet">
+            <span className="wave-greet-hello">{firstName ? `Привет, ${firstName}!` : 'Добро пожаловать!'}</span>
+            <span className="wave-greet-sub">Что послушаем сегодня?</span>
+          </div>
+        )}
         <div className="wave-label">МОЯ ВОЛНА</div>
 
         <button

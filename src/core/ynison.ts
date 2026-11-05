@@ -12,7 +12,7 @@
 const BASE_URL = 'wss://ynison.music.yandex.ru'
 const REDIRECT_SERVICE = 'redirector.YnisonRedirectService/GetRedirectToYnison'
 const STATE_SERVICE = 'ynison_state.YnisonStateService/PutYnisonState'
-const DEFAULT_TITLE = 'YM Player'
+const DEFAULT_TITLE = 'Muse'
 
 export interface YnisonRemoteActions {
   /** другое устройство включило трек */

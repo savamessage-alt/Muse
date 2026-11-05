@@ -41,6 +41,31 @@ export const PLACEHOLDER_COVER = 'data:image/svg+xml;utf8,' + encodeURIComponent
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect width="200" height="200" fill="#2a2a2a"/><text x="100" y="110" font-size="40" text-anchor="middle" fill="#666" font-family="Arial">♪</text></svg>',
 )
 
+/** Инициалы пользователя для аватара без фото (Яндекс не отдаёт аватар в API) */
+export function userInitials(name?: string | null): string {
+  const parts = (name ?? '').trim().split(/\s+/).filter(Boolean)
+  if (!parts.length) return '♪'
+  const first = parts[0]?.[0] ?? ''
+  const second = parts.length > 1 ? parts[1]?.[0] ?? '' : ''
+  return (first + second).toUpperCase()
+}
+
+/** Детерминированный градиент аватара (по логину/uid) — красивый fallback вместо чужой картинки */
+export function avatarGradient(seed?: string | number | null): [string, string] {
+  const s = String(seed ?? 'muse')
+  let h = 0
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0
+  const grads: [string, string][] = [
+    ['#ff3b3b', '#ff7a00'],
+    ['#7c3aed', '#ec4899'],
+    ['#2563eb', '#22d3ee'],
+    ['#059669', '#a3e635'],
+    ['#db2777', '#f59e0b'],
+    ['#0ea5e9', '#8b5cf6'],
+  ]
+  return grads[h % grads.length]
+}
+
 export function clamp(v: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, v))
 }

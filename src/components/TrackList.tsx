@@ -14,6 +14,8 @@ interface Props {
   emptyText?: string
   /** источник очереди при клике (radio/playlist/queue/…), по умолчанию queue */
   playSource?: PlayableTrack['source']
+  /** пока идёт загрузка — спиннер вместо «пусто» (иначе мелькает «пока пусто») */
+  loading?: boolean
 }
 
 /** Воспроизвести список с указанного индекса (по умолчанию) */
@@ -22,11 +24,20 @@ export function playTracks(tracks: Track[], index = 0, source: PlayableTrack['so
   void player.playQueue(tracks.map((track) => ({ track, source })), index)
 }
 
-export default function TrackList({ tracks, onPlay, showAlbum = true, showLikes = true, emptyText, playSource = 'queue' }: Props) {
+export default function TrackList({ tracks, onPlay, showAlbum = true, showLikes = true, emptyText, playSource = 'queue', loading }: Props) {
   const [snap, setSnap] = useState(() => player.snapshot())
   useEffect(() => player.onChange(setSnap), [])
   const isLiked = useApp((s) => s.isLiked)
   const toggleLike = useApp((s) => s.toggleLike)
+
+  if (loading) {
+    return (
+      <div className="list-loading" role="status" aria-label="Загрузка">
+        <div className="spinner" />
+        <span className="muted small">Загружаем…</span>
+      </div>
+    )
+  }
 
   if (!tracks.length) {
     return <div className="muted pad">{emptyText ?? 'Здесь пока пусто'}</div>

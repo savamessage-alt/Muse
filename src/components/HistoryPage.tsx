@@ -16,8 +16,10 @@ interface Row {
 export default function HistoryPage() {
   const [rows, setRows] = useState<Row[]>([])
   const [err, setErr] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    let alive = true
     ymClient
       .musicHistory()
       .then(async (itemsRaw) => {
@@ -25,21 +27,46 @@ export default function HistoryPage() {
         const raw = itemsRaw.filter((i) => i.type === 'track' && i.id?.trackId)
         const shorts = raw.map((i) => ({ id: i.id!.trackId!, albumId: i.id!.albumId ?? '' }))
         const full = await expandTracks(shorts)
-        setRows(
-          raw.map((item, k) => ({
-            item,
-            track: full[k] ?? null,
-            ts: item.timestamp ? new Date(item.timestamp).getTime() : 0,
-          })),
-        )
+        if (alive) {
+          setRows(
+            raw.map((item, k) => ({
+              item,
+              track: full[k] ?? null,
+              ts: item.timestamp ? new Date(item.timestamp).getTime() : 0,
+            })),
+          )
+        }
       })
       .catch((e) => {
         diag('history: ОШИБКА ' + String((e as Error)?.message ?? e).slice(0, 120))
-        setErr('Не удалось загрузить историю: ' + (e as Error).message)
+        if (alive) setErr('Не удалось загрузить историю: ' + (e as Error).message)
       })
+      .finally(() => {
+        if (alive) setLoading(false)
+      })
+    return () => {
+      alive = false
+    }
   }, [])
 
   if (err) return <div className="error-box"><p>{err}</p></div>
+
+  if (loading) {
+    return (
+      <div className="entity-page">
+        <div className="entity-head">
+          <div className="entity-info">
+            <div className="entity-type">История</div>
+            <h1 className="entity-title">История прослушивания</h1>
+          </div>
+        </div>
+        <div className="list-loading" role="status" aria-label="Загрузка истории">
+          <div className="spinner" />
+          <span className="muted small">Загружаем…</span>
+        </div>
+      </div>
+    )
+  }
 
   const tracks = rows.map((r) => r.track).filter((t): t is Track => !!t)
 

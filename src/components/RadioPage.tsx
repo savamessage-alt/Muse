@@ -37,12 +37,14 @@ export default function RadioPage() {
   const [collections, setCollections] = useState<Collection[]>([])
   const [chart, setChart] = useState<{ title?: string; tracks: Track[]; plays: Map<string, number> } | null>(null)
   const [chartBusy, setChartBusy] = useState(false)
+  const [stationsLoading, setStationsLoading] = useState(true)
 
   useEffect(() => {
     ymClient
       .radioDashboard()
       .then((r) => setStations(r.stations ?? []))
       .catch((e) => setErr('Не удалось загрузить радио: ' + (e as Error).message))
+      .finally(() => setStationsLoading(false))
 
     // «Новинки и Премьеры» из ленты — готовые плейлисты с треками
     ymClient
@@ -182,9 +184,14 @@ export default function RadioPage() {
       {err && <div className="error-box"><p>{err}</p></div>}
       {busy && <div className="spinner" />}
 
-      {stations.length === 0 && !err && !busy && (
+      {stationsLoading ? (
+        <div className="list-loading" role="status" aria-label="Загрузка радио">
+          <div className="spinner" />
+          <span className="muted small">Загружаем станции…</span>
+        </div>
+      ) : stations.length === 0 && !err && !busy ? (
         <p className="muted pad">Станции не найдены. Возможно, нужна подписка на музыку.</p>
-      )}
+      ) : null}
 
       <div className="radio-grid">
         {stations.map((s, i) => {
