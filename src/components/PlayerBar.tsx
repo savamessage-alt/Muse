@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { player, type PlayerSnapshot } from '../core/player'
 import { ymClient } from '../core/client'
 import { useApp } from '../state/store'
 import { coverUrl, formatMs, PLACEHOLDER_COVER, artistNames } from '../core/format'
 import { diag } from '../core/diag'
 import QueuePanel from './QueuePanel'
+import SimilarPanel from './SimilarPanel'
 import {
   IconPlay,
   IconPause,
@@ -17,6 +19,7 @@ import {
   IconShuffle,
   IconQueue,
   IconLyrics,
+  IconSimilar,
   IconX,
 } from './icons'
 
@@ -27,6 +30,7 @@ function useSnapshot(): PlayerSnapshot {
 }
 
 export default function PlayerBar() {
+  const navigate = useNavigate()
   const snap = useSnapshot()
   const isLiked = useApp((s) => s.isLiked)
   const toggleLike = useApp((s) => s.toggleLike)
@@ -37,6 +41,7 @@ export default function PlayerBar() {
   const [lyricsError, setLyricsError] = useState('')
   const [lyricsTrackId, setLyricsTrackId] = useState('')
   const [queueOpen, setQueueOpen] = useState(false)
+  const [similarOpen, setSimilarOpen] = useState(false)
 
   const cur = snap.current
   const liked = cur ? isLiked(cur.track) : false
@@ -113,10 +118,12 @@ export default function PlayerBar() {
               src={coverUrl(cur.track.coverUri, '120x120') ?? PLACEHOLDER_COVER}
               className="pb-cover"
               alt=""
+              onClick={() => navigate('/')}
+              title="Открыть «Мою волну»"
               onError={(e) => ((e.target as HTMLImageElement).src = PLACEHOLDER_COVER)}
             />
-            <div className="pb-meta">
-              <div className="pb-title" title={cur.track.title}>{cur.track.title}</div>
+            <div className="pb-meta" onClick={() => navigate('/')} title="Открыть «Мою волну»">
+              <div className="pb-title">{cur.track.title}</div>
               <div className="pb-artist" title={artistNames(cur.track.artists)}>
                 {artistNames(cur.track.artists)}
               </div>
@@ -186,6 +193,19 @@ export default function PlayerBar() {
         >
           <IconLyrics size={18} />
         </button>
+        <button
+          className={'icon-btn' + (similarOpen ? ' active' : '')}
+          onClick={() => {
+            if (!cur) {
+              showToast('Сначала выберите трек')
+              return
+            }
+            setSimilarOpen((v) => !v)
+          }}
+          title="Похожие треки"
+        >
+          <IconSimilar size={20} />
+        </button>
         <button className={'icon-btn' + (queueOpen ? ' active' : '')} onClick={() => setQueueOpen((v) => !v)} title="Очередь">
           <IconQueue size={20} />
           {snap.queue.length > 0 && <span className="queue-badge">{snap.queue.length}</span>}
@@ -220,6 +240,7 @@ export default function PlayerBar() {
       )}
 
       {queueOpen && <QueuePanel onClose={() => setQueueOpen(false)} />}
+      {similarOpen && cur && <SimilarPanel trackTitle={cur.track.title} onClose={() => setSimilarOpen(false)} />}
     </footer>
   )
 }

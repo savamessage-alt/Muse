@@ -215,6 +215,33 @@ export interface Feed {
   }[]
 }
 
+/** Блок лендинга /landing3 (подборки, новинки, чарт и т.д.) */
+export interface LandingBlock {
+  type?: string
+  id?: string
+  entities?: {
+    type?: string
+    id?: string
+    data?: {
+      kind?: number
+      title?: string
+      trackCount?: number
+      cover?: { uri?: string } | null
+      owner?: { uid?: number }
+      playlist?: { kind?: number; title?: string; trackCount?: number; cover?: { uri?: string } | null; owner?: { uid?: number } }
+    }
+  }[]
+}
+
+/** Плейлист «Чарт» из /landing3/chart: треки — записи {track, playCount} */
+export interface ChartPlaylist {
+  title?: string
+  kind?: number
+  owner?: { uid?: number }
+  trackCount?: number
+  tracks?: { track?: TrackShort; playCount?: number; recent?: boolean }[]
+}
+
 export interface FileDownloadInfo {
   codec?: 'mp3' | 'aac' | 'hls' | 'flac' | 'wav' | string
   bitrateInKbps?: number

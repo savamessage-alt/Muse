@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react'
 import { ymClient } from '../core/client'
 import { player } from '../core/player'
 import { coverUrl, PLACEHOLDER_COVER } from '../core/format'
-import type { RadioStation, Track } from '../core/types'
+import type { RadioStation, Track, TrackShort } from '../core/types'
 import { useApp } from '../state/store'
 import { IconRadio } from './icons'
 import { Section } from './cards'
+import TrackList, { playTracks } from './TrackList'
+import { expandTracks } from '../core/tracks'
 
 interface Premiere {
   kind: number
@@ -16,6 +18,14 @@ interface Premiere {
   description?: string
 }
 
+interface Collection {
+  kind: number
+  ownerUid: number
+  title: string
+  cover?: string
+  trackCount?: number
+}
+
 export default function RadioPage() {
   const [stations, setStations] = useState<RadioStation[]>([])
   const [err, setErr] = useState<string | null>(null)
@@ -24,6 +34,9 @@ export default function RadioPage() {
   const showToast = useApp((s) => s.showToast)
   const [premieres, setPremieres] = useState<Premiere[]>([])
   const [loadingPl, setLoadingPl] = useState<number | null>(null)
+  const [collections, setCollections] = useState<Collection[]>([])
+  const [chart, setChart] = useState<{ title?: string; tracks: Track[]; plays: Map<string, number> } | null>(null)
+  const [chartBusy, setChartBusy] = useState(false)
 
   useEffect(() => {
     ymClient
@@ -53,6 +66,49 @@ export default function RadioPage() {
       .catch(() => {
         /* лента недоступна — не показываем премьеры */
       })
+
+    // «Подборки для вас» (новые плейлисты из лендинга)
+    ymClient
+      .landing(['new-playlists'])
+      .then((blocks) => {
+        const out: Collection[] = []
+        for (const b of blocks ?? []) {
+          for (const e of b.entities ?? []) {
+            const d = e.data
+            const pl = d?.playlist ?? d
+            if (pl?.kind !== undefined) {
+              out.push({
+                kind: pl.kind,
+                ownerUid: pl.owner?.uid ?? 0,
+                title: pl.title ?? 'Подборка',
+                cover: pl.cover?.uri ?? undefined,
+                trackCount: pl.trackCount,
+              })
+            }
+          }
+        }
+        setCollections(out.filter((x) => x.ownerUid > 0))
+      })
+      .catch(() => {
+        /* без интернета — просто нет подборок */
+      })
+
+    // «Чарт: Топ-100»
+    void (async () => {
+      try {
+        const res = await ymClient.chart()
+        const pl = res?.chart
+        if (pl && Array.isArray(pl.tracks)) {
+          const shorts: TrackShort[] = pl.tracks.map((x) => x.track).filter((x): x is TrackShort => !!x)
+          const plays = new Map<string, number>()
+          for (const x of pl.tracks) if (x.track?.id && x.playCount) plays.set(x.track.id, x.playCount)
+          const full = await expandTracks(shorts)
+          setChart({ title: pl.title ?? 'Чарт', tracks: full, plays })
+        }
+      } catch {
+        /* чарт недоступен — не показываем */
+      }
+    })()
   }, [])
 
   const playPremiere = async (p: Premiere) => {
@@ -62,6 +118,29 @@ export default function RadioPage() {
       if (tracks.length) void player.playQueue(tracks.map((t) => ({ track: t, source: 'playlist' })), 0)
     } finally {
       setLoadingPl(null)
+    }
+  }
+
+  const playCollection = async (x: Collection) => {
+    setLoadingPl(x.kind)
+    try {
+      const tracks = await ymClient.playlistTracks(x.ownerUid, x.kind)
+      if (tracks.length) await player.playQueue(tracks.map((t) => ({ track: t, source: 'playlist' })), 0)
+    } finally {
+      setLoadingPl(null)
+    }
+  }
+
+  const playChart = async () => {
+    if (!chart?.tracks.length) return
+    setChartBusy(true)
+    try {
+      await player.playQueue(chart.tracks.map((t) => ({ track: t, source: 'queue' })), 0)
+      showToast('🎵 Чарт — играет')
+    } catch (e) {
+      showToast('Ошибка чарта: ' + (e as Error).message, 'error')
+    } finally {
+      setChartBusy(false)
     }
   }
 
@@ -131,6 +210,26 @@ export default function RadioPage() {
         })}
       </div>
 
+      {collections.length > 0 && (
+        <Section title="Подборки для вас">
+          <div className="radio-grid">
+            {collections.map((x) => (
+              <button key={x.kind + '-' + x.ownerUid} className="radio-card" onClick={() => void playCollection(x)} disabled={loadingPl === x.kind}>
+                <div className="card-cover">
+                  <img
+                    src={coverUrl(x.cover) ?? PLACEHOLDER_COVER}
+                    alt=""
+                    onError={(e) => ((e.target as HTMLImageElement).src = PLACEHOLDER_COVER)}
+                  />
+                  <div className="card-play">{loadingPl === x.kind ? '…' : '▶'}</div>
+                </div>
+                <div className="card-title">{x.title ?? 'Подборка'}</div>
+              </button>
+            ))}
+          </div>
+        </Section>
+      )}
+
       {premieres.length > 0 && (
         <Section title="Новинки и Премьеры">
           <div className="premieres">
@@ -157,6 +256,19 @@ export default function RadioPage() {
               </button>
             ))}
           </div>
+        </Section>
+      )}
+
+      {chart && chart.tracks.length > 0 && (
+        <Section title={chart.title ?? 'Чарт'}>
+          <button className="primary-btn small" onClick={() => void playChart()} disabled={chartBusy}>
+            {chartBusy ? '…' : '▶ Играть всё'}
+          </button>
+          <TrackList
+            tracks={chart.tracks.slice(0, 50)}
+            emptyText="Треков нет"
+            playSource="queue"
+          />
         </Section>
       )}
     </div>

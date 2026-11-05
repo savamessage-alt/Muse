@@ -19,3 +19,5 @@ android/
 Thumbs.db
 
 e2e/
+
+tsconfig.app.tsbuildinfo

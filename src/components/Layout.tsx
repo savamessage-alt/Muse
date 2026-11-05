@@ -69,6 +69,14 @@ export default function Layout() {
         </main>
       </div>
       <PlayerBar />
+      <nav className="mobile-nav">
+        {[...nav, { to: '/settings', label: 'Настройки', icon: IconSettings }].map(({ to, label, icon: Icon, end }) => (
+          <NavLink key={to} to={to} end={end} className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')}>
+            <Icon size={20} />
+            <span>{label}</span>
+          </NavLink>
+        ))}
+      </nav>
       <ResumePosition />
     </div>
   )

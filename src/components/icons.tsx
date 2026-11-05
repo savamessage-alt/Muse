@@ -47,6 +47,10 @@ export const IconHistory = (p: P) => (
 export const IconSettings = (p: P) => (
   <svg {...base(p)}><path d="M19.4 13a7.8 7.8 0 0 0 0-2l2-1.6-2-3.4-2.4 1a8 8 0 0 0-1.7-1L15 3.4h-4l-.3 2.6a8 8 0 0 0-1.7 1l-2.4-1-2 3.4 2 1.6a7.8 7.8 0 0 0 0 2l-2 1.6 2 3.4 2.4-1a8 8 0 0 0 1.7 1l.3 2.6h4l.3-2.6a8 8 0 0 0 1.7-1l2.4 1 2-3.4-2-1.6zM13 15.5A2.5 2.5 0 1 1 13 10.5a2.5 2.5 0 0 1 0 5z" /></svg>
 )
+/** «Похожие треки» — книжная полка с нотой (library_music) */
+export const IconSimilar = (p: P) => (
+  <svg {...base(p)}><path d="M20 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 5h-3v5.5c0 1.38-1.12 2.5-2.5 2.5S10 13.88 10 12.5s1.12-2.5 2.5-2.5c.57 0 1.08.19 1.5.51V5h4v2zM4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6z" /></svg>
+)
 export const IconQueue = (p: P) => (
   <svg {...base(p)}><path d="M3 6h13v2H3V6zm0 4h13v2H3v-2zm0 4h8v2H3v-2zm13.5-2.5 5 3-5 3v-6z" /></svg>
 )

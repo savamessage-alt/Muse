@@ -12,6 +12,8 @@ interface Props {
   showAlbum?: boolean
   showLikes?: boolean
   emptyText?: string
+  /** источник очереди при клике (radio/playlist/queue/…), по умолчанию queue */
+  playSource?: PlayableTrack['source']
 }
 
 /** Воспроизвести список с указанного индекса (по умолчанию) */
@@ -20,7 +22,7 @@ export function playTracks(tracks: Track[], index = 0, source: PlayableTrack['so
   void player.playQueue(tracks.map((track) => ({ track, source })), index)
 }
 
-export default function TrackList({ tracks, onPlay, showAlbum = true, showLikes = true, emptyText }: Props) {
+export default function TrackList({ tracks, onPlay, showAlbum = true, showLikes = true, emptyText, playSource = 'queue' }: Props) {
   const [snap, setSnap] = useState(() => player.snapshot())
   useEffect(() => player.onChange(setSnap), [])
   const isLiked = useApp((s) => s.isLiked)
@@ -47,8 +49,8 @@ export default function TrackList({ tracks, onPlay, showAlbum = true, showLikes 
           <div
             key={t.id + (t.albums?.[0]?.id ?? '')}
             className={'trackrow' + (snap.current?.track.id === t.id ? ' current' : '')}
-            onDoubleClick={() => (onPlay ? onPlay(i) : playTracks(tracks, i))}
-            onClick={() => (onPlay ? onPlay(i) : playTracks(tracks, i))}
+            onDoubleClick={() => (onPlay ? onPlay(i) : playTracks(tracks, i, playSource))}
+            onClick={() => (onPlay ? onPlay(i) : playTracks(tracks, i, playSource))}
             title="Двойной клик — играть"
           >
             <span className="tc-idx">

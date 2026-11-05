@@ -12,10 +12,12 @@ import type {
   Album,
   Artist,
   BriefInfo,
+  ChartPlaylist,
   DownloadInfo,
   Feed,
   FileDownloadInfo,
   HistoryItem,
+  LandingBlock,
   Playlist,
   Queue,
   RadioStation,
@@ -295,10 +297,14 @@ class YandexMusicClient {
   feed(wave?: boolean): Promise<Feed> {
     return this.req(`/feed${wave ? '?wave=1' : ''}`)
   }
-  landing(): Promise<unknown> {
-    return this.req('/landing3')
+  landing(blocks: string[]): Promise<LandingBlock[]> {
+    const params = new URLSearchParams({
+      blocks: blocks.join(','),
+      eitherUserId: '10254713668400548221',
+    })
+    return this.req<{ blocks?: LandingBlock[] }>(`/landing3?${params.toString()}`).then((r) => r.blocks ?? [])
   }
-  chart(): Promise<unknown> {
+  chart(): Promise<{ chart?: ChartPlaylist }> {
     return this.req('/landing3/chart')
   }
 
