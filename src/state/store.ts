@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // Глобальное состояние UI: пользователь, лайки, плейлисты, тосты
 // ============================================================
 
@@ -34,6 +34,8 @@ interface AppState {
   toggleLike: (track: Track) => Promise<void>
   isLiked: (track: Track) => boolean
   createPlaylist: (title: string) => Promise<Playlist | null>
+  /** Добавить трек в конец плейлиста (по kind) */
+  addToPlaylist: (track: Track, kind: string) => Promise<void>
   showToast: (text: string, kind?: Toast['kind']) => void
   dismissToast: (id: number) => void
   logout: () => void
@@ -170,6 +172,26 @@ export const useApp = create<AppState>((set, get) => ({
     } catch (e) {
       get().showToast('Ошибка создания: ' + (e as Error).message, 'error')
       return null
+    }
+  },
+
+  addToPlaylist: async (track, kind) => {
+    let pl = get().playlists.find((p) => String(p.kind) === String(kind)) ?? null
+    if (!pl) {
+      const fetched = await ymClient.playlist(kind)
+      if (fetched) pl = fetched
+    }
+    if (!pl) {
+      get().showToast('Плейлист не найден', 'error')
+      return
+    }
+    const albumId = track.albums?.[0]?.id ?? track.albumId ?? undefined
+    try {
+      await ymClient.playlistInsertTracks(pl, [{ id: track.id, albumId }], pl.trackCount ?? 0)
+      get().showToast('Добавлено в «' + (pl.title ?? 'плейлист') + '»', 'success')
+      void get().refreshPlaylists()
+    } catch (e) {
+      get().showToast('Не удалось добавить трек: ' + (e as Error).message, 'error')
     }
   },
 

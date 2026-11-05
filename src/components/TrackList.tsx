@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { player, type PlayableTrack } from '../core/player'
 import { useApp } from '../state/store'
 import { artistNames, coverUrl, formatMs, PLACEHOLDER_COVER } from '../core/format'
 import type { Track } from '../core/types'
-import { IconPlay, IconPause, IconHeart, IconHeartFilled } from './icons'
+import { IconPlay, IconPause, IconHeart, IconHeartFilled, IconMore, IconList, IconPlus } from './icons'
 
 interface Props {
   tracks: Track[]
@@ -22,6 +23,86 @@ interface Props {
 export function playTracks(tracks: Track[], index = 0, source: PlayableTrack['source'] = 'queue') {
   if (!tracks.length) return
   void player.playQueue(tracks.map((track) => ({ track, source })), index)
+}
+
+/** Меню действий с треком: добавить в плейлист (с выбором), создать плейлист */
+function TrackMenu({ track }: { track: Track }) {
+  const playlists = useApp((s) => s.playlists)
+  const addToPlaylist = useApp((s) => s.addToPlaylist)
+  const nav = useNavigate()
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const onDoc = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onDoc)
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDoc)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open])
+
+  const pick = (kind: string) => {
+    setOpen(false)
+    void addToPlaylist(track, kind)
+  }
+
+  return (
+    <div className="track-menu" ref={ref}>
+      <button
+        className={'icon-btn small' + (open ? ' active' : '')}
+        onClick={(e) => {
+          e.stopPropagation()
+          setOpen((v) => !v)
+        }}
+        title="Действия с треком"
+        aria-label="Действия с треком"
+        aria-haspopup="menu"
+        aria-expanded={open}
+      >
+        <IconMore size={16} />
+      </button>
+      {open && (
+        <div className="track-menu-pop" role="menu" onClick={(e) => e.stopPropagation()}>
+          <div className="track-menu-title">Добавить в плейлист</div>
+          <div className="track-menu-list">
+            {playlists.length === 0 && <div className="muted small track-menu-empty">Плейлистов пока нет</div>}
+            {playlists.slice(0, 40).map((pl) => (
+              <button
+                key={pl.kind}
+                className="track-menu-item"
+                role="menuitem"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  pick(String(pl.kind))
+                }}
+              >
+                <IconList size={15} />
+                <span className="track-menu-item-name">{pl.title || 'Без названия'}</span>
+                {pl.trackCount != null && <span className="muted small">{pl.trackCount}</span>}
+              </button>
+            ))}
+            <button
+              className="track-menu-item create"
+              role="menuitem"
+              onClick={(e) => {
+                e.stopPropagation()
+                setOpen(false)
+                nav('/playlists')
+              }}
+            >
+              <IconPlus size={15} /> Создать плейлист
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }
 
 export default function TrackList({ tracks, onPlay, showAlbum = true, showLikes = true, emptyText, playSource = 'queue', loading }: Props) {
@@ -106,6 +187,7 @@ export default function TrackList({ tracks, onPlay, showAlbum = true, showLikes 
                   {liked ? <IconHeartFilled size={16} /> : <IconHeart size={16} />}
                 </button>
               )}
+              <TrackMenu track={t} />
             </span>
           </div>
         )

@@ -25,6 +25,7 @@ import {
   ThumbsDown,
   CircleAlert,
   Music,
+  MoreVertical,
 } from 'lucide-react'
 import type { LucideProps } from 'lucide-react'
 
@@ -59,3 +60,4 @@ export const IconDislike = (p: P) => <ThumbsDown {...p} />
 export const IconError = (p: P) => <CircleAlert {...p} />
 /** Нотка (пустое состояние, например нет текста песни) */
 export const IconMusicNote = (p: P) => <Music {...p} />
+export const IconMore = (p: P) => <MoreVertical {...p} />

@@ -6,6 +6,7 @@ import type { Track, TrackShort } from '../core/types'
 import { plural } from '../core/format'
 import TrackList, { playTracks } from './TrackList'
 import { PlaylistCard, Section } from './cards'
+import { IconPlus } from './icons'
 import { diag } from '../core/diag'
 
 /**
@@ -17,6 +18,19 @@ export default function FavoritesPage() {
   const [err, setErr] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const playlists = useApp((s) => s.playlists)
+  const createPlaylist = useApp((s) => s.createPlaylist)
+  const [showCreate, setShowCreate] = useState(false)
+  const [plTitle, setPlTitle] = useState('')
+
+  const submitPl = async () => {
+    const t = plTitle.trim()
+    if (!t) return
+    const pl = await createPlaylist(t)
+    if (pl) {
+      setPlTitle('')
+      setShowCreate(false)
+    }
+  }
 
   useEffect(() => {
     let alive = true
@@ -59,6 +73,30 @@ export default function FavoritesPage() {
           )}
         </div>
       </div>
+
+      {playlists.length === 0 && (
+        <Section title="Мои плейлисты">
+          {showCreate ? (
+            <div className="create-box">
+              <input
+                className="input"
+                placeholder="Название плейлиста"
+                value={plTitle}
+                onChange={(e) => setPlTitle(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && void submitPl()}
+                autoFocus
+              />
+              <button className="primary-btn small" onClick={() => void submitPl()} disabled={!plTitle.trim()}>
+                Создать
+              </button>
+            </div>
+          ) : (
+            <button className="fav-create-btn" onClick={() => setShowCreate(true)}>
+              <IconPlus size={18} /> Создать первый плейлист
+            </button>
+          )}
+        </Section>
+      )}
 
       {playlists.length > 0 && (
         <Section title="Мои плейлисты">
