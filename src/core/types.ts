@@ -118,6 +118,8 @@ export interface Playlist {
   coverUri?: string
   createdAt?: string
   modifiedAt?: string
+  /** ревизия для операций change (растёт с каждым изменением) */
+  revision?: number
   durationMs?: number
   playCounter?: number
   tags?: string[]

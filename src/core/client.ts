@@ -297,11 +297,22 @@ class YandexMusicClient {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8' },
     })
   }
-  async playlistChange(kind: string, diff: Record<string, PlaylistOp>, uid?: number): Promise<Playlist> {
+  async playlistChange(
+    kind: string,
+    diff: Record<string, PlaylistOp>,
+    uid?: number,
+    revision?: number,
+  ): Promise<Playlist> {
     const u = uid ?? (await this.getUid())
-    // form {kind, revision, diff: json-строка} — как в эталонной библиотеке
+    // form {kind, revision, diff: json-строка}; ревизия обязательна — без неё API
+    // отвечает «Expected revision: N, actual revision: M»
     const body =
-      'kind=' + encodeURIComponent(kind) + '&revision=1&diff=' + encodeURIComponent(JSON.stringify(diff))
+      'kind=' +
+      encodeURIComponent(kind) +
+      '&revision=' +
+      encodeURIComponent(String(revision ?? 1)) +
+      '&diff=' +
+      encodeURIComponent(JSON.stringify(diff))
     return this.req(`/users/${u}/playlists/${encodeURIComponent(kind)}/change`, {
       method: 'POST',
       body,
@@ -317,13 +328,13 @@ class YandexMusicClient {
   ): Promise<Playlist | null> {
     const kind = playlist.kind ?? ''
     const diff: Record<string, PlaylistOp> = { op_1: { op: 'insert', at, tracks } }
-    return this.playlistChange(kind, diff, playlist.owner?.uid)
+    return this.playlistChange(kind, diff, playlist.owner?.uid, playlist.revision)
   }
   /** Удалить треки из плейлиста (диапазон позиций) */
   async playlistDeleteRange(playlist: Playlist, from: number, to: number): Promise<Playlist | null> {
     const kind = playlist.kind ?? ''
     const diff: Record<string, PlaylistOp> = { op_1: { op: 'delete', from, to } }
-    return this.playlistChange(kind, diff, playlist.owner?.uid)
+    return this.playlistChange(kind, diff, playlist.owner?.uid, playlist.revision)
   }
 
   // ---------- Поиск ----------

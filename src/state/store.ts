@@ -176,22 +176,44 @@ export const useApp = create<AppState>((set, get) => ({
   },
 
   addToPlaylist: async (track, kind) => {
+    const albumId = track.albums?.[0]?.id ?? track.albumId ?? undefined
+    const item = { id: track.id, albumId }
+    const loadFresh = async (): Promise<Playlist | null> => {
+      const fresh = await ymClient.playlist(kind)
+      return fresh
+    }
     let pl = get().playlists.find((p) => String(p.kind) === String(kind)) ?? null
+    if (pl && pl.revision == null) pl = await loadFresh().catch(() => pl)
     if (!pl) {
-      const fetched = await ymClient.playlist(kind)
+      const fetched = await loadFresh().catch(() => null)
       if (fetched) pl = fetched
     }
     if (!pl) {
       get().showToast('Плейлист не найден', 'error')
       return
     }
-    const albumId = track.albums?.[0]?.id ?? track.albumId ?? undefined
-    try {
-      await ymClient.playlistInsertTracks(pl, [{ id: track.id, albumId }], pl.trackCount ?? 0)
-      get().showToast('Добавлено в «' + (pl.title ?? 'плейлист') + '»', 'success')
+    const insert = async (target: Playlist, notify: string) => {
+      await ymClient.playlistInsertTracks(target, [item], target.trackCount ?? 0)
+      get().showToast(notify, 'success')
       void get().refreshPlaylists()
+    }
+    try {
+      await insert(pl, 'Добавлено в «' + (pl.title ?? 'плейлист') + '»')
     } catch (e) {
-      get().showToast('Не удалось добавить трек: ' + (e as Error).message, 'error')
+      const msg = (e as Error).message
+      if (/revision/i.test(msg)) {
+        const fresh = await loadFresh().catch(() => null)
+        if (fresh && fresh.revision != null && fresh.kind) {
+          try {
+            await insert(fresh, 'Добавлено в «' + (fresh.title ?? 'плейлист') + '»')
+            return
+          } catch (e2) {
+            get().showToast('Не удалось добавить трек: ' + (e2 as Error).message, 'error')
+            return
+          }
+        }
+      }
+      get().showToast('Не удалось добавить трек: ' + msg, 'error')
     }
   },
 
