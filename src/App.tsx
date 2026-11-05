@@ -4,6 +4,7 @@ import { HashRouter, Routes, Route, Navigate, useNavigate } from 'react-router-d
 import { useApp } from './state/store'
 import { tokenManager } from './core/tokenManager'
 import LoginPage from './components/LoginPage'
+import WelcomePage from './components/WelcomePage'
 import Layout from './components/Layout'
 import HomePage from './components/HomePage'
 import SearchPage from './components/SearchPage'
@@ -48,6 +49,19 @@ function LoginGate() {
   return <LoginPage />
 }
 
+function WelcomeGate() {
+  const authenticated = useApp((s) => s.authenticated)
+  if (authenticated) return <Navigate to="/" replace />
+  return <WelcomePage />
+}
+
+/** Плеер доступен только с аккаунтом; без токена — экран-приветствие */
+function RequireAuth({ children }: { children: ReactNode }) {
+  const authenticated = useApp((s) => s.authenticated)
+  if (!authenticated) return <Navigate to="/welcome" replace />
+  return <>{children}</>
+}
+
 function ReauthWatcher() {
   const navigate = useNavigate()
   useEffect(() => {
@@ -74,7 +88,8 @@ export default function App() {
           <ReauthWatcher />
           <Routes>
             <Route path="/login" element={<LoginGate />} />
-            <Route element={<Layout />}>
+            <Route path="/welcome" element={<WelcomeGate />} />
+            <Route element={<RequireAuth><Layout /></RequireAuth>}>
               <Route path="/" element={<HomePage />} />
               <Route path="/search" element={<SearchPage />} />
               <Route path="/playlists" element={<PlaylistsPage />} />
