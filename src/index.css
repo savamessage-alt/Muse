@@ -509,17 +509,24 @@ button { font-family: inherit; }
 .playerbar .icon-btn, .pb-controls .icon-btn { position: relative; }
 .queue-overlay {
   position: fixed; inset: 0; z-index: 60;
-  background: rgba(0, 0, 0, .45);
+  background: rgba(0, 0, 0, .5);
   display: flex; align-items: flex-end; justify-content: center;
   backdrop-filter: blur(3px);
+  animation: fade-in .16s ease;
 }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 .queue-panel {
   width: min(640px, 96vw); max-height: 64vh;
   margin-bottom: 84px; border-radius: 20px;
-  background: var(--bg2, #191921); border: 1px solid rgba(255, 255, 255, .10);
+  background: rgba(25, 25, 33, .86);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, .12);
   box-shadow: 0 -10px 50px rgba(0, 0, 0, .6);
   display: flex; flex-direction: column; overflow: hidden;
+  animation: sheet-in .22s cubic-bezier(.2, .8, .2, 1);
 }
+@keyframes sheet-in { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
 .queue-head {
   display: flex; align-items: center; justify-content: space-between;
   padding: 12px 16px; border-bottom: 1px solid rgba(255, 255, 255, .08);
@@ -594,13 +601,21 @@ button { font-family: inherit; }
   position: absolute; bottom: calc(100% + 8px); right: 12px;
   width: min(440px, calc(100% - 24px));
   max-height: 46vh;
-  background: rgba(24, 24, 28, 0.98);
-  border: 1px solid var(--border);
+  background: rgba(24, 24, 28, 0.84);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, .10);
   border-radius: 14px;
   display: flex; flex-direction: column;
   box-shadow: 0 12px 40px rgba(0,0,0,.55);
   z-index: 60;
   overflow: hidden;
+  animation: pop-in .18s ease;
+  transform-origin: bottom right;
+}
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(6px) scale(.97); }
+  to { opacity: 1; transform: none; }
 }
 .pb-lyrics-head {
   display: flex; align-items: center; justify-content: space-between;
@@ -611,6 +626,25 @@ button { font-family: inherit; }
   margin: 0; white-space: pre-wrap; word-break: break-word;
   font-family: inherit; font-size: 15px; line-height: 1.6; color: var(--text);
 }
+
+/* скелетон загрузки и состояния (ошибка / пусто) */
+.lyrics-loading {
+  display: flex; flex-direction: column; gap: 10px; padding: 8px 2px;
+}
+.skeleton-line {
+  height: 14px; border-radius: 7px;
+  background: linear-gradient(90deg, rgba(255,255,255,.06), rgba(255,255,255,.16), rgba(255,255,255,.06));
+  background-size: 200% 100%;
+  animation: shimmer 1.2s ease-in-out infinite;
+}
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+.lyrics-state {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  text-align: center; color: var(--text-dim); padding: 22px 8px;
+}
+.lyrics-state svg { opacity: .55; }
+.lyrics-state-text { font-size: 13.5px; line-height: 1.5; }
+.lyrics-state .btn { display: inline-flex; align-items: center; gap: 7px; padding: 7px 16px; }
 
 /* ============================================================
    АДАПТИВНОСТЬ

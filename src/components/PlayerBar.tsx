@@ -20,6 +20,9 @@ import {
   IconQueue,
   IconLyrics,
   IconSimilar,
+  IconError,
+  IconMusicNote,
+  IconRefresh,
   IconX,
 } from './icons'
 
@@ -62,31 +65,23 @@ export default function PlayerBar() {
     showToast(`В очереди: ${snap.queue.length} треков`)
   }
 
-  const toggleLyrics = () => {
-    if (lyricsOpen) {
-      setLyricsOpen(false)
-      return
-    }
-    if (!cur) {
-      showToast('Сначала выберите трек')
-      return
-    }
-    setLyricsOpen(true)
-    if (cur.track.id === lyricsTrackId && lyrics) return // уже загружено
+  // загрузка текста песни (при открытии и по кнопке «Повторить»)
+  const loadLyrics = (trackId: string) => {
     setLyricsLoading(true)
     setLyricsError('')
+    setLyrics('')
     let did = false
     const timer = window.setTimeout(() => {
       if (!did) void fetch('/__diag', { method: 'POST', body: JSON.stringify({ fact: 'lyrics', href: location.href, msg: 'загрузка >10с' }) }).catch(() => {})
     }, 10000)
     void ymClient
-      .trackLyrics(cur.track.id)
+      .trackLyrics(trackId)
       .then((res) => {
         did = true
         window.clearTimeout(timer)
         diag('lyrics: OK len=' + String(res.lyric ?? '').length)
         setLyrics(res.lyric ?? '')
-        setLyricsTrackId(cur.track.id)
+        setLyricsTrackId(trackId)
         setLyricsLoading(false)
       })
       .catch((e) => {
@@ -97,6 +92,25 @@ export default function PlayerBar() {
         setLyricsError('Тексты недоступны: ' + msg)
         setLyricsLoading(false)
       })
+  }
+
+  const toggleLyrics = () => {
+    if (lyricsOpen) {
+      setLyricsOpen(false)
+      return
+    }
+    if (!cur) {
+      showToast('Сначала выберите трек')
+      return
+    }
+    setLyricsOpen(true)
+    if (cur.track.id === lyricsTrackId) return // уже загружено (текст или «нет текста») — при ошибке повтор при открытии
+    loadLyrics(cur.track.id)
+  }
+
+  const retryLyrics = () => {
+    if (!cur) return
+    loadLyrics(cur.track.id)
   }
 
   // закрыть тексты, если трек сменился на другой
@@ -232,9 +246,30 @@ export default function PlayerBar() {
             </button>
           </div>
           <div className="pb-lyrics-body">
-            {lyricsLoading && <div className="muted">Загружаем текст…</div>}
-            {!lyricsLoading && lyricsError && <div className="muted">{lyricsError}</div>}
-            {!lyricsLoading && !lyricsError && <pre className="lyrics-text">{cleanLyrics || 'Текст недоступен'}</pre>}
+            {lyricsLoading && (
+              <div className="lyrics-loading" aria-label="Загрузка текста">
+                <span className="skeleton-line" style={{ width: '94%' }} />
+                <span className="skeleton-line" style={{ width: '70%' }} />
+                <span className="skeleton-line" style={{ width: '86%' }} />
+                <span className="skeleton-line" style={{ width: '48%' }} />
+              </div>
+            )}
+            {!lyricsLoading && lyricsError && (
+              <div className="lyrics-state">
+                <IconError size={34} />
+                <div className="lyrics-state-text">{lyricsError}</div>
+                <button className="btn small" onClick={retryLyrics}>
+                  <IconRefresh size={14} /> Повторить
+                </button>
+              </div>
+            )}
+            {!lyricsLoading && !lyricsError && cleanLyrics && <pre className="lyrics-text">{cleanLyrics}</pre>}
+            {!lyricsLoading && !lyricsError && !cleanLyrics && (
+              <div className="lyrics-state">
+                <IconMusicNote size={34} />
+                <div className="lyrics-state-text">Для этого трека текст пока недоступен</div>
+              </div>
+            )}
           </div>
         </div>
       )}

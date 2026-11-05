@@ -362,8 +362,35 @@ class YandexMusicClient {
   // ---------- История ----------
   async musicHistory(): Promise<HistoryItem[]> {
     // Параметр fullModelsCount обязателен (иначе API: "Parameter value is not set")
+    const res = await this.req<{ history?: unknown; historyTabs?: unknown }>('/music-history?fullModelsCount=20')
+    // Новый формат ответа: result.historyTabs = [{date, items: [{context, tracks: [{type,data:{itemId:{trackId,albumId}}}]}]}]
+    const tabs = res?.historyTabs
+    if (Array.isArray(tabs)) {
+      const out: HistoryItem[] = []
+      for (const tab of tabs) {
+        const day = tab && typeof tab === 'object' && typeof (tab as { date?: unknown }).date === 'string'
+          ? (tab as { date: string }).date
+          : ''
+        const groups = (tab as { items?: unknown })?.items
+        if (!Array.isArray(groups)) continue
+        for (const g of groups) {
+          const tracks = (g as { tracks?: unknown })?.tracks
+          if (!Array.isArray(tracks)) continue
+          for (const t of tracks) {
+            const d = (t as { data?: { itemId?: { trackId?: unknown; albumId?: unknown } } })?.data?.itemId
+            if (!d || d.trackId == null) continue
+            out.push({
+              type: 'track',
+              id: { trackId: String(d.trackId), albumId: d.albumId != null ? String(d.albumId) : '' },
+              timestamp: day ? `${day}T12:00:00Z` : undefined,
+            })
+          }
+        }
+      }
+      if (out.length > 0) return out
+    }
+    // Старый формат: result.history = [HistoryItem...]
     // API отдаёт result.history КАК МАССИВ (иногда {items}) — выравниваем
-    const res = await this.req<{ history?: unknown }>('/music-history?fullModelsCount=20')
     const h = res?.history
     if (Array.isArray(h)) return h as HistoryItem[]
     if (h && typeof h === 'object' && Array.isArray((h as { items?: unknown }).items)) {
