@@ -113,7 +113,7 @@
 - [x] ✅ main-процесс: загрузка dev/сборки, IPC `ym-request` через net.fetch (без CORS)
 - [x] ✅ preload-мост (contextIsolation), транспорт выбирает мост автоматически
 - [x] ✅ electron-builder: конфигурация (NSIS, productName, appId), скрипты electron:dev/electron:build
-- [x] 🔶 **Установщик пересобирается с последними фиксами и адаптивностью** — `release/YM Player Setup 0.1.0.exe`
+- [x] ✅ **Установщик пересобран с последними фиксами, адаптивностью и полировкой дизайна** — `release/YM Player Setup 0.1.0.exe` (05.11)
 - [ ] ⬜ Безопасное хранение токена (safeStorage)
 - [ ] ⬜ Иконка .ico в electron/build (сейчас — дефолтная)
 - [ ] ⬜ Подпись кода (SmartScreen без неё предупредит)
@@ -122,7 +122,7 @@
 - [x] ✅ capacitor.config.ts (appId, webDir, CapacitorHttp включён для обхода CORS)
 - [x] ✅ Скрипты cap:add:android / cap:sync / cap:open:android / cap:build:apk
 - [x] ✅ Сгенерирован проект `android/`
-- [x] 🔶 **APK пересобирается с последними фиксами и адаптивностью** — `android/app/build/outputs/apk/debug/app-debug.apk`
+- [x] ✅ **APK пересобран с последними фиксами, адаптивностью и полировкой дизайна** — `android/app/build/outputs/apk/debug/app-debug.apk` (05.11)
 - [ ] ⬜ Хранение токена (@capacitor/preferences)
 - [ ] ⬜ Фоновое воспроизведение с заблокированным экраном (нативный медиа-сервис)
 
