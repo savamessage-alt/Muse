@@ -17,7 +17,7 @@ function createWindow() {
     minHeight: 600,
     backgroundColor: '#121212',
     autoHideMenuBar: true,
-    title: 'YM Player',
+    title: 'Muse',
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,

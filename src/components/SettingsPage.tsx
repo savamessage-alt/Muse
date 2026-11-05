@@ -154,7 +154,7 @@ export default function SettingsPage() {
             <div className="muted small">Логин: {user?.login ?? '—'} · UID: {user?.uid ?? '—'}</div>
             <div className="muted small">Регион API: {status?.account?.region ?? status?.region ?? '—'}</div>
           </div>
-          <span className={'badge' + (hasPlus ? ' plus' : '')}>{hasPlus ? 'Яндекс Плюс' : 'Без подписки'}</span>
+          <span className={'badge' + (hasPlus ? ' plus' : '')}>{hasPlus ? 'С подпиской' : 'Без подписки'}</span>
         </div>
         {sub && (
           <div className="muted small">
@@ -187,7 +187,7 @@ export default function SettingsPage() {
             Выйти из аккаунта
           </button>
         </div>
-        <p className="hint">Access-токен живёт ограниченное время. При истечении плеер автоматически обновляет его по refresh-токену; если Яндекс отозвал доступ — появится экран повторного входа.</p>
+        <p className="hint">Access-токен живёт ограниченное время. При истечении плеер автоматически обновляет его по refresh-токену; если это не удалось — появится экран повторного входа.</p>
       </section>
 
       <section className="settings-card">
@@ -238,9 +238,8 @@ export default function SettingsPage() {
       <section className="settings-card">
         <h2>Об приложении</h2>
         <p className="muted small">
-          YM Player — неофициальный клиент Яндекс Музыки на TypeScript (React + Vite). Интерфейс на русском.
-          Сборки: веб → Windows (.exe, Electron) → Android (.apk, Capacitor). На основе OpenAPI-спецификации
-          проекта MarshalX/yandex-music-api.
+          Muse — музыкальный плеер. Интерфейс на русском.
+          Сборки: веб → Windows (.exe, Electron) → Android (.apk, Capacitor).
         </p>
       </section>
     </div>

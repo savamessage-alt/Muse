@@ -1,0 +1,154 @@
+import { useEffect, useState } from 'react'
+import { player, type PlayerSnapshot } from '../core/player'
+import { useApp } from '../state/store'
+import { coverUrl, formatMs, PLACEHOLDER_COVER, artistNames } from '../core/format'
+import {
+  IconPlay,
+  IconPause,
+  IconPrev,
+  IconNext,
+  IconShuffle,
+  IconRepeat,
+  IconHeart,
+  IconHeartFilled,
+  IconVolume,
+  IconX,
+  IconLyrics,
+  IconSimilar,
+  IconQueue,
+} from './icons'
+
+function useSnapshot(): PlayerSnapshot {
+  const [snap, setSnap] = useState<PlayerSnapshot>(() => player.snapshot())
+  useEffect(() => player.onChange(setSnap), [])
+  return snap
+}
+
+interface Props {
+  onClose: () => void
+  onLyrics: () => void
+  onQueue: () => void
+  onSimilar: () => void
+}
+
+/** Полноэкранный плеер «bottom-sheet»: крупная обложка, управление, быстрый доступ ко всем панелям */
+export default function ExpandedPlayer({ onClose, onLyrics, onQueue, onSimilar }: Props) {
+  const snap = useSnapshot()
+  const isLiked = useApp((s) => s.isLiked)
+  const toggleLike = useApp((s) => s.toggleLike)
+  const cur = snap.current
+  const liked = cur ? isLiked(cur.track) : false
+  const duration = snap.durationMs || 0
+  const position = snap.positionMs
+
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', h)
+    return () => window.removeEventListener('keydown', h)
+  }, [onClose])
+
+  return (
+    <div className="psheet" onClick={onClose}>
+      <div className="psheet-card" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Плеер">
+        <div className="psheet-head">
+          <span className="muted small">Сейчас играет</span>
+          <button className="icon-btn" onClick={onClose} title="Свернуть">
+            <IconX size={18} />
+          </button>
+        </div>
+
+        {cur ? (
+          <div className="psheet-main">
+            <img
+              className="psheet-cover"
+              src={coverUrl(cur.track.coverUri, '400x400') ?? PLACEHOLDER_COVER}
+              alt=""
+              onError={(e) => ((e.target as HTMLImageElement).src = PLACEHOLDER_COVER)}
+            />
+            <div className="psheet-side">
+              <div className="psheet-title">{cur.track.title}</div>
+              <div className="psheet-artist" title={artistNames(cur.track.artists)}>
+                {artistNames(cur.track.artists)}
+              </div>
+              <div className="psheet-controls">
+                <button
+                  className={'icon-btn' + (snap.shuffle ? ' active' : '')}
+                  onClick={() => player.setShuffle(!snap.shuffle)}
+                  title="Перемешать"
+                >
+                  <IconShuffle size={20} />
+                </button>
+                <button className="icon-btn" onClick={() => void player.prev()} title="Предыдущий">
+                  <IconPrev size={24} />
+                </button>
+                <button className="psheet-play" onClick={() => void player.toggle()} title={snap.playing ? 'Пауза' : 'Играть'}>
+                  {snap.playing ? <IconPause size={26} /> : <IconPlay size={26} />}
+                </button>
+                <button className="icon-btn" onClick={() => void player.next()} title="Следующий">
+                  <IconNext size={24} />
+                </button>
+                <button
+                  className={'icon-btn' + (snap.repeat !== 'off' ? ' active' : '')}
+                  onClick={() => player.setRepeat(snap.repeat === 'off' ? 'all' : snap.repeat === 'all' ? 'one' : 'off')}
+                  title="Повтор: off / все / один"
+                >
+                  <IconRepeat size={20} />
+                </button>
+              </div>
+              <div className="psheet-seek">
+                <span className="pb-time">{formatMs(position)}</span>
+                <input
+                  type="range"
+                  className="range"
+                  min={0}
+                  max={Math.max(duration, 1)}
+                  value={Math.min(position, Math.max(duration, 1))}
+                  onChange={(e) => player.seek(Number(e.target.value))}
+                  aria-label="Перемотка"
+                />
+                <span className="pb-time">{formatMs(duration)}</span>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="psheet-empty muted">Очередь пуста — выберите трек</div>
+        )}
+
+        <div className="psheet-foot">
+          <button
+            className={'icon-btn' + (liked ? ' liked' : '')}
+            onClick={() => cur && void toggleLike(cur.track)}
+            title={liked ? 'Убрать из «Мне нравится»' : 'В «Мне нравится»'}
+          >
+            {liked ? <IconHeartFilled size={20} /> : <IconHeart size={20} />}
+          </button>
+          <button className={'icon-btn' + ''} onClick={onLyrics} title="Текст песни" disabled={!cur}>
+            <IconLyrics size={19} />
+          </button>
+          <button className="icon-btn" onClick={onSimilar} title="Похожие треки" disabled={!cur}>
+            <IconSimilar size={20} />
+          </button>
+          <button className="icon-btn" onClick={onQueue} title="Очередь">
+            <IconQueue size={20} />
+            {snap.queue.length > 0 && <span className="queue-badge">{snap.queue.length}</span>}
+          </button>
+          <div className="psheet-vol">
+            <IconVolume size={18} className="pb-vol-icon" />
+            <input
+              type="range"
+              className="range thin"
+              min={0}
+              max={1}
+              step={0.01}
+              value={snap.muted ? 0 : snap.volume}
+              onChange={(e) => player.setVolume(Number(e.target.value))}
+              aria-label="Громкость"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}

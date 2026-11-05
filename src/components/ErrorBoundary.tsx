@@ -19,7 +19,7 @@ export default class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo): void {
-    console.error('[YM Player] Ошибка отрисовки:', error, info.componentStack)
+    console.error('[Muse] Ошибка отрисовки:', error, info.componentStack)
     try {
       diag('render-error', tokenManager.getToken())
       void fetch('/__diag', {

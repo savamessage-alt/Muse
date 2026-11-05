@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { player, type PlayerSnapshot } from '../core/player'
 import { ymClient } from '../core/client'
 import { useApp } from '../state/store'
@@ -7,6 +6,7 @@ import { coverUrl, formatMs, PLACEHOLDER_COVER, artistNames } from '../core/form
 import { diag } from '../core/diag'
 import QueuePanel from './QueuePanel'
 import SimilarPanel from './SimilarPanel'
+import ExpandedPlayer from './ExpandedPlayer'
 import {
   IconPlay,
   IconPause,
@@ -33,11 +33,11 @@ function useSnapshot(): PlayerSnapshot {
 }
 
 export default function PlayerBar() {
-  const navigate = useNavigate()
   const snap = useSnapshot()
   const isLiked = useApp((s) => s.isLiked)
   const toggleLike = useApp((s) => s.toggleLike)
   const showToast = useApp((s) => s.showToast)
+  const [expanded, setExpanded] = useState(false)
   const [lyricsOpen, setLyricsOpen] = useState(false)
   const [lyrics, setLyrics] = useState<string | null>(null)
   const [lyricsLoading, setLyricsLoading] = useState(false)
@@ -51,6 +51,26 @@ export default function PlayerBar() {
   const duration = snap.durationMs || 0
   const position = snap.positionMs
 
+  // глобальные хоткеи: пробел — пауза/играть, ←/→ — перемотка на 5 с
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null
+      if (t && (t.closest('input, textarea, select, [contenteditable]') || t.tagName === 'BUTTON')) return
+      if (e.code === 'Space') {
+        e.preventDefault()
+        void player.toggle()
+      } else if (e.key === 'ArrowRight' && snap.current) {
+        e.preventDefault()
+        player.seek(snap.positionMs + 5000)
+      } else if (e.key === 'ArrowLeft' && snap.current) {
+        e.preventDefault()
+        player.seek(Math.max(0, snap.positionMs - 5000))
+      }
+    }
+    window.addEventListener('keydown', h)
+    return () => window.removeEventListener('keydown', h)
+  }, [snap.current, snap.positionMs])
+
   const onSeek = (ms: number) => player.seek(ms)
 
   const togglePlay = async () => {
@@ -61,8 +81,12 @@ export default function PlayerBar() {
     await player.toggle()
   }
 
-  const queueOpenFn = () => {
-    showToast(`В очереди: ${snap.queue.length} треков`)
+  const openExpanded = () => {
+    if (!cur) {
+      showToast('Сначала выберите трек')
+      return
+    }
+    setExpanded(true)
   }
 
   // загрузка текста песни (при открытии и по кнопке «Повторить»)
@@ -125,6 +149,20 @@ export default function PlayerBar() {
 
   return (
     <footer className="playerbar">
+      {expanded && (
+        <ExpandedPlayer
+          onClose={() => setExpanded(false)}
+          onLyrics={toggleLyrics}
+          onQueue={() => setQueueOpen((v) => !v)}
+          onSimilar={() => {
+            if (!cur) {
+              showToast('Сначала выберите трек')
+              return
+            }
+            setSimilarOpen((v) => !v)
+          }}
+        />
+      )}
       <div className="pb-track">
         {cur ? (
           <>
@@ -132,11 +170,11 @@ export default function PlayerBar() {
               src={coverUrl(cur.track.coverUri, '120x120') ?? PLACEHOLDER_COVER}
               className="pb-cover"
               alt=""
-              onClick={() => navigate('/')}
-              title="Открыть «Мою волну»"
+              onClick={openExpanded}
+              title="Развернуть плеер"
               onError={(e) => ((e.target as HTMLImageElement).src = PLACEHOLDER_COVER)}
             />
-            <div className="pb-meta" onClick={() => navigate('/')} title="Открыть «Мою волну»">
+            <div className="pb-meta" onClick={openExpanded} title="Развернуть плеер">
               <div className="pb-title">{cur.track.title}</div>
               <div className="pb-artist" title={artistNames(cur.track.artists)}>
                 {artistNames(cur.track.artists)}

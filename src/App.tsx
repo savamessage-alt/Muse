@@ -67,7 +67,7 @@ function ReauthWatcher() {
   useEffect(() => {
     return tokenManager.onReauthNeeded(() => {
       useApp.setState({ authenticated: false })
-      useApp.getState().showToast('Токен Яндекса истёк или отозван — войдите заново', 'error')
+      useApp.getState().showToast('Сессия истекла — войдите заново', 'error')
       navigate('/login')
     })
   }, [navigate])

@@ -183,7 +183,7 @@ export default function RadioPage() {
       {busy && <div className="spinner" />}
 
       {stations.length === 0 && !err && !busy && (
-        <p className="muted pad">Станции не найдены. Возможно, нужен аккаунт с подпиской Яндекс Плюс.</p>
+        <p className="muted pad">Станции не найдены. Возможно, нужна подписка на музыку.</p>
       )}
 
       <div className="radio-grid">

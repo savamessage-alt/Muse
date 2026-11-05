@@ -16,20 +16,20 @@ export default function WelcomePage() {
             </div>
           </div>
         </div>
-        <h1 className="welcome-title">YM&nbsp;Player</h1>
+        <h1 className="welcome-title">Muse</h1>
         <p className="welcome-tag">
           Твоя музыка в тёмном стиле.
           <br />
-          «Моя волна», лайки, плейлисты и тексты песен — как в Яндекс&nbsp;Музыке.
+          Волны, лайки, плейлисты и тексты песен — всё в одном месте.
         </p>
         <button className="primary-btn welcome-cta" onClick={goLogin}>
-          Войти в Яндекс&nbsp;Музыку
+          Войти в аккаунт
         </button>
         <button className="link-btn" onClick={goLogin}>
           У меня уже есть токен
         </button>
         <p className="hint welcome-hint">
-          Вход займёт минуту: приложение покажет код, а вы подтвердите его на ya.ru/device.
+          Вход займёт минуту: приложение покажет код, а вы подтвердите его по ссылке на странице входа.
         </p>
       </div>
     </div>

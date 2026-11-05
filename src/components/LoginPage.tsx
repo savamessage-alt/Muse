@@ -14,9 +14,6 @@ export default function LoginPage() {
   const [manual, setManual] = useState('')
   const [showManual, setShowManual] = useState(false)
 
-  // Диагностика: почему показан экран входа (был ли сохранён токен)
-  const stored = tokenManager.getToken()
-
   const start = async () => {
     setErr(null)
     setStatusText('Получаем код входа…')
@@ -46,7 +43,7 @@ export default function LoginPage() {
         if (!alive) return
         if (poll === 'authorization_pending') {
           attempts++
-          setStatusText(`Ждём, пока вы подтвердите вход на Яндексе… (проверка №${attempts})`)
+          setStatusText(`Ждём подтверждения входа… (проверка №${attempts})`)
         } else {
           setStatusText('Ожидаем подтверждения… (' + poll + ')')
         }
@@ -92,18 +89,18 @@ export default function LoginPage() {
     <div className="login-wrap">
       <div className="login-card">
         <div className="login-logo">
-          <span className="logo-dot" /> Yandex&nbsp;Music&nbsp;Player
+          <span className="logo-dot" /> Muse
         </div>
-        <h1>Вход через Яндекс</h1>
+        <h1>Вход в аккаунт</h1>
         <p className="muted">
-          Плеер работает с вашим аккаунтом Яндекс&nbsp;Музыки. Токен истекает — приложение
-          автоматически обновляет его по refresh-токену, а если это не удалось — вы просто войдёте ещё раз.
+          Плеер работает с вашим музыкальным аккаунтом: лайки, плейлисты и история синхронизируются.
+          Токен обновляется автоматически, а если вход не удался — просто войдите ещё раз.
         </p>
 
         {step === 'idle' && (
           <>
             <button className="primary-btn" onClick={() => void start()}>
-              Войти через Яндекс
+              Войти в аккаунт
             </button>
             <button className="link-btn" onClick={() => setShowManual((v) => !v)}>
               {showManual ? 'Скрыть ручной ввод' : 'У меня уже есть токен'}
@@ -121,22 +118,6 @@ export default function LoginPage() {
                 </button>
               </div>
             )}
-            {stored && (
-              <p className="hint token-diag">
-                Найден сохранённый токен в этом браузере:{' '}
-                <b>{stored.accessToken.slice(0, 6)}…</b>
-                {stored.expiresAt
-                  ? ` истекает ${new Date(stored.expiresAt).toLocaleString()}`
-                  : ' без срока'}
-                {stored.refreshToken ? ' · есть refresh' : ' · без refresh'}
-              </p>
-            )}
-            {!stored && (
-              <p className="hint token-diag">
-                Сохранённого токена в этом браузере нет. Вход производится отдельно для каждого адреса
-                (localhost и 192.168… — разные) и для каждого устройства.
-              </p>
-            )}
           </>
         )}
 
@@ -146,7 +127,7 @@ export default function LoginPage() {
             <p className="muted">Откройте страницу и введите код (откройте ссылку кнопкой):</p>
             <div className="code-url">
               <span>{code.verificationUrl}</span>
-              <button className="icon-btn" onClick={openPage} title="Открыть страницу входа на Яндексе">
+              <button className="icon-btn" onClick={openPage} title="Открыть страницу входа">
                 <IconExternal />
               </button>
             </div>

@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Музыкальный плеер Яндекс Музыки на TypeScript (веб → Windows exe → Android apk)",
+  "description": "Музыкальный плеер: веб → Windows exe → Android apk",
   "main": "electron/main.cjs",
   "scripts": {
     "dev": "vite",
@@ -21,6 +21,7 @@
   "dependencies": {
     "@capacitor/android": "^8.5.3",
     "@capacitor/core": "^8.5.3",
+    "lucide-react": "^1.69.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "react-router-dom": "^7.18.4",
@@ -42,7 +43,7 @@
   },
   "build": {
     "appId": "com.ymplayer.app",
-    "productName": "YM Player",
+    "productName": "Muse",
     "directories": {
       "output": "release",
       "buildResources": "electron/build"

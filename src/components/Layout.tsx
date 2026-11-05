@@ -23,7 +23,7 @@ export default function Layout() {
         <aside className="sidebar">
           <div className="sidebar-logo">
             <span className="logo-dot" />
-            YM Player
+            Muse
           </div>
           <nav className="nav">
             {nav.map(({ to, label, icon: Icon, end }) => (
