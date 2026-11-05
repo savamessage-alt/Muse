@@ -719,8 +719,8 @@ button { font-family: inherit; }
     max-height: calc(100vh - var(--player-h) - var(--nav-h) - 30px);
   }
   /* подписи нижней навигации (планшетное правило их скрывало) */
-  .mobile-nav .nav-link { color: var(--text-dim); }
-  .mobile-nav .nav-link span { display: inline; }
+  .mobile-nav .nav-link { color: var(--text-dim); font-size: 10.5px; letter-spacing: .2px; }
+  .mobile-nav .nav-link span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
   .mobile-nav .nav-link.active { color: var(--accent); }
 
   /* списки треков: без колонки «альбом» и времени */

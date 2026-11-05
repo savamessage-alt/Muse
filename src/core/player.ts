@@ -5,6 +5,7 @@
 
 import { resolveStreamUrl } from './stream'
 import { ymClient } from './client'
+import { backgroundPlayback } from './background'
 import type { RadioSessionResume, Track } from './types'
 
 export interface PlayableTrack {
@@ -190,19 +191,31 @@ class Player {
   }
 
   async toggle(): Promise<boolean> {
-    if (this.audio.paused) return this.audio.play().then(() => true).catch(() => false)
+    if (this.audio.paused) {
+      return this.audio
+        .play()
+        .then(() => {
+          this.syncBackground()
+          return true
+        })
+        .catch(() => false)
+    }
     this.audio.pause()
+    backgroundPlayback.stop()
     return true
   }
 
   /** пауза (для удалённого управления Ynison) */
   pause(): void {
     if (!this.audio.paused) this.audio.pause()
+    backgroundPlayback.stop()
   }
 
   /** продолжить (для удалённого управления Ynison) */
   resume(): void {
-    if (this.audio.paused) void this.audio.play().catch(() => {})
+    if (this.audio.paused) {
+      void this.audio.play().then(() => this.syncBackground()).catch(() => {})
+    }
   }
 
   async next(): Promise<boolean> {
@@ -257,6 +270,7 @@ class Player {
     this.audio.pause()
     this.audio.removeAttribute('src')
     this.audio.load()
+    backgroundPlayback.stop()
     this.emit()
   }
 
@@ -290,6 +304,7 @@ class Player {
       try {
         await this.audio.play()
         void this.diagPlay('playing-ok ' + item.track.id)
+        this.syncBackground()
         this.sendRadioFeedback('trackStarted')
         return true
       } catch (p) {
@@ -334,9 +349,18 @@ class Player {
     }
     const goNext = await this.step(1)
     if (!goNext) {
-      // конец очереди
+      // конец очереди — убираем фоновое уведомление
+      backgroundPlayback.stop()
     }
     void skipError
+  }
+
+  /** Обновить фоновое уведомление (новая песня / продолжили паузу) */
+  private syncBackground(): void {
+    const cur = this.queue[this.index]
+    if (!cur) return
+    const artists = (cur.track.artists ?? []).map((a) => a.name).join(', ')
+    backgroundPlayback.start(cur.track.title, artists || 'Неизвестный артист')
   }
 
   private async step(dir: 1 | -1): Promise<boolean> {
