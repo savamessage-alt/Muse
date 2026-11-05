@@ -1130,3 +1130,20 @@ button { font-family: inherit; }
   from { opacity: 0; transform: scale(.82) rotate(-14deg); }
   to   { opacity: 1; transform: none; }
 }
+
+/* быстрый доступ к «Моим плейлистам» на главной — виден только на телефоне
+   (на десктопе плейлисты и так в сайдбаре; снизу и так много кнопок) */
+.wave-quick { display: none; margin-top: 2px; animation: greetIn .5s cubic-bezier(.2, .8, .3, 1) .34s both; }
+.wave-quick-chip {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 18px; border-radius: 22px; border: 1px solid rgba(255, 255, 255, .24);
+  background: linear-gradient(120deg, var(--accent), var(--accent-2));
+  color: #fff; font-weight: 800; font-size: 14px; cursor: pointer;
+  box-shadow: 0 10px 30px rgba(255, 60, 0, .38);
+  transition: transform .12s, box-shadow .15s;
+}
+.wave-quick-chip:hover { transform: translateY(-1px) scale(1.03); box-shadow: 0 12px 36px rgba(255, 60, 0, .5); }
+.wave-quick-chip:active { transform: scale(.96); }
+@media (max-width: 768px) {
+  .wave-quick { display: flex; justify-content: center; }
+}

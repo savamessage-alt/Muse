@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { ymClient } from '../core/client'
 import { useApp } from '../state/store'
 import { player } from '../core/player'
 import { artistNames, coverUrl, formatMs, PLACEHOLDER_COVER } from '../core/format'
 import type { Track } from '../core/types'
-import { IconDislike, IconHeart, IconHeartFilled, IconNext, IconPause, IconPlay, IconShuffle } from './icons'
+import { IconDislike, IconHeart, IconHeartFilled, IconList, IconNext, IconPause, IconPlay, IconShuffle } from './icons'
 
 interface Wave {
   type: string
@@ -22,6 +23,7 @@ export default function HomePage() {
   const user = useApp((s) => s.user)
   const [snap, setSnap] = useState(() => player.snapshot())
   useEffect(() => player.onChange(setSnap), [])
+  const nav = useNavigate()
 
   const firstName = user?.firstName ?? (user?.displayName ?? user?.name ?? '').split(/\s+/)[0] ?? user?.login ?? ''
 
@@ -128,10 +130,17 @@ export default function HomePage() {
       <div className="wave-glow" />
       <div className="wave-main">
         {!cur && (
-          <div className="wave-greet">
-            <span className="wave-greet-hello">{firstName ? `Привет, ${firstName}!` : 'Добро пожаловать!'}</span>
-            <span className="wave-greet-sub">Что послушаем сегодня?</span>
-          </div>
+          <>
+            <div className="wave-greet">
+              <span className="wave-greet-hello">{firstName ? `Привет, ${firstName}!` : 'Добро пожаловать!'}</span>
+              <span className="wave-greet-sub">Что послушаем сегодня?</span>
+            </div>
+            <div className="wave-quick">
+              <button className="wave-quick-chip" onClick={() => nav('/playlists')} title="Мои плейлисты">
+                <IconList size={17} /> Мои плейлисты
+              </button>
+            </div>
+          </>
         )}
         <div className="wave-label">МОЯ ВОЛНА</div>
 
