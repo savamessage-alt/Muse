@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { player, type PlayableTrack } from '../core/player'
 import { useApp } from '../state/store'
-import { artistNames, coverUrl, formatMs, PLACEHOLDER_COVER } from '../core/format'
+import { artistNames, coverUrl, formatMs, trackKey, PLACEHOLDER_COVER } from '../core/format'
 import type { Track } from '../core/types'
 import { IconPlay, IconPause, IconHeart, IconHeartFilled, IconMore, IconList, IconPlus, IconTrash } from './icons'
 
@@ -33,16 +33,23 @@ function TrackMenu({
   track,
   index,
   onRemoveFromPlaylist,
+  openSignal,
 }: {
   track: Track
   index?: number
   onRemoveFromPlaylist?: (index: number) => void
+  /** внешний сигнал открыть меню (свайп влево по строке) */
+  openSignal?: number
 }) {
   const playlists = useApp((s) => s.playlists)
   const addToPlaylist = useApp((s) => s.addToPlaylist)
   const nav = useNavigate()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (openSignal && openSignal > 0) setOpen(true)
+  }, [openSignal])
 
   useEffect(() => {
     if (!open) return
@@ -129,11 +136,16 @@ function TrackMenu({
   )
 }
 
+/** Время последнего свайпа по строке — чтобы не срабатывал клик «играть» */
+let lastRowSwipeAt = 0
+
 export default function TrackList({ tracks, onPlay, showAlbum = true, showLikes = true, emptyText, playSource = 'queue', loading, removeFromPlaylist }: Props) {
   const [snap, setSnap] = useState(() => player.snapshot())
   useEffect(() => player.onChange(setSnap), [])
-  const isLiked = useApp((s) => s.isLiked)
+  const likedKeys = useApp((s) => s.likedKeys)
   const toggleLike = useApp((s) => s.toggleLike)
+  const rowSwipe = useRef<{ x: number; y: number; t: number } | null>(null)
+  const [menuSignal, setMenuSignal] = useState<{ id: string; n: number } | null>(null)
 
   if (loading) {
     return (
@@ -160,14 +172,34 @@ export default function TrackList({ tracks, onPlay, showAlbum = true, showLikes 
       {tracks.map((t, i) => {
         const playing = snap.current?.track.id === t.id && snap.playing
         const paused = snap.current?.track.id === t.id && !snap.playing
-        const liked = isLiked(t)
+        const liked = likedKeys.has(trackKey(t))
         return (
           <div
             key={t.id + (t.albums?.[0]?.id ?? '')}
             className={'trackrow' + (snap.current?.track.id === t.id ? ' current' : '')}
             onDoubleClick={() => (onPlay ? onPlay(i) : playTracks(tracks, i, playSource))}
-            onClick={() => (onPlay ? onPlay(i) : playTracks(tracks, i, playSource))}
-            title="Двойной клик — играть"
+            onClick={() => {
+              if (Date.now() - lastRowSwipeAt < 400) return
+              if (onPlay) onPlay(i)
+              else playTracks(tracks, i, playSource)
+            }}
+            onPointerDown={(e) => {
+              if ((e.target as HTMLElement).closest('.icon-btn')) return
+              rowSwipe.current = { x: e.clientX, y: e.clientY, t: Date.now() }
+            }}
+            onPointerUp={(e) => {
+              const s = rowSwipe.current
+              rowSwipe.current = null
+              if (!s) return
+              const dx = e.clientX - s.x
+              const dy = e.clientY - s.y
+              if (Date.now() - s.t > 700) return
+              if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return
+              lastRowSwipeAt = Date.now()
+              if (dx < 0) setMenuSignal({ id: t.id, n: Date.now() })
+              else void toggleLike(t)
+            }}
+            title="Двойной клик — играть · свайп влево — действия, вправо — лайк"
           >
             <span className="tc-idx">
               {playing ? (
@@ -211,7 +243,12 @@ export default function TrackList({ tracks, onPlay, showAlbum = true, showLikes 
                   {liked ? <IconHeartFilled size={16} /> : <IconHeart size={16} />}
                 </button>
               )}
-              <TrackMenu track={t} index={i} onRemoveFromPlaylist={removeFromPlaylist} />
+              <TrackMenu
+                track={t}
+                index={i}
+                onRemoveFromPlaylist={removeFromPlaylist}
+                openSignal={menuSignal?.id === t.id ? menuSignal.n : 0}
+              />
             </span>
           </div>
         )

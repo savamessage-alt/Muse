@@ -3,6 +3,8 @@ import type { ReactNode } from 'react'
 import { HashRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useApp } from './state/store'
 import { tokenManager } from './core/tokenManager'
+import { initMediaControl } from './core/mediaControl'
+import { player } from './core/player'
 import LoginPage from './components/LoginPage'
 import WelcomePage from './components/WelcomePage'
 import Layout from './components/Layout'
@@ -114,6 +116,11 @@ export default function App() {
     if (!booted) void useApp.getState().boot()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [booted])
+
+  useEffect(() => {
+    initMediaControl()
+    void player.restore()
+  }, [])
 
   return (
     <ErrorBoundary>

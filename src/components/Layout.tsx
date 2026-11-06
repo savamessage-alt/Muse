@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { useApp } from '../state/store'
+import { useSwipeBack } from '../hooks/useSwipeBack'
 import PlayerBar from './PlayerBar'
 import ResumePosition from './ResumePosition'
 import UserAvatar from './UserAvatar'
@@ -8,6 +9,7 @@ import { IconHome, IconSearch, IconRadio, IconHeart, IconHistory, IconSettings, 
 export default function Layout() {
   const user = useApp((s) => s.user)
   const playlists = useApp((s) => s.playlists)
+  useSwipeBack()
 
   const nav = [
     { to: '/', label: 'Главная', icon: IconHome, end: true },

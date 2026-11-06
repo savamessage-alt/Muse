@@ -5,7 +5,6 @@
 
 import { resolveStreamUrl } from './stream'
 import { ymClient } from './client'
-import { backgroundPlayback } from './background'
 import type { RadioSessionResume, Track } from './types'
 
 export interface PlayableTrack {
@@ -59,6 +58,9 @@ class Player {
   private listeners = new Set<SnapshotListener>()
   // Радио-состояние
   private radio: { type: string; tag: string; session?: RadioSessionResume } | null = null
+  // Защита от бесконечного скипа битых треков (в фоне play() может отклоняться)
+  private consecutiveFailures = 0
+  private lastPersist = 0
 
   constructor() {
     const a = this.audio
@@ -151,6 +153,8 @@ class Player {
       ? { type: radio.type, tag: radio.tag, session: undefined }
       : null
     this.error = null
+    this.consecutiveFailures = 0
+    this.persist(true)
     return this.loadAndPlay(this.queue[this.index])
   }
 
@@ -161,6 +165,7 @@ class Player {
   /** Добавить треки в конец очереди (не прерывая текущий) */
   enqueue(items: PlayableTrack[]): void {
     this.queue.push(...items)
+    this.persist(true)
     this.emit()
   }
 
@@ -201,14 +206,12 @@ class Player {
         .catch(() => false)
     }
     this.audio.pause()
-    backgroundPlayback.stop()
     return true
   }
 
   /** пауза (для удалённого управления Ynison) */
   pause(): void {
     if (!this.audio.paused) this.audio.pause()
-    backgroundPlayback.stop()
   }
 
   /** продолжить (для удалённого управления Ynison) */
@@ -270,7 +273,6 @@ class Player {
     this.audio.pause()
     this.audio.removeAttribute('src')
     this.audio.load()
-    backgroundPlayback.stop()
     this.emit()
   }
 
@@ -279,6 +281,66 @@ class Player {
     const cur = this.queue[this.index]
     if (!cur) return false
     return this.loadAndPlay(cur)
+  }
+
+  /** Восстановить очередь после перезапуска приложения (пауза, на позиции) */
+  async restore(): Promise<void> {
+    try {
+      const raw = localStorage.getItem('ym.queue')
+      if (!raw) return
+      const data = JSON.parse(raw) as {
+        ids?: string[]
+        sources?: string[]
+        index?: number
+        positionMs?: number
+        radio?: { type: string; tag: string } | null
+      }
+      if (!data?.ids?.length) return
+      const full = await ymClient.tracks(data.ids)
+      const byId = new Map((full ?? []).map((t) => [String(t.id), t]))
+      const items: PlayableTrack[] = []
+      data.ids.forEach((id, i) => {
+        const t = byId.get(String(id))
+        if (t) items.push({ track: t, source: (data.sources?.[i] as PlayableTrack['source']) ?? 'queue' })
+      })
+      if (!items.length) return
+      this.queue = items
+      this.index = Math.min(Math.max(data.index ?? 0, 0), items.length - 1)
+      this.radio = data.radio ? { type: data.radio.type, tag: data.radio.tag, session: undefined } : null
+      this.emit()
+      const cur = this.queue[this.index]
+      if (cur) {
+        const choice = await resolveStreamUrl(cur.track)
+        if (choice) {
+          this.audio.src = choice.url
+          this.audio.currentTime = Math.max(0, (data.positionMs ?? 0) / 1000)
+          this.updateMediaSession(cur)
+          this.emit()
+        }
+      }
+    } catch {
+      /* нет сохранённой очереди — ок */
+    }
+  }
+
+  /** Сохранить очередь/позицию (для восстановления после перезапуска) */
+  private persist(force = false): void {
+    const now = Date.now()
+    if (!force && now - this.lastPersist < 2000) return
+    this.lastPersist = now
+    try {
+      if (!this.queue.length) return
+      const data = {
+        ids: this.queue.map((q) => q.track.id),
+        sources: this.queue.map((q) => q.source ?? 'queue'),
+        index: this.index,
+        positionMs: Math.round(this.audio.currentTime * 1000),
+        radio: this.radio ? { type: this.radio.type, tag: this.radio.tag } : null,
+      }
+      localStorage.setItem('ym.queue', JSON.stringify(data))
+    } catch {
+      /* ignore */
+    }
   }
 
   /** поставить/снять лайк текущему треку и уведомить */
@@ -304,6 +366,7 @@ class Player {
       try {
         await this.audio.play()
         void this.diagPlay('playing-ok ' + item.track.id)
+        this.consecutiveFailures = 0
         this.syncBackground()
         this.sendRadioFeedback('trackStarted')
         return true
@@ -333,7 +396,16 @@ class Player {
   private failTrack(reason: string): void {
     this.error = reason
     this.buffering = false
+    this.consecutiveFailures++
     this.emit()
+    // Не скипаем всю очередь бесконечно: после 3 подряд ошибок — стоп
+    if (this.consecutiveFailures >= 3) {
+      this.consecutiveFailures = 0
+      this.error = 'Не удалось воспроизвести. Проверьте соединение.'
+      this.emit()
+      this.stop()
+      return
+    }
     void this.onEnded(true) // пробуем следующую
   }
 
@@ -348,20 +420,11 @@ class Player {
       this.index = -1
     }
     const goNext = await this.step(1)
-    if (!goNext) {
-      // конец очереди — убираем фоновое уведомление
-      backgroundPlayback.stop()
-    }
     void skipError
   }
 
-  /** Обновить фоновое уведомление (новая песня / продолжили паузу) */
-  private syncBackground(): void {
-    const cur = this.queue[this.index]
-    if (!cur) return
-    const artists = (cur.track.artists ?? []).map((a) => a.name).join(', ')
-    backgroundPlayback.start(cur.track.title, artists || 'Неизвестный артист')
-  }
+  /** Состояние для нативного медиа-виджета ведёт mediaControl.ts (полный push). */
+  private syncBackground(): void {}
 
   private async step(dir: 1 | -1): Promise<boolean> {
     if (!this.queue.length) return false
@@ -383,11 +446,46 @@ class Player {
 
     if (idx < 0) idx = this.queue.length - 1
     if (idx >= this.queue.length) {
-      if (this.repeat === 'all' && this.queue.length) idx = 0
-      else return false
+      if (this.repeat === 'all' && this.queue.length) {
+        idx = 0
+      } else {
+        // Очередь кончилась — продолжаем похожими треками (как «Моя волна»)
+        const extended = await this.extendWithSimilar()
+        if (!extended) return false
+        idx = this.index + 1
+        if (idx >= this.queue.length) return false
+      }
     }
     this.index = idx
+    this.persist(true)
     return this.loadAndPlay(this.queue[idx])
+  }
+
+  /** Дополнить очередь похожими треками на текущий (бесконечное воспроизведение) */
+  private async extendWithSimilar(): Promise<boolean> {
+    const cur = this.queue[this.index]
+    if (!cur || this.radio) return false
+    if (this.queue.length > 300) return false
+    try {
+      const res = await ymClient.tracksSimilar(cur.track.id)
+      const known = new Set(this.queue.map((q) => q.track.id))
+      const ids = (res.similarTracks ?? [])
+        .filter((t) => t && t.id && !known.has(String(t.id)))
+        .map((t) => String(t.id))
+        .slice(0, 20)
+      if (!ids.length) return false
+      const full = await ymClient.tracks(ids)
+      const fresh = (full ?? [])
+        .filter((t) => t && t.id && !known.has(String(t.id)))
+        .map((t) => ({ track: t, source: 'queue' as const }))
+      if (!fresh.length) return false
+      this.queue.push(...fresh)
+      this.persist(true)
+      this.emit()
+      return true
+    } catch {
+      return false
+    }
   }
 
   private async ensureRadioBuffer(): Promise<void> {
@@ -454,6 +552,7 @@ class Player {
   }
 
   private emit(): void {
+    this.persist()
     const s = this.snapshot()
     this.listeners.forEach((fn) => fn(s))
   }
