@@ -26,6 +26,7 @@ import {
   CircleAlert,
   Music,
   MoreVertical,
+  Trash2,
 } from 'lucide-react'
 import type { LucideProps } from 'lucide-react'
 
@@ -61,3 +62,4 @@ export const IconError = (p: P) => <CircleAlert {...p} />
 /** Нотка (пустое состояние, например нет текста песни) */
 export const IconMusicNote = (p: P) => <Music {...p} />
 export const IconMore = (p: P) => <MoreVertical {...p} />
+export const IconTrash = (p: P) => <Trash2 {...p} />

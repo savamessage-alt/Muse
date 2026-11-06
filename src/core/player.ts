@@ -468,3 +468,8 @@ class Player {
 }
 
 export const player = new Player()
+
+// e2e-хук: доступ к плееру для тестов (индекс очереди, снапшот)
+if (typeof window !== 'undefined') {
+  ;(window as unknown as { __player: Player }).__player = player
+}

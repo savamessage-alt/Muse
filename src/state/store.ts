@@ -36,6 +36,10 @@ interface AppState {
   createPlaylist: (title: string) => Promise<Playlist | null>
   /** Добавить трек в конец плейлиста (по kind) */
   addToPlaylist: (track: Track, kind: string) => Promise<void>
+  /** Убрать трек из плейлиста по индексу (kind известен из контекста) */
+  removeFromPlaylist: (index: number, kind: string) => Promise<boolean>
+  /** Удалить плейлист целиком */
+  deletePlaylist: (kind: string) => Promise<void>
   showToast: (text: string, kind?: Toast['kind']) => void
   dismissToast: (id: number) => void
   logout: () => void
@@ -214,6 +218,55 @@ export const useApp = create<AppState>((set, get) => ({
         }
       }
       get().showToast('Не удалось добавить трек: ' + msg, 'error')
+    }
+  },
+
+  removeFromPlaylist: async (index, kind) => {
+    const loadFresh = async (): Promise<Playlist | null> => {
+      try {
+        return await ymClient.playlist(kind)
+      } catch {
+        return null
+      }
+    }
+    const pl = await loadFresh()
+    if (!pl) {
+      get().showToast('Плейлист не найден', 'error')
+      return false
+    }
+    const del = async (target: Playlist): Promise<boolean> => {
+      await ymClient.playlistDeleteRange(target, index, index + 1)
+      get().showToast('Трек убран из плейлиста', 'success')
+      void get().refreshPlaylists()
+      return true
+    }
+    try {
+      return await del(pl)
+    } catch (e) {
+      const msg = (e as Error).message
+      if (/revision/i.test(msg)) {
+        const fresh = await loadFresh()
+        if (fresh && fresh.revision != null && fresh.kind) {
+          try {
+            return await del(fresh)
+          } catch (e2) {
+            get().showToast('Не удалось убрать трек: ' + (e2 as Error).message, 'error')
+            return false
+          }
+        }
+      }
+      get().showToast('Не удалось убрать трек: ' + msg, 'error')
+      return false
+    }
+  },
+
+  deletePlaylist: async (kind) => {
+    try {
+      await ymClient.playlistDelete(kind)
+      get().showToast('Плейлист удалён', 'success')
+      await get().refreshPlaylists()
+    } catch (e) {
+      get().showToast('Не удалось удалить плейлист: ' + (e as Error).message, 'error')
     }
   },
 

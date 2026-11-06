@@ -287,6 +287,8 @@ button { font-family: inherit; }
   color: var(--accent-2); margin-top: 4px; padding-top: 10px;
   border-top: 1px solid var(--border); border-radius: 0 0 8px 8px;
 }
+.track-menu-item.danger { color: #ff6b6b; margin-bottom: 4px; padding-bottom: 9px; border-bottom: 1px solid var(--border); border-radius: 8px 8px 0 0; }
+.track-menu-item.danger:hover { background: rgba(255, 107, 107, .12); }
 
 /* ---------- сущности (альбом/плейлист/артист) ---------- */
 .entity-page { padding-top: 8px; }
@@ -1196,3 +1198,44 @@ button { font-family: inherit; }
 .fav-create-btn svg { color: var(--accent-2); }
 .fav-create-btn:hover { background: rgba(255, 255, 255, .08); border-color: var(--accent); transform: translateY(-1px); }
 .fav-create-btn:active { transform: scale(.98); }
+
+/* Удаление плейлиста: кнопка на странице + модальное подтверждение */
+.entity-actions { display: flex; align-items: center; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
+.delete-playlist-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 14px; border-radius: 10px; border: 1px solid rgba(255, 107, 107, .4);
+  background: rgba(255, 107, 107, .08); color: #ff8f8f;
+  font-size: 13.5px; font-weight: 600; cursor: pointer; transition: background .15s;
+}
+.delete-playlist-btn:hover { background: rgba(255, 107, 107, .18); }
+.confirm-overlay {
+  position: fixed; inset: 0; z-index: 500;
+  background: rgba(0, 0, 0, .6); backdrop-filter: blur(3px);
+  display: grid; place-items: center; padding: 24px;
+}
+.confirm-box {
+  width: min(400px, 100%); background: var(--bg-panel);
+  border: 1px solid var(--border); border-radius: 18px;
+  padding: 18px; box-shadow: 0 24px 70px rgba(0, 0, 0, .65);
+  animation: popIn .18s ease-out;
+}
+@keyframes popIn { from { transform: scale(.94); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.confirm-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.confirm-title { font-size: 17px; font-weight: 800; margin-bottom: 6px; }
+.confirm-text { color: var(--text-dim); font-size: 13.5px; line-height: 1.5; margin-bottom: 18px; }
+.confirm-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.primary-btn.ghost { background: rgba(255, 255, 255, .08); color: var(--text); }
+.primary-btn.ghost:hover { background: rgba(255, 255, 255, .14); }
+.primary-btn.danger { background: #e5484d; }
+.primary-btn.danger:hover { background: #d63c41; }
+
+/* Свайп-зона обложки в плеере */
+.psheet-cover-wrap {
+  position: relative; touch-action: none; user-select: none;
+  -webkit-user-select: none; flex-shrink: 0;
+}
+.psheet-swipe-hint {
+  position: absolute; left: 50%; bottom: -4px; transform: translateX(-50%);
+  font-size: 11px; opacity: .55; letter-spacing: 1px; pointer-events: none;
+  white-space: nowrap;
+}

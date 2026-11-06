@@ -1,16 +1,22 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { ymClient } from '../core/client'
 import { expandTracks } from '../core/tracks'
 import { coverUrl, formatCount, PLACEHOLDER_COVER } from '../core/format'
 import type { Playlist, Track, TrackShort } from '../core/types'
+import { useApp } from '../state/store'
 import TrackList, { playTracks } from './TrackList'
+import { IconTrash, IconX } from './icons'
 
 export default function PlaylistPage() {
   const { kind } = useParams<{ kind: string }>()
+  const nav = useNavigate()
   const [playlist, setPlaylist] = useState<Playlist | null>(null)
   const [tracks, setTracks] = useState<Track[]>([])
   const [err, setErr] = useState<string | null>(null)
+  const [confirmDel, setConfirmDel] = useState(false)
+  const removeFromPlaylist = useApp((s) => s.removeFromPlaylist)
+  const deletePlaylist = useApp((s) => s.deletePlaylist)
 
   useEffect(() => {
     if (!kind) return
@@ -40,6 +46,19 @@ export default function PlaylistPage() {
       .catch((e) => setErr('Не удалось загрузить плейлист: ' + (e as Error).message))
   }, [kind])
 
+  const onRemove = async (i: number) => {
+    if (!kind) return
+    const ok = await removeFromPlaylist(i, kind)
+    if (ok) setTracks((ts) => ts.filter((_, idx) => idx !== i))
+  }
+
+  const onDeletePlaylist = async () => {
+    if (!kind) return
+    setConfirmDel(false)
+    await deletePlaylist(kind)
+    nav('/playlists')
+  }
+
   if (err) return <div className="error-box"><p>{err}</p></div>
   if (!playlist) return <div className="spinner" />
 
@@ -63,15 +82,49 @@ export default function PlaylistPage() {
             {tracks.length ? formatCount(tracks.length) + ' треков' : ''}
             {totalDur ? ' · ' + Math.round(totalDur / 60000) + ' мин' : ''}
           </div>
-          {tracks.length > 0 && (
-            <button className="primary-btn" onClick={() => playTracks(tracks, 0, 'playlist')}>
-              ▶ Играть
+          <div className="entity-actions">
+            {tracks.length > 0 && (
+              <button className="primary-btn" onClick={() => playTracks(tracks, 0, 'playlist')}>
+                ▶ Играть
+              </button>
+            )}
+            <button className="delete-playlist-btn" onClick={() => setConfirmDel(true)} title="Удалить плейлист">
+              <IconTrash size={15} /> Удалить плейлист
             </button>
-          )}
+          </div>
         </div>
       </div>
 
-      <TrackList tracks={tracks} emptyText="В плейлисте нет треков" />
+      <TrackList
+        tracks={tracks}
+        emptyText="В плейлисте нет треков"
+        removeFromPlaylist={onRemove}
+      />
+
+      {confirmDel && (
+        <div className="confirm-overlay" onClick={() => setConfirmDel(false)}>
+          <div className="confirm-box" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Удаление плейлиста">
+            <div className="confirm-head">
+              <span className="muted small">Удаление</span>
+              <button className="icon-btn small" onClick={() => setConfirmDel(false)} title="Закрыть">
+                <IconX size={16} />
+              </button>
+            </div>
+            <div className="confirm-title">Удалить плейлист?</div>
+            <div className="confirm-text">
+              «{playlist.title ?? 'Без названия'}» будет удалён навсегда — треки из «Избранного» и библиотеки не пропадут.
+            </div>
+            <div className="confirm-actions">
+              <button className="primary-btn ghost" onClick={() => setConfirmDel(false)}>
+                Отмена
+              </button>
+              <button className="primary-btn danger" onClick={() => void onDeletePlaylist()}>
+                <IconTrash size={15} /> Удалить
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -4,7 +4,7 @@ import { player, type PlayableTrack } from '../core/player'
 import { useApp } from '../state/store'
 import { artistNames, coverUrl, formatMs, PLACEHOLDER_COVER } from '../core/format'
 import type { Track } from '../core/types'
-import { IconPlay, IconPause, IconHeart, IconHeartFilled, IconMore, IconList, IconPlus } from './icons'
+import { IconPlay, IconPause, IconHeart, IconHeartFilled, IconMore, IconList, IconPlus, IconTrash } from './icons'
 
 interface Props {
   tracks: Track[]
@@ -17,6 +17,8 @@ interface Props {
   playSource?: PlayableTrack['source']
   /** пока идёт загрузка — спиннер вместо «пусто» (иначе мелькает «пока пусто») */
   loading?: boolean
+  /** если задано — в меню появляется «Убрать из плейлиста» (индекс строки передаётся) */
+  removeFromPlaylist?: (index: number) => void
 }
 
 /** Воспроизвести список с указанного индекса (по умолчанию) */
@@ -25,8 +27,17 @@ export function playTracks(tracks: Track[], index = 0, source: PlayableTrack['so
   void player.playQueue(tracks.map((track) => ({ track, source })), index)
 }
 
-/** Меню действий с треком: добавить в плейлист (с выбором), создать плейлист */
-function TrackMenu({ track }: { track: Track }) {
+/** Меню действий с треком: добавить в плейлист (с выбором), создать плейлист,
+ *  а в контексте плейлиста — убрать трек из него */
+function TrackMenu({
+  track,
+  index,
+  onRemoveFromPlaylist,
+}: {
+  track: Track
+  index?: number
+  onRemoveFromPlaylist?: (index: number) => void
+}) {
   const playlists = useApp((s) => s.playlists)
   const addToPlaylist = useApp((s) => s.addToPlaylist)
   const nav = useNavigate()
@@ -69,6 +80,19 @@ function TrackMenu({ track }: { track: Track }) {
       </button>
       {open && (
         <div className="track-menu-pop" role="menu" onClick={(e) => e.stopPropagation()}>
+          {onRemoveFromPlaylist && index != null && (
+            <button
+              className="track-menu-item danger"
+              role="menuitem"
+              onClick={(e) => {
+                e.stopPropagation()
+                setOpen(false)
+                onRemoveFromPlaylist(index)
+              }}
+            >
+              <IconTrash size={15} /> Убрать из плейлиста
+            </button>
+          )}
           <div className="track-menu-title">Добавить в плейлист</div>
           <div className="track-menu-list">
             {playlists.length === 0 && <div className="muted small track-menu-empty">Плейлистов пока нет</div>}
@@ -105,7 +129,7 @@ function TrackMenu({ track }: { track: Track }) {
   )
 }
 
-export default function TrackList({ tracks, onPlay, showAlbum = true, showLikes = true, emptyText, playSource = 'queue', loading }: Props) {
+export default function TrackList({ tracks, onPlay, showAlbum = true, showLikes = true, emptyText, playSource = 'queue', loading, removeFromPlaylist }: Props) {
   const [snap, setSnap] = useState(() => player.snapshot())
   useEffect(() => player.onChange(setSnap), [])
   const isLiked = useApp((s) => s.isLiked)
@@ -187,7 +211,7 @@ export default function TrackList({ tracks, onPlay, showAlbum = true, showLikes 
                   {liked ? <IconHeartFilled size={16} /> : <IconHeart size={16} />}
                 </button>
               )}
-              <TrackMenu track={t} />
+              <TrackMenu track={t} index={i} onRemoveFromPlaylist={removeFromPlaylist} />
             </span>
           </div>
         )

@@ -330,11 +330,19 @@ class YandexMusicClient {
     const diff: Record<string, PlaylistOp> = { op_1: { op: 'insert', at, tracks } }
     return this.playlistChange(kind, diff, playlist.owner?.uid, playlist.revision)
   }
-  /** Удалить треки из плейлиста (диапазон позиций) */
+  /** Удалить треки из плейлиста: диапазон позиций [from, to) — стартовый индекс
+ *  включается, конечный НЕ включается (семантика Yandex API: удалить i-й трек —
+ *  deleteRange(pl, i, i + 1)) */
   async playlistDeleteRange(playlist: Playlist, from: number, to: number): Promise<Playlist | null> {
     const kind = playlist.kind ?? ''
     const diff: Record<string, PlaylistOp> = { op_1: { op: 'delete', from, to } }
     return this.playlistChange(kind, diff, playlist.owner?.uid, playlist.revision)
+  }
+  /** Удалить плейлист целиком */
+  async playlistDelete(kind: string, uid?: number): Promise<boolean> {
+    const u = uid ?? (await this.getUid())
+    await this.req(`/users/${u}/playlists/${encodeURIComponent(kind)}/delete`, { method: 'POST' })
+    return true
   }
 
   // ---------- Поиск ----------

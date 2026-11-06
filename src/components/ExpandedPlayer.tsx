@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { player, type PlayerSnapshot } from '../core/player'
 import { useApp } from '../state/store'
 import { coverUrl, formatMs, PLACEHOLDER_COVER, artistNames } from '../core/format'
@@ -49,6 +49,38 @@ export default function ExpandedPlayer({ onClose, onLyrics, onQueue, onSimilar }
     return () => window.removeEventListener('keydown', h)
   }, [onClose])
 
+  // Свайпы по обложке: влево — следующий, вправо — предыдущий, вниз — свернуть
+  const swipeRef = useRef<{ x: number; y: number; t: number } | null>(null)
+  const coverPointer = {
+    onPointerDown: (e: React.PointerEvent) => {
+      e.preventDefault()
+      swipeRef.current = { x: e.clientX, y: e.clientY, t: Date.now() }
+    },
+    onPointerMove: (e: React.PointerEvent) => {
+      // лёгкий визуальный сдвиг обложки при свайпе
+      const s = swipeRef.current
+      if (!s) return
+      const dx = e.clientX - s.x
+      const el = e.currentTarget as HTMLElement
+      el.style.transform = dx !== 0 ? `translateX(${Math.max(-90, Math.min(90, dx * 0.35))}px)` : ''
+    },
+    onPointerUp: (e: React.PointerEvent) => {
+      const s = swipeRef.current
+      swipeRef.current = null
+      const el = e.currentTarget as HTMLElement
+      el.style.transform = ''
+      if (!s) return
+      const dx = e.clientX - s.x
+      const dy = e.clientY - s.y
+      if (Date.now() - s.t > 800) return
+      if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.4) {
+        void (dx < 0 ? player.next() : player.prev())
+      } else if (dy > 110 && Math.abs(dy) > Math.abs(dx) * 1.2) {
+        onClose()
+      }
+    },
+  }
+
   return (
     <div className="psheet" onClick={onClose}>
       <div className="psheet-card" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Плеер">
@@ -61,12 +93,20 @@ export default function ExpandedPlayer({ onClose, onLyrics, onQueue, onSimilar }
 
         {cur ? (
           <div className="psheet-main">
-            <img
-              className="psheet-cover"
-              src={coverUrl(cur.track.coverUri, '400x400') ?? PLACEHOLDER_COVER}
-              alt=""
-              onError={(e) => ((e.target as HTMLImageElement).src = PLACEHOLDER_COVER)}
-            />
+            <div
+              className="psheet-cover-wrap"
+              {...coverPointer}
+              title="Свайп влево/вправо — следующий/предыдущий, вниз — свернуть"
+            >
+              <img
+                className="psheet-cover"
+                src={coverUrl(cur.track.coverUri, '400x400') ?? PLACEHOLDER_COVER}
+                alt=""
+                draggable={false}
+                onError={(e) => ((e.target as HTMLImageElement).src = PLACEHOLDER_COVER)}
+              />
+              <span className="psheet-swipe-hint muted small">← свайп →</span>
+            </div>
             <div className="psheet-side">
               <div className="psheet-title">{cur.track.title}</div>
               <div className="psheet-artist" title={artistNames(cur.track.artists)}>
