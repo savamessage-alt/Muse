@@ -1,5 +1,5 @@
-/* ============================================================
-   Muse — тёмная тема в духе Яндекс Музыки
+﻿/* ============================================================
+   Muse вЂ” С‚С‘РјРЅР°СЏ С‚РµРјР° РІ РґСѓС…Рµ РЇРЅРґРµРєСЃ РњСѓР·С‹РєРё
    ============================================================ */
 
 :root {
@@ -11,7 +11,7 @@
   --text: #ffffff;
   --text-dim: #b3b3b3;
   --text-faint: #7a7a7a;
-  --accent: #f33; /* красный акцент */
+  --accent: #f33; /* РєСЂР°СЃРЅС‹Р№ Р°РєС†РµРЅС‚ */
   --accent-2: #ff7a00;
   --good: #1DB954;
   --danger: #f0506e;
@@ -46,10 +46,10 @@ button { font-family: inherit; }
 .pad { padding: 12px 4px; }
 .hint { color: var(--text-faint); font-size: 12.5px; }
 
-/* ---------- каркас ---------- */
+/* ---------- РєР°СЂРєР°СЃ ---------- */
 .app { height: 100vh; display: grid; grid-template-rows: 1fr var(--player-h); grid-template-columns: minmax(0, 1fr); width: 100%; overflow-x: clip; }
 .body { display: flex; min-height: 0; min-width: 0; }
-.mobile-nav { display: none; } /* включается только на телефоне */
+.mobile-nav { display: none; } /* РІРєР»СЋС‡Р°РµС‚СЃСЏ С‚РѕР»СЊРєРѕ РЅР° С‚РµР»РµС„РѕРЅРµ */
 
 .sidebar {
   width: var(--sidebar-w);
@@ -82,7 +82,8 @@ button { font-family: inherit; }
   transition: background .15s, color .15s;
 }
 .nav-link:hover { color: var(--text); background: var(--bg-hover); }
-.nav-link.active { color: var(--text); background: var(--bg-hover); }
+.nav-link.active { color: var(--text); background: rgba(255,51,51,.13); }
+.nav-link.active svg { color: var(--accent); }
 
 .sidebar-section { border-top: 1px solid var(--border); padding-top: 10px; }
 .sidebar-section-title {
@@ -121,7 +122,7 @@ button { font-family: inherit; }
 .page-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 .now-station { color: var(--accent); font-weight: 700; }
 
-/* ---------- кнопки ---------- */
+/* ---------- РєРЅРѕРїРєРё ---------- */
 .primary-btn {
   display: inline-flex; align-items: center; gap: 8px;
   background: var(--text); color: #000; font-weight: 700;
@@ -132,7 +133,7 @@ button { font-family: inherit; }
 .primary-btn:disabled { opacity: .5; cursor: default; transform: none; }
 .primary-btn.small { padding: 7px 16px; font-size: 14px; border-radius: 18px; }
 
-/* действия в шапке сущности (альбом/артист): кнопки лайков */
+/* РґРµР№СЃС‚РІРёСЏ РІ С€Р°РїРєРµ СЃСѓС‰РЅРѕСЃС‚Рё (Р°Р»СЊР±РѕРј/Р°СЂС‚РёСЃС‚): РєРЅРѕРїРєРё Р»Р°Р№РєРѕРІ */
 .entity-actions { display: flex; align-items: center; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
 .liked-outline {
   display: inline-grid; place-items: center;
@@ -159,8 +160,15 @@ button { font-family: inherit; }
 }
 .icon-btn:hover { color: var(--text); background: var(--bg-hover); }
 .icon-btn.small { width: 30px; height: 30px; }
-.icon-btn.liked { color: var(--accent); }
+.icon-btn.liked { color: var(--accent); background: rgba(255,51,99,.10); }
+.icon-btn.liked:hover { color: var(--accent); background: rgba(255,51,99,.16); }
+.icon-btn.liked svg { animation: heart-pop .38s cubic-bezier(.25,1.6,.4,1); }
 .icon-btn.active { color: var(--accent); }
+@keyframes heart-pop {
+  0% { transform: scale(.55); }
+  60% { transform: scale(1.28); }
+  100% { transform: scale(1); }
+}
 
 .link-btn {
   background: none; border: none; color: var(--text-dim);
@@ -168,7 +176,7 @@ button { font-family: inherit; }
 }
 .link-btn:hover { color: var(--text); text-decoration: underline; }
 
-/* ---------- формы ---------- */
+/* ---------- С„РѕСЂРјС‹ ---------- */
 .input {
   background: var(--bg-card); color: var(--text);
   border: 1px solid var(--border); border-radius: 24px;
@@ -191,7 +199,7 @@ button { font-family: inherit; }
 }
 .radio-row:hover { color: var(--text); }
 
-/* ---------- карточки ---------- */
+/* ---------- РєР°СЂС‚РѕС‡РєРё ---------- */
 .cards {
   display: grid; gap: 16px;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -236,7 +244,7 @@ button { font-family: inherit; }
   display: grid; place-items: center; color: var(--text-dim);
 }
 
-/* ---------- треки ---------- */
+/* ---------- С‚СЂРµРєРё ---------- */
 .tracklist { margin-top: 18px; }
 .trackrow {
   display: grid;
@@ -290,7 +298,7 @@ button { font-family: inherit; }
 .track-menu-item.danger { color: #ff6b6b; margin-bottom: 4px; padding-bottom: 9px; border-bottom: 1px solid var(--border); border-radius: 8px 8px 0 0; }
 .track-menu-item.danger:hover { background: rgba(255, 107, 107, .12); }
 
-/* ---------- сущности (альбом/плейлист/артист) ---------- */
+/* ---------- СЃСѓС‰РЅРѕСЃС‚Рё (Р°Р»СЊР±РѕРј/РїР»РµР№Р»РёСЃС‚/Р°СЂС‚РёСЃС‚) ---------- */
 .entity-page { padding-top: 8px; }
 .entity-head { display: flex; gap: 26px; align-items: flex-end; margin-bottom: 26px; flex-wrap: wrap; }
 .entity-cover { width: 210px; height: 210px; border-radius: 12px; object-fit: cover; box-shadow: 0 10px 30px rgba(0,0,0,.5); }
@@ -300,7 +308,7 @@ button { font-family: inherit; }
 .entity-title { margin: 6px 0 10px; font-size: clamp(22px, 6vw, 38px); font-weight: 900; line-height: 1.05; overflow-wrap: anywhere; }
 .entity-sub { color: var(--text-dim); margin-bottom: 18px; }
 
-/* ---------- история ---------- */
+/* ---------- РёСЃС‚РѕСЂРёСЏ ---------- */
 .history-list { margin-top: 12px; }
 .history-row {
   display: flex; align-items: center; gap: 14px;
@@ -314,7 +322,7 @@ button { font-family: inherit; }
 .history-time { color: var(--text-faint); font-size: 13px; }
 .history-play { color: var(--text-faint); }
 
-/* ---------- панель плеера ---------- */
+/* ---------- РїР°РЅРµР»СЊ РїР»РµРµСЂР° ---------- */
 .playerbar {
   position: relative;
   display: grid;
@@ -350,7 +358,7 @@ button { font-family: inherit; }
   display: grid; place-items: center; padding: 0 3px;
 }
 
-/* ---------- слайдеры ---------- */
+/* ---------- СЃР»Р°Р№РґРµСЂС‹ ---------- */
 .range {
   -webkit-appearance: none; appearance: none;
   height: 4px; border-radius: 2px;
@@ -364,7 +372,7 @@ button { font-family: inherit; }
 }
 .range:disabled { opacity: .4; }
 
-/* ---------- вкладки ---------- */
+/* ---------- РІРєР»Р°РґРєРё ---------- */
 .tabs { display: flex; gap: 6px; margin: 18px 0; flex-wrap: wrap; }
 .tab {
   background: none; border: none; color: var(--text-dim);
@@ -375,11 +383,11 @@ button { font-family: inherit; }
 .tab.active { background: var(--bg-hover); color: var(--text); }
 .tab-count { color: var(--text-faint); margin-left: 5px; font-size: 12px; }
 
-/* ---------- секции ---------- */
+/* ---------- СЃРµРєС†РёРё ---------- */
 .section { margin-bottom: 30px; }
 .section-title { font-size: clamp(16px, 3.6vw, 20px); font-weight: 800; margin: 0 0 14px; }
 
-/* ---------- настройки ---------- */
+/* ---------- РЅР°СЃС‚СЂРѕР№РєРё ---------- */
 .settings-card {
   background: var(--bg-panel); border: 1px solid var(--border);
   border-radius: 14px; padding: 20px; margin-bottom: 18px; max-width: 720px;
@@ -394,7 +402,7 @@ button { font-family: inherit; }
 }
 .badge.plus { background: rgba(29,185,84,.15); color: var(--good); border-color: var(--good); }
 
-/* ---------- вход ---------- */
+/* ---------- РІС…РѕРґ ---------- */
 .login-wrap {
   min-height: 100dvh; min-height: 100vh;
   display: grid; place-items: center;
@@ -406,7 +414,7 @@ button { font-family: inherit; }
     radial-gradient(700px 500px at 70% 20%, rgba(120, 80, 255, .12), transparent 55%),
     var(--bg);
 }
-/* живые «полосы» света на обоих экранах входа */
+/* Р¶РёРІС‹Рµ В«РїРѕР»РѕСЃС‹В» СЃРІРµС‚Р° РЅР° РѕР±РѕРёС… СЌРєСЂР°РЅР°С… РІС…РѕРґР° */
 .welcome::before, .welcome::after, .login-wrap::before, .login-wrap::after {
   content: ''; position: absolute; border-radius: 50%;
   filter: blur(72px); opacity: .5; pointer-events: none;
@@ -467,7 +475,7 @@ button { font-family: inherit; }
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
   text-align: left;
 }
-/* большая градиентная кнопка «Авторизоваться» — на welcome и на входе */
+/* Р±РѕР»СЊС€Р°СЏ РіСЂР°РґРёРµРЅС‚РЅР°СЏ РєРЅРѕРїРєР° В«РђРІС‚РѕСЂРёР·РѕРІР°С‚СЊСЃСЏВ» вЂ” РЅР° welcome Рё РЅР° РІС…РѕРґРµ */
 .primary-btn.cta-gradient {
   background: linear-gradient(120deg, var(--accent), var(--accent-2));
   color: #fff; border-radius: 26px;
@@ -477,7 +485,7 @@ button { font-family: inherit; }
 .primary-btn.cta-gradient:hover { transform: translateY(-1px) scale(1.02); box-shadow: 0 18px 46px rgba(255, 60, 0, .45); }
 .primary-btn.cta-gradient:disabled { opacity: .5; transform: none; }
 
-/* ---------- «Моя волна» — весь главный экран ---------- */
+/* ---------- В«РњРѕСЏ РІРѕР»РЅР°В» вЂ” РІРµСЃСЊ РіР»Р°РІРЅС‹Р№ СЌРєСЂР°РЅ ---------- */
 .wave {
   position: relative; overflow: hidden; border-radius: 26px;
   min-height: calc(100vh - 150px);
@@ -585,7 +593,7 @@ button { font-family: inherit; }
 .wave-playbig:hover { transform: scale(1.06); box-shadow: 0 12px 44px rgba(255,51,51,.62); }
 .wave-playbig:disabled { opacity: .6; cursor: wait; }
 
-/* ---------- панель «Очередь» ---------- */
+/* ---------- РїР°РЅРµР»СЊ В«РћС‡РµСЂРµРґСЊВ» ---------- */
 .queue-badge {
   position: absolute; top: -4px; right: -6px; min-width: 16px; height: 16px;
   padding: 0 4px; border-radius: 999px; font-size: 10px; line-height: 16px;
@@ -635,7 +643,7 @@ button { font-family: inherit; }
 .queue-actions .btn:disabled { opacity: .5; cursor: default; }
 .queue-play { color: var(--text-dim); flex: none; }
 
-/* ---------- премьеры (на странице «Радио») ---------- */
+/* ---------- РїСЂРµРјСЊРµСЂС‹ (РЅР° СЃС‚СЂР°РЅРёС†Рµ В«Р Р°РґРёРѕВ») ---------- */
 .premieres { display: flex; flex-direction: column; gap: 10px; }
 .premiere-card {
   display: flex; align-items: center; gap: 14px; width: 100%;
@@ -650,7 +658,7 @@ button { font-family: inherit; }
 .premiere-title { font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .premiere-play { color: var(--accent); font-weight: 600; font-size: 14px; flex-shrink: 0; }
 
-/* ---------- уведомления ---------- */
+/* ---------- СѓРІРµРґРѕРјР»РµРЅРёСЏ ---------- */
 .toasts {
   position: fixed; top: 16px; right: 16px; z-index: 1000;
   display: flex; flex-direction: column; gap: 8px; max-width: 380px;
@@ -666,7 +674,7 @@ button { font-family: inherit; }
 .toast-success { border-color: var(--good); }
 @keyframes toast-in { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
 
-/* ---------- прочее ---------- */
+/* ---------- РїСЂРѕС‡РµРµ ---------- */
 .spinner {
   width: 30px; height: 30px; margin: 24px auto;
   border: 3px solid var(--border); border-top-color: var(--accent);
@@ -681,7 +689,7 @@ button { font-family: inherit; }
   gap: 6px; color: var(--text-dim);
 }
 
-/* ---------- тексты песен ---------- */
+/* ---------- С‚РµРєСЃС‚С‹ РїРµСЃРµРЅ ---------- */
 .pb-lyrics {
   position: absolute; bottom: calc(100% + 8px); right: 12px;
   width: min(440px, calc(100% - 24px));
@@ -712,7 +720,7 @@ button { font-family: inherit; }
   font-family: inherit; font-size: 15px; line-height: 1.6; color: var(--text);
 }
 
-/* скелетон загрузки и состояния (ошибка / пусто) */
+/* СЃРєРµР»РµС‚РѕРЅ Р·Р°РіСЂСѓР·РєРё Рё СЃРѕСЃС‚РѕСЏРЅРёСЏ (РѕС€РёР±РєР° / РїСѓСЃС‚Рѕ) */
 .lyrics-loading {
   display: flex; flex-direction: column; gap: 10px; padding: 8px 2px;
 }
@@ -732,10 +740,10 @@ button { font-family: inherit; }
 .lyrics-state .btn { display: inline-flex; align-items: center; gap: 7px; padding: 7px 16px; }
 
 /* ============================================================
-   АДАПТИВНОСТЬ
+   РђР”РђРџРўРР’РќРћРЎРўР¬
    ============================================================ */
 
-/* ---------- планшет: сайдбар в виде узких иконок ---------- */
+/* ---------- РїР»Р°РЅС€РµС‚: СЃР°Р№РґР±Р°СЂ РІ РІРёРґРµ СѓР·РєРёС… РёРєРѕРЅРѕРє ---------- */
 @media (max-width: 1024px) {
   :root { --sidebar-w: 64px; }
   .sidebar { padding: 14px 6px; align-items: center; }
@@ -747,11 +755,11 @@ button { font-family: inherit; }
   .sidebar-bottom { width: 100%; align-items: center; }
   .user-chip { padding: 6px 0; justify-content: center; }
   .content { padding: 20px 22px 36px; }
-  /* на узких экранах ползунок громкости в плеере вылезает за край — без него */
+  /* РЅР° СѓР·РєРёС… СЌРєСЂР°РЅР°С… РїРѕР»Р·СѓРЅРѕРє РіСЂРѕРјРєРѕСЃС‚Рё РІ РїР»РµРµСЂРµ РІС‹Р»РµР·Р°РµС‚ Р·Р° РєСЂР°Р№ вЂ” Р±РµР· РЅРµРіРѕ */
   .playerbar .pb-right input[type="range"] { display: none; }
 }
 
-/* ---------- телефон: нижняя навигация, плеер сверху неё ---------- */
+/* ---------- С‚РµР»РµС„РѕРЅ: РЅРёР¶РЅСЏСЏ РЅР°РІРёРіР°С†РёСЏ, РїР»РµРµСЂ СЃРІРµСЂС…Сѓ РЅРµС‘ ---------- */
 @media (max-width: 640px) {
   :root { --player-h: 62px; --nav-h: 58px; }
 
@@ -762,7 +770,7 @@ button { font-family: inherit; }
   .content { padding: 14px 12px 26px; }
   .page-title { margin: 2px 0 14px; }
 
-  /* нижняя навигация */
+  /* РЅРёР¶РЅСЏСЏ РЅР°РІРёРіР°С†РёСЏ */
   .mobile-nav {
     display: flex;
     background: var(--bg-panel);
@@ -776,20 +784,20 @@ button { font-family: inherit; }
     border-radius: 10px;
   }
 
-  /* компактный плеер: трек | prev-play-next | сердце-похожие-очередь */
+  /* РєРѕРјРїР°РєС‚РЅС‹Р№ РїР»РµРµСЂ: С‚СЂРµРє | prev-play-next | СЃРµСЂРґС†Рµ-РїРѕС…РѕР¶РёРµ-РѕС‡РµСЂРµРґСЊ */
   .playerbar {
     grid-template-columns: minmax(0, 1fr) auto auto;
     gap: 4px; padding: 0 8px;
   }
   .pb-cover { width: 40px; height: 40px; }
   .pb-center { display: flex; flex-direction: row; }
-  .pb-center .pb-seek { display: none; } /* перемотка — на «Моей волне» */
+  .pb-center .pb-seek { display: none; } /* РїРµСЂРµРјРѕС‚РєР° вЂ” РЅР° В«РњРѕРµР№ РІРѕР»РЅРµВ» */
   .pb-controls { gap: 0; }
   .pb-controls .icon-btn { width: 32px; height: 32px; }
   .pb-controls .icon-btn svg { width: 18px; height: 18px; }
   .pb-play { width: 42px; height: 42px; margin: 0 2px; }
   .pb-play svg { width: 20px; height: 20px; }
-  /* перемешивание/повтор на телефоне — на «Моей волне», в плеере лишние */
+  /* РїРµСЂРµРјРµС€РёРІР°РЅРёРµ/РїРѕРІС‚РѕСЂ РЅР° С‚РµР»РµС„РѕРЅРµ вЂ” РЅР° В«РњРѕРµР№ РІРѕР»РЅРµВ», РІ РїР»РµРµСЂРµ Р»РёС€РЅРёРµ */
   .pb-controls .icon-btn:first-child,
   .pb-controls .icon-btn:last-child { display: none; }
   .pb-vol-icon, .pb-right input[type="range"] { display: none; }
@@ -799,34 +807,34 @@ button { font-family: inherit; }
   .pb-track .icon-btn { width: 32px; height: 32px; }
   .pb-title { font-size: 13px; }
   .pb-artist { font-size: 11.5px; }
-  /* шторки (очередь/похожие) выше плеера и навигации */
+  /* С€С‚РѕСЂРєРё (РѕС‡РµСЂРµРґСЊ/РїРѕС…РѕР¶РёРµ) РІС‹С€Рµ РїР»РµРµСЂР° Рё РЅР°РІРёРіР°С†РёРё */
   .queue-panel {
     margin-bottom: calc(var(--player-h) + var(--nav-h) + 10px);
     max-height: calc(100vh - var(--player-h) - var(--nav-h) - 30px);
   }
-  /* подписи нижней навигации (планшетное правило их скрывало) */
+  /* РїРѕРґРїРёСЃРё РЅРёР¶РЅРµР№ РЅР°РІРёРіР°С†РёРё (РїР»Р°РЅС€РµС‚РЅРѕРµ РїСЂР°РІРёР»Рѕ РёС… СЃРєСЂС‹РІР°Р»Рѕ) */
   .mobile-nav .nav-link { color: var(--text-dim); font-size: 10.5px; letter-spacing: .2px; }
   .mobile-nav .nav-link span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
   .mobile-nav .nav-link.active { color: var(--accent); }
 
-  /* списки треков: без колонки «альбом» и времени */
+  /* СЃРїРёСЃРєРё С‚СЂРµРєРѕРІ: Р±РµР· РєРѕР»РѕРЅРєРё В«Р°Р»СЊР±РѕРјВ» Рё РІСЂРµРјРµРЅРё */
   .trackrow { grid-template-columns: 30px minmax(0, 1fr) 60px; gap: 8px; padding: 6px 8px; }
   .trackhead { display: none; }
   .tc-album, .tc-time { display: none; }
   .tc-cover { width: 40px; height: 40px; }
 
-  /* карточки/гриды */
+  /* РєР°СЂС‚РѕС‡РєРё/РіСЂРёРґС‹ */
   .radio-grid { grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 12px; }
   .card-title { font-size: 13px; }
   .card-sub { font-size: 12px; }
   .card-play { width: 36px; height: 36px; right: 6px; bottom: 6px; opacity: 1; transform: none; }
 
-  /* страница сущности */
+  /* СЃС‚СЂР°РЅРёС†Р° СЃСѓС‰РЅРѕСЃС‚Рё */
   .entity-head { gap: 14px; align-items: center; }
   .entity-cover { width: 120px; height: 120px; }
   .entity-info { min-width: 0; }
 
-  /* «Моя волна» */
+  /* В«РњРѕСЏ РІРѕР»РЅР°В» */
   .wave { min-height: calc(100vh - var(--player-h) - var(--nav-h) - 30px); padding: 14px 10px; border-radius: 20px; }
   .wave-main { padding: 20px 14px 20px; border-radius: 26px; }
   .wave-disc { width: 158px; height: 158px; margin: 8px 0 4px; }
@@ -836,22 +844,22 @@ button { font-family: inherit; }
   .wave-ctl { width: 44px; height: 44px; }
   .wave-playbig { width: 58px; height: 58px; }
 
-  /* оверлеи приподнимаем над плеером и навигацией */
+  /* РѕРІРµСЂР»РµРё РїСЂРёРїРѕРґРЅРёРјР°РµРј РЅР°Рґ РїР»РµРµСЂРѕРј Рё РЅР°РІРёРіР°С†РёРµР№ */
   .queue-panel { margin-bottom: calc(var(--player-h) + var(--nav-h) + 8px); width: 100vw; max-height: 58vh; border-radius: 18px 18px 0 0; }
   .pb-lyrics { right: 8px; width: calc(100% - 16px); max-height: 40vh; }
 }
 
 /* ============================================================
-   ПОЛИРОВКА ДИЗАЙНА: кнопки и детали (в духе Я.Музыки)
+   РџРћР›РР РћР’РљРђ Р”РР—РђР™РќРђ: РєРЅРѕРїРєРё Рё РґРµС‚Р°Р»Рё (РІ РґСѓС…Рµ РЇ.РњСѓР·С‹РєРё)
    ============================================================ */
 
-/* доступность: видимое кольцо при навигации с клавиатуры */
+/* РґРѕСЃС‚СѓРїРЅРѕСЃС‚СЊ: РІРёРґРёРјРѕРµ РєРѕР»СЊС†Рѕ РїСЂРё РЅР°РІРёРіР°С†РёРё СЃ РєР»Р°РІРёР°С‚СѓСЂС‹ */
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
-/* главная кнопка — акцентный градиент */
+/* РіР»Р°РІРЅР°СЏ РєРЅРѕРїРєР° вЂ” Р°РєС†РµРЅС‚РЅС‹Р№ РіСЂР°РґРёРµРЅС‚ */
 .primary-btn {
   background: linear-gradient(135deg, var(--accent), var(--accent-2));
   color: #fff;
@@ -866,20 +874,20 @@ button { font-family: inherit; }
 .primary-btn:active { transform: scale(.97); }
 .primary-btn:disabled { opacity: .45; cursor: default; transform: none; filter: none; box-shadow: none; }
 
-/* обычная кнопка — мягкое нажатие */
+/* РѕР±С‹С‡РЅР°СЏ РєРЅРѕРїРєР° вЂ” РјСЏРіРєРѕРµ РЅР°Р¶Р°С‚РёРµ */
 .btn { transition: background .15s, border-color .15s, transform .08s, box-shadow .15s; }
 .btn:hover { box-shadow: 0 4px 14px rgba(0,0,0,.35); }
 .btn:active { transform: scale(.97); }
 .btn.danger:hover { background: rgba(240, 80, 110, .12); }
 
-/* иконки-кнопки — отклик на нажатие, состояния disabled */
+/* РёРєРѕРЅРєРё-РєРЅРѕРїРєРё вЂ” РѕС‚РєР»РёРє РЅР° РЅР°Р¶Р°С‚РёРµ, СЃРѕСЃС‚РѕСЏРЅРёСЏ disabled */
 .icon-btn { transition: color .15s, background .15s, transform .08s; }
 .icon-btn:active:not(:disabled) { transform: scale(.9); }
 .icon-btn:disabled { opacity: .45; cursor: default; }
 .icon-btn:disabled:hover { color: var(--text-dim); background: transparent; }
 .icon-btn.active { background: rgba(255, 51, 51, .12); }
 
-/* вкладки — активная как белая «пилюля» (как в Я.Музыке) */
+/* РІРєР»Р°РґРєРё вЂ” Р°РєС‚РёРІРЅР°СЏ РєР°Рє Р±РµР»Р°СЏ В«РїРёР»СЋР»СЏВ» (РєР°Рє РІ РЇ.РњСѓР·С‹РєРµ) */
 .tab { transition: background .15s, color .15s, transform .08s; }
 .tab:active { transform: scale(.96); }
 .tab.active {
@@ -889,7 +897,7 @@ button { font-family: inherit; }
   box-shadow: 0 4px 14px rgba(0,0,0,.4);
 }
 
-/* карточки — подъём и зум обложки при наведении */
+/* РєР°СЂС‚РѕС‡РєРё вЂ” РїРѕРґСЉС‘Рј Рё Р·СѓРј РѕР±Р»РѕР¶РєРё РїСЂРё РЅР°РІРµРґРµРЅРёРё */
 .card { transition: background .15s, transform .15s, box-shadow .15s; }
 .card:hover {
   transform: translateY(-3px);
@@ -907,7 +915,7 @@ button { font-family: inherit; }
 }
 .card-play:hover { transform: scale(1.1) translateY(0); }
 
-/* кнопки «Моей волны» — акцент при наведении */
+/* РєРЅРѕРїРєРё В«РњРѕРµР№ РІРѕР»РЅС‹В» вЂ” Р°РєС†РµРЅС‚ РїСЂРё РЅР°РІРµРґРµРЅРёРё */
 .wave-ctl { transition: background .12s, transform .1s, border-color .12s, color .12s; }
 .wave-ctl:hover {
   background: rgba(255, 51, 51, .22);
@@ -931,7 +939,7 @@ button { font-family: inherit; }
   50%      { box-shadow: 0 10px 48px rgba(255,51,51,.75); }
 }
 
-/* слайдеры — красный прогресс и кольцо на бегунке */
+/* СЃР»Р°Р№РґРµСЂС‹ вЂ” РєСЂР°СЃРЅС‹Р№ РїСЂРѕРіСЂРµСЃСЃ Рё РєРѕР»СЊС†Рѕ РЅР° Р±РµРіСѓРЅРєРµ */
 .range {
   background: linear-gradient(to right, var(--accent) var(--fill, 0%), #4d4d4d var(--fill, 0%));
 }
@@ -946,12 +954,12 @@ button { font-family: inherit; }
   cursor: pointer;
 }
 
-/* большая кнопка плеера — свечение при наведении */
+/* Р±РѕР»СЊС€Р°СЏ РєРЅРѕРїРєР° РїР»РµРµСЂР° вЂ” СЃРІРµС‡РµРЅРёРµ РїСЂРё РЅР°РІРµРґРµРЅРёРё */
 .pb-play { transition: transform .1s, box-shadow .15s, background .15s; }
 .pb-play:hover { transform: scale(1.06); box-shadow: 0 6px 22px rgba(255,51,51,.4); }
 .pb-play:active { transform: scale(.94); }
 
-/* уведомления — мягче и круглее */
+/* СѓРІРµРґРѕРјР»РµРЅРёСЏ вЂ” РјСЏРіС‡Рµ Рё РєСЂСѓРіР»РµРµ */
 .toast {
   border-radius: 14px;
   background: rgba(42, 42, 42, .92);
@@ -961,7 +969,7 @@ button { font-family: inherit; }
 }
 
 /* ============================================================
-   ЭКРАН-ПРИВЕТСТВИЕ (нет токена): лого-диск, слоган, вход
+   Р­РљР РђРќ-РџР РР’Р•РўРЎРўР’РР• (РЅРµС‚ С‚РѕРєРµРЅР°): Р»РѕРіРѕ-РґРёСЃРє, СЃР»РѕРіР°РЅ, РІС…РѕРґ
    ============================================================ */
 .welcome {
   min-height: 100dvh; min-height: 100vh;
@@ -1011,7 +1019,7 @@ button { font-family: inherit; }
 .welcome-hint { margin: clamp(20px, 5vh, 28px) auto 0; max-width: 330px; }
 
 /* ============================================================
-   РАЗВЁРНУТЫЙ ПЛЕЕР (bottom-sheet, паттерн spotube/nuclear)
+   Р РђР—Р’РЃР РќРЈРўР«Р™ РџР›Р•Р•Р  (bottom-sheet, РїР°С‚С‚РµСЂРЅ spotube/nuclear)
    ============================================================ */
 .psheet {
   position: fixed; inset: 0; z-index: 50;
@@ -1064,7 +1072,7 @@ button { font-family: inherit; }
 .psheet-foot .icon-btn { position: relative; }
 .psheet-vol { display: inline-flex; align-items: center; gap: 8px; flex: 0 0 160px; margin-left: 6px; }
 
-/* мобильный вид: лист от низа экрана */
+/* РјРѕР±РёР»СЊРЅС‹Р№ РІРёРґ: Р»РёСЃС‚ РѕС‚ РЅРёР·Р° СЌРєСЂР°РЅР° */
 @media (max-width: 640px) {
   .psheet { align-items: flex-end; padding: 0; }
   .psheet-card { width: 100%; max-height: 88vh; border-radius: 20px 20px 0 0; padding: 14px 16px 16px; }
@@ -1075,7 +1083,7 @@ button { font-family: inherit; }
   .psheet-vol { flex-basis: 130px; }
 }
 
-/* ==================== Полировка: аватар, лоадеры, заставка, вход ==================== */
+/* ==================== РџРѕР»РёСЂРѕРІРєР°: Р°РІР°С‚Р°СЂ, Р»РѕР°РґРµСЂС‹, Р·Р°СЃС‚Р°РІРєР°, РІС…РѕРґ ==================== */
 .user-avatar.inline {
   display: inline-flex; align-items: center; justify-content: center;
   color: #fff; font-weight: 800; font-size: 13px; letter-spacing: .02em;
@@ -1090,14 +1098,14 @@ button { font-family: inherit; }
   padding: 34px 16px;
 }
 
-/* анимация появления страниц — плавный «вход» с лёгким сдвигом */
+/* Р°РЅРёРјР°С†РёСЏ РїРѕСЏРІР»РµРЅРёСЏ СЃС‚СЂР°РЅРёС† вЂ” РїР»Р°РІРЅС‹Р№ В«РІС…РѕРґВ» СЃ Р»С‘РіРєРёРј СЃРґРІРёРіРѕРј */
 .content > * { animation: pageIn .4s cubic-bezier(.2, .7, .3, 1) both; }
 @keyframes pageIn {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: none; }
 }
 
-/* заставка при входе в приложение (пульсирующий диск-логотип + гашение) */
+/* Р·Р°СЃС‚Р°РІРєР° РїСЂРё РІС…РѕРґРµ РІ РїСЂРёР»РѕР¶РµРЅРёРµ (РїСѓР»СЊСЃРёСЂСѓСЋС‰РёР№ РґРёСЃРє-Р»РѕРіРѕС‚РёРї + РіР°С€РµРЅРёРµ) */
 .splash {
   position: fixed; inset: 0; z-index: 2000;
   display: flex; align-items: center; justify-content: center;
@@ -1128,7 +1136,7 @@ button { font-family: inherit; }
   color: rgba(255, 255, 255, .48);
 }
 
-/* приветствие на «Моей волне» */
+/* РїСЂРёРІРµС‚СЃС‚РІРёРµ РЅР° В«РњРѕРµР№ РІРѕР»РЅРµВ» */
 .wave-greet { display: flex; flex-direction: column; gap: 3px; margin-bottom: 6px; }
 .wave-greet-hello {
   font-size: clamp(19px, 5vw, 26px); font-weight: 800; color: #fff;
@@ -1136,7 +1144,7 @@ button { font-family: inherit; }
 }
 .wave-greet-sub { font-size: 13.5px; color: rgba(255, 255, 255, .62); letter-spacing: .02em; }
 
-/* плавный «вход» на главный экран после заставки: диск всплывает, приветствие поднимается */
+/* РїР»Р°РІРЅС‹Р№ В«РІС…РѕРґВ» РЅР° РіР»Р°РІРЅС‹Р№ СЌРєСЂР°РЅ РїРѕСЃР»Рµ Р·Р°СЃС‚Р°РІРєРё: РґРёСЃРє РІСЃРїР»С‹РІР°РµС‚, РїСЂРёРІРµС‚СЃС‚РІРёРµ РїРѕРґРЅРёРјР°РµС‚СЃСЏ */
 .wave { animation: waveIn .6s cubic-bezier(.2, .8, .3, 1) .05s both; }
 @keyframes waveIn {
   from { opacity: 0; transform: scale(.965) translateY(16px); }
@@ -1155,8 +1163,8 @@ button { font-family: inherit; }
   to   { opacity: 1; transform: none; }
 }
 
-/* быстрый доступ к «Моим плейлистам» на главной — виден только на телефоне
-   (на десктопе плейлисты и так в сайдбаре; снизу и так много кнопок) */
+/* Р±С‹СЃС‚СЂС‹Р№ РґРѕСЃС‚СѓРї Рє В«РњРѕРёРј РїР»РµР№Р»РёСЃС‚Р°РјВ» РЅР° РіР»Р°РІРЅРѕР№ вЂ” РІРёРґРµРЅ С‚РѕР»СЊРєРѕ РЅР° С‚РµР»РµС„РѕРЅРµ
+   (РЅР° РґРµСЃРєС‚РѕРїРµ РїР»РµР№Р»РёСЃС‚С‹ Рё С‚Р°Рє РІ СЃР°Р№РґР±Р°СЂРµ; СЃРЅРёР·Сѓ Рё С‚Р°Рє РјРЅРѕРіРѕ РєРЅРѕРїРѕРє) */
 .wave-quick { display: none; margin-top: 2px; animation: greetIn .5s cubic-bezier(.2, .8, .3, 1) .34s both; }
 .wave-quick-chip {
   display: inline-flex; align-items: center; gap: 8px;
@@ -1172,7 +1180,7 @@ button { font-family: inherit; }
   .wave-quick { display: flex; justify-content: center; }
 }
 
-/* «Избранное»: лента плейлистов сверху (горизонтальный скролл без полосы) */
+/* В«РР·Р±СЂР°РЅРЅРѕРµВ»: Р»РµРЅС‚Р° РїР»РµР№Р»РёСЃС‚РѕРІ СЃРІРµСЂС…Сѓ (РіРѕСЂРёР·РѕРЅС‚Р°Р»СЊРЅС‹Р№ СЃРєСЂРѕР»Р» Р±РµР· РїРѕР»РѕСЃС‹) */
 .fav-row {
   display: flex; gap: 14px; overflow-x: auto;
   scrollbar-width: none; padding: 2px 2px 12px;
@@ -1186,7 +1194,7 @@ button { font-family: inherit; }
   font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
-/* CTA «Создать первый плейлист» в «Избранном», когда плейлистов ещё нет */
+/* CTA В«РЎРѕР·РґР°С‚СЊ РїРµСЂРІС‹Р№ РїР»РµР№Р»РёСЃС‚В» РІ В«РР·Р±СЂР°РЅРЅРѕРјВ», РєРѕРіРґР° РїР»РµР№Р»РёСЃС‚РѕРІ РµС‰С‘ РЅРµС‚ */
 .fav-create-btn {
   display: inline-flex; align-items: center; gap: 10px;
   padding: 15px 22px; border-radius: 16px;
@@ -1199,7 +1207,7 @@ button { font-family: inherit; }
 .fav-create-btn:hover { background: rgba(255, 255, 255, .08); border-color: var(--accent); transform: translateY(-1px); }
 .fav-create-btn:active { transform: scale(.98); }
 
-/* Удаление плейлиста: кнопка на странице + модальное подтверждение */
+/* РЈРґР°Р»РµРЅРёРµ РїР»РµР№Р»РёСЃС‚Р°: РєРЅРѕРїРєР° РЅР° СЃС‚СЂР°РЅРёС†Рµ + РјРѕРґР°Р»СЊРЅРѕРµ РїРѕРґС‚РІРµСЂР¶РґРµРЅРёРµ */
 .entity-actions { display: flex; align-items: center; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
 .delete-playlist-btn {
   display: inline-flex; align-items: center; gap: 7px;
@@ -1229,7 +1237,7 @@ button { font-family: inherit; }
 .primary-btn.danger { background: #e5484d; }
 .primary-btn.danger:hover { background: #d63c41; }
 
-/* Свайп-зона обложки в плеере */
+/* РЎРІР°Р№Рї-Р·РѕРЅР° РѕР±Р»РѕР¶РєРё РІ РїР»РµРµСЂРµ */
 .psheet-cover-wrap {
   position: relative; touch-action: none; user-select: none;
   -webkit-user-select: none; flex-shrink: 0;
@@ -1239,3 +1247,42 @@ button { font-family: inherit; }
   font-size: 11px; opacity: .55; letter-spacing: 1px; pointer-events: none;
   white-space: nowrap;
 }
+/* ============================================================
+   Полировка в духе Telegram/современных нативных приложений
+   ============================================================ */
+
+/* фокус-кольца для доступности */
+button:focus-visible, a:focus-visible, input:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px;
+}
+::selection { background: rgba(255,51,51,.35); }
+
+/* тонкие аккуратные скроллбары */
+* { scrollbar-width: thin; scrollbar-color: #3a3a3a transparent; }
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-thumb { background: #3a3a3a; border-radius: 8px; }
+*::-webkit-scrollbar-thumb:hover { background: #4a4a4a; }
+
+/* отклик на нажатие */
+.primary-btn:active, .btn:active, .link-btn:active { transform: scale(.97); }
+.icon-btn:active:not(:disabled) { transform: scale(.88); }
+
+/* карточки: тонкая рамка и приподъём */
+.card { border: 1px solid rgba(255,255,255,.05); }
+.card:hover { border-color: rgba(255,255,255,.12); box-shadow: 0 10px 28px rgba(0,0,0,.4); }
+
+/* заголовки секций: воздух */
+.section-title { letter-spacing: .2px; }
+
+/* подложка-«таблетка» активного пункта нижней навигации (телефон) */
+.mobile-nav .nav-link.active { background: rgba(255,51,51,.14); }
+
+/* ---------- эквалайзер (уникальная фишка: анимация «сейчас играет») ---------- */
+.eq { display: inline-flex; align-items: flex-end; gap: 2px; height: 14px; }
+.eq span { width: 3px; border-radius: 2px; background: var(--accent); animation: eq-bounce 1s ease-in-out infinite; }
+.eq span:nth-child(2) { animation-delay: .18s; }
+.eq span:nth-child(3) { animation-delay: .36s; }
+.eq span:nth-child(4) { animation-delay: .54s; }
+@keyframes eq-bounce { 0%, 100% { height: 4px; } 50% { height: 14px; } }
+
+/* уведомительная точка у «Избранного», когда есть свежие лайки — не требуется */

@@ -4,7 +4,7 @@ import { player, type PlayableTrack } from '../core/player'
 import { useApp } from '../state/store'
 import { artistNames, coverUrl, formatMs, trackKey, PLACEHOLDER_COVER } from '../core/format'
 import type { Track } from '../core/types'
-import { IconPlay, IconPause, IconHeart, IconHeartFilled, IconMore, IconList, IconPlus, IconTrash } from './icons'
+import { IconPlay, IconHeart, IconHeartFilled, IconMore, IconList, IconPlus, IconTrash } from './icons'
 
 interface Props {
   tracks: Track[]
@@ -203,7 +203,9 @@ export default function TrackList({ tracks, onPlay, showAlbum = true, showLikes 
           >
             <span className="tc-idx">
               {playing ? (
-                <IconPause size={16} className="ic-playing" />
+                <span className="eq ic-playing" title="Сейчас играет" aria-label="Сейчас играет">
+                  <span /><span /><span /><span />
+                </span>
               ) : paused ? (
                 <IconPlay size={16} className="ic-playing" />
               ) : (

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { player, type PlayerSnapshot } from '../core/player'
 import { ymClient } from '../core/client'
 import { useApp } from '../state/store'
-import { coverUrl, formatMs, PLACEHOLDER_COVER, artistNames } from '../core/format'
+import { coverUrl, formatMs, trackKey, PLACEHOLDER_COVER, artistNames } from '../core/format'
 import { diag } from '../core/diag'
 import QueuePanel from './QueuePanel'
 import SimilarPanel from './SimilarPanel'
@@ -34,7 +34,7 @@ function useSnapshot(): PlayerSnapshot {
 
 export default function PlayerBar() {
   const snap = useSnapshot()
-  const isLiked = useApp((s) => s.isLiked)
+  const likedKeys = useApp((s) => s.likedKeys)
   const toggleLike = useApp((s) => s.toggleLike)
   const showToast = useApp((s) => s.showToast)
   const [expanded, setExpanded] = useState(false)
@@ -47,7 +47,7 @@ export default function PlayerBar() {
   const [similarOpen, setSimilarOpen] = useState(false)
 
   const cur = snap.current
-  const liked = cur ? isLiked(cur.track) : false
+  const liked = cur ? likedKeys.has(trackKey(cur.track)) : false
   const duration = snap.durationMs || 0
   const position = snap.positionMs
 
@@ -175,7 +175,10 @@ export default function PlayerBar() {
               onError={(e) => ((e.target as HTMLImageElement).src = PLACEHOLDER_COVER)}
             />
             <div className="pb-meta" onClick={openExpanded} title="Развернуть плеер">
-              <div className="pb-title">{cur.track.title}</div>
+              <div className="pb-title">
+                {snap.playing && <span className="eq pb-eq" aria-hidden="true"><span /><span /><span /></span>}
+                {cur.track.title}
+              </div>
               <div className="pb-artist" title={artistNames(cur.track.artists)}>
                 {artistNames(cur.track.artists)}
               </div>

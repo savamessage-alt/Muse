@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ymClient } from '../core/client'
 import { useApp } from '../state/store'
 import { player } from '../core/player'
-import { artistNames, coverUrl, formatMs, PLACEHOLDER_COVER } from '../core/format'
+import { artistNames, coverUrl, formatMs, trackKey, PLACEHOLDER_COVER } from '../core/format'
 import type { Track } from '../core/types'
 import { IconDislike, IconHeart, IconHeartFilled, IconList, IconNext, IconPause, IconPlay, IconShuffle } from './icons'
 
@@ -18,7 +18,7 @@ export default function HomePage() {
   const [wave, setWave] = useState<Wave | null>(null)
   const [loadingWave, setLoadingWave] = useState(false)
   const showToast = useApp((s) => s.showToast)
-  const isLiked = useApp((s) => s.isLiked)
+  const likedKeys = useApp((s) => s.likedKeys)
   const toggleLike = useApp((s) => s.toggleLike)
   const user = useApp((s) => s.user)
   const [snap, setSnap] = useState(() => player.snapshot())
@@ -115,7 +115,7 @@ export default function HomePage() {
 
   const cur = snap.current
   const playing = snap.playing && !!cur
-  const liked = cur ? isLiked(cur.track) : false
+  const liked = cur ? likedKeys.has(trackKey(cur.track)) : false
 
   // фон: обложка играющего трека (или значка волны) — размытая и анимированная на весь экран
   const heroBg = cur?.track.coverUri

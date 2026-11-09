@@ -8,6 +8,8 @@ const config: CapacitorConfig = {
   plugins: {
     // нативный HTTP вместо WebView-fetch: обход CORS на Android
     CapacitorHttp: { enabled: true },
+    // Фоновый медиа-виджет
+    BackgroundPlayback: {},
   },
   android: {
     allowMixedContent: true,

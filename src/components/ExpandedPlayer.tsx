@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { player, type PlayerSnapshot } from '../core/player'
 import { useApp } from '../state/store'
-import { coverUrl, formatMs, PLACEHOLDER_COVER, artistNames } from '../core/format'
+import { coverUrl, formatMs, PLACEHOLDER_COVER, artistNames, trackKey } from '../core/format'
 import {
   IconPlay,
   IconPause,
@@ -34,10 +34,10 @@ interface Props {
 /** Полноэкранный плеер «bottom-sheet»: крупная обложка, управление, быстрый доступ ко всем панелям */
 export default function ExpandedPlayer({ onClose, onLyrics, onQueue, onSimilar }: Props) {
   const snap = useSnapshot()
-  const isLiked = useApp((s) => s.isLiked)
+  const likedKeys = useApp((s) => s.likedKeys)
   const toggleLike = useApp((s) => s.toggleLike)
   const cur = snap.current
-  const liked = cur ? isLiked(cur.track) : false
+  const liked = cur ? likedKeys.has(trackKey(cur.track)) : false
   const duration = snap.durationMs || 0
   const position = snap.positionMs
 
@@ -108,7 +108,10 @@ export default function ExpandedPlayer({ onClose, onLyrics, onQueue, onSimilar }
               <span className="psheet-swipe-hint muted small">← свайп →</span>
             </div>
             <div className="psheet-side">
-              <div className="psheet-title">{cur.track.title}</div>
+              <div className="psheet-title">
+                {snap.playing && cur && <span className="eq psheet-eq" aria-hidden="true"><span /><span /><span /><span /></span>}
+                {cur.track.title}
+              </div>
               <div className="psheet-artist" title={artistNames(cur.track.artists)}>
                 {artistNames(cur.track.artists)}
               </div>
