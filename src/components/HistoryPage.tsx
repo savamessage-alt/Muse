@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { ymClient } from '../core/client'
 import { expandTracks } from '../core/tracks'
-import { artistNames, coverUrl, formatMs, PLACEHOLDER_COVER } from '../core/format'
+import { coverUrl, formatMs, PLACEHOLDER_COVER } from '../core/format'
+import { ArtistLink } from './ArtistLink'
 import type { HistoryItem, Track } from '../core/types'
 import { playTracks } from './TrackList'
 import { IconPlay } from './icons'
@@ -102,7 +103,7 @@ export default function HistoryPage() {
               />
               <div className="history-meta">
                 <div className="history-title">{t.title}</div>
-                <div className="history-sub">{artistNames(t.artists)}</div>
+                <ArtistLink artists={t.artists} className="history-sub" />
               </div>
               <span className="history-time">{formatMs(t.durationMs ?? 0)}</span>
               <span className="history-play"><IconPlay size={16} /></span>

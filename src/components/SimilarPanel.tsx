@@ -2,7 +2,8 @@
 import { useEffect, useState } from 'react'
 import { ymClient } from '../core/client'
 import { player } from '../core/player'
-import { artistNames, coverUrl, PLACEHOLDER_COVER } from '../core/format'
+import { coverUrl, PLACEHOLDER_COVER } from '../core/format'
+import { ArtistLink } from './ArtistLink'
 import type { Track } from '../core/types'
 import { IconPlay, IconX } from './icons'
 
@@ -93,7 +94,7 @@ export default function SimilarPanel({ trackTitle, onClose }: { trackTitle: stri
                 />
                 <div className="queue-meta">
                   <div className="queue-name">{t.title}</div>
-                  <div className="queue-artist">{artistNames(t.artists)}</div>
+                  <ArtistLink artists={t.artists} className="queue-artist" />
                 </div>
                 <IconPlay size={16} className="queue-play" />
               </div>

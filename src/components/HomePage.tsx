@@ -3,9 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import { ymClient } from '../core/client'
 import { useApp } from '../state/store'
 import { player } from '../core/player'
-import { artistNames, coverUrl, formatMs, trackKey, PLACEHOLDER_COVER } from '../core/format'
+import { coverUrl, formatMs, trackKey, PLACEHOLDER_COVER } from '../core/format'
+import { ArtistLink } from './ArtistLink'
+import WaveSettings, { type WaveChoice } from './WaveSettings'
+import { buildSeeds, findWaveStation, fetchWaveTracks, fetchGenreTracks, GENRES, WAVE } from '../core/wave'
 import type { Track } from '../core/types'
-import { IconDislike, IconHeart, IconHeartFilled, IconList, IconNext, IconPause, IconPlay, IconShuffle } from './icons'
+import { IconDislike, IconHeart, IconHeartFilled, IconList, IconNext, IconPause, IconPlay, IconShuffle, IconSliders } from './icons'
 
 interface Wave {
   type: string
@@ -23,78 +26,61 @@ export default function HomePage() {
   const user = useApp((s) => s.user)
   const [snap, setSnap] = useState(() => player.snapshot())
   useEffect(() => player.onChange(setSnap), [])
+  const [waveSettingsOpen, setWaveSettingsOpen] = useState(false)
+  const [choice, setChoice] = useState<WaveChoice>({ label: 'Моя волна' })
   const nav = useNavigate()
 
   const firstName = user?.firstName ?? (user?.displayName ?? user?.name ?? '').split(/\s+/)[0] ?? user?.login ?? ''
 
-  // Найти «Мою волну» (персональную станцию user:onyourwave) в дашборде радио
+  // Найти «Мою волну» в дашборде радио
   useEffect(() => {
-    ymClient
-      .radioDashboard()
-      .then((r) => {
-        const list = r.stations ?? []
-        const mine =
-          list.find((s) => s.station?.id?.type === 'user' && s.station?.id?.tag === 'onyourwave') ??
-          list.find((s) => s.station?.id?.type === 'user') ??
-          list[0]
-        if (mine) {
-          const tp = mine.station?.id?.type ?? mine.id?.type ?? ''
-          const tg = mine.station?.id?.tag ?? mine.id?.tag ?? ''
-          if (tp && tg) {
-            setWave({
-              type: tp,
-              tag: tg,
-              name: mine.station?.name ?? 'Моя волна',
-              icon: mine.station?.icon?.uri,
-            })
-          }
-        }
+    void findWaveStation()
+      .then((st) => {
+        if (!st?.id?.type || !st.id.tag) return
+        setWave({
+          type: st.id.type,
+          tag: st.id.tag,
+          name: st.name ?? 'Моя волна',
+          icon: st.icon?.uri,
+        })
       })
       .catch(() => {
         /* радио недоступно — показываем фон-заглушку */
       })
   }, [])
 
-  const playWave = async () => {
+  const playWave = async (override?: WaveChoice) => {
     if (loadingWave) return
+    const picked = override ?? choice
     setLoadingWave(true)
     try {
-      // если станция ещё не определена (dashboard грузится) — дождёмся её
-      let target = wave
-      if (!target) {
-        const r = await ymClient.radioDashboard()
-        const list = r.stations ?? []
-        const mine =
-          list.find((s) => s.station?.id?.type === 'user' && s.station?.id?.tag === 'onyourwave') ??
-          list.find((s) => s.station?.id?.type === 'user') ??
-          list[0]
-        const tp = mine?.station?.id?.type ?? mine?.id?.type ?? ''
-        const tg = mine?.station?.id?.tag ?? mine?.id?.tag ?? ''
-        if (tp && tg) {
-          target = { type: tp, tag: tg, name: mine?.station?.name ?? 'Моя волна', icon: mine?.station?.icon?.uri }
-          setWave(target)
+      let tracks: Track[] = []
+      const seeds = buildSeeds(picked.moodSeed, picked.energySeed, picked.langSeed ?? undefined, picked.divSeed)
+      // жанровая волна или «Моя волна» со всеми выбранными параметрами
+      if (picked.genre) {
+        tracks = await fetchGenreTracks(picked.genre, seeds)
+      } else {
+        tracks = await fetchWaveTracks(seeds)
+        // если станция ещё не определена — попробуем найти
+        if (!tracks.length && !wave) {
+          const st = await findWaveStation().catch(() => null)
+          if (st?.id?.type && st.id.tag) {
+            setWave({ type: st.id.type, tag: st.id.tag, name: st.name ?? 'Моя волна', icon: st.icon?.uri })
+          }
         }
       }
-      if (!target) {
-        showToast('Моя волна пока недоступна (радио не ответило)', 'error')
-        return
-      }
-      const res = await ymClient.radioStationTracks(target.type, target.tag)
-      const tracks = (res.sequence ?? [])
-        .filter((x) => x.type === 'track' && x.track)
-        .map((x) => x.track as Track)
       if (!tracks.length) {
-        showToast('Моя волна не вернула треки (возможно, нужна подписка)', 'error')
+        showToast('Волна не вернула треки (возможно, нужна подписка)', 'error')
         return
       }
       await player.playQueue(
         tracks.map((track) => ({ track, source: 'radio' as const })),
         0,
-        { type: target.type, tag: target.tag },
+        picked.genre ? { type: 'genre', tag: picked.genre } : { type: WAVE.type, tag: WAVE.tag },
       )
-      showToast('🎵 Моя волна — играет')
+      showToast('🎵 ' + picked.label + ' — играет')
     } catch (e) {
-      showToast('Ошибка Моей волны: ' + (e as Error).message, 'error')
+      showToast('Ошибка волны: ' + (e as Error).message, 'error')
     } finally {
       setLoadingWave(false)
     }
@@ -142,7 +128,12 @@ export default function HomePage() {
             </div>
           </>
         )}
-        <div className="wave-label">МОЯ ВОЛНА</div>
+        <div className="wave-label">
+          {choice.genre ? GENRES.find((g) => g.tag === choice.genre)?.name.toUpperCase() ?? 'ЖАНРОВАЯ ВОЛНА' : 'МОЯ ВОЛНА'}
+          <button className="wave-settings-btn" onClick={() => setWaveSettingsOpen(true)} title="Настроить волну">
+            <IconSliders size={15} />
+          </button>
+        </div>
 
         <button
           className="wave-disc"
@@ -165,7 +156,7 @@ export default function HomePage() {
         {cur ? (
           <>
             <div className="wave-track-title">{cur.track.title}</div>
-            <div className="wave-track-artist">{artistNames(cur.track.artists)}</div>
+            <ArtistLink artists={cur.track.artists} className="wave-track-artist" />
             <div className="wave-progress">
               <span className="wave-time">{formatMs(snap.positionMs)}</span>
               <input
@@ -220,6 +211,16 @@ export default function HomePage() {
           </button>
         </div>
       </div>
+      {waveSettingsOpen && (
+        <WaveSettings
+          current={choice}
+          onApply={(c) => {
+            setChoice(c)
+            void playWave(c)
+          }}
+          onClose={() => setWaveSettingsOpen(false)}
+        />
+      )}
     </div>
   )
 }

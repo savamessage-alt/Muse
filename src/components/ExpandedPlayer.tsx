@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { player, type PlayerSnapshot } from '../core/player'
 import { useApp } from '../state/store'
-import { coverUrl, formatMs, PLACEHOLDER_COVER, artistNames, trackKey } from '../core/format'
+import { coverUrl, formatMs, PLACEHOLDER_COVER, trackKey } from '../core/format'
+import { ArtistLink } from './ArtistLink'
 import {
   IconPlay,
   IconPause,
@@ -16,7 +17,15 @@ import {
   IconLyrics,
   IconSimilar,
   IconQueue,
+  IconMoon,
+  IconSleepTimer,
 } from './icons'
+
+function formatRemaining(ms: number | null): string {
+  if (ms === null) return ''
+  const total = Math.max(0, Math.round(ms / 1000))
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`
+}
 
 function useSnapshot(): PlayerSnapshot {
   const [snap, setSnap] = useState<PlayerSnapshot>(() => player.snapshot())
@@ -29,10 +38,11 @@ interface Props {
   onLyrics: () => void
   onQueue: () => void
   onSimilar: () => void
+  onSleepTimer: () => void
 }
 
 /** Полноэкранный плеер «bottom-sheet»: крупная обложка, управление, быстрый доступ ко всем панелям */
-export default function ExpandedPlayer({ onClose, onLyrics, onQueue, onSimilar }: Props) {
+export default function ExpandedPlayer({ onClose, onLyrics, onQueue, onSimilar, onSleepTimer }: Props) {
   const snap = useSnapshot()
   const likedKeys = useApp((s) => s.likedKeys)
   const toggleLike = useApp((s) => s.toggleLike)
@@ -86,9 +96,18 @@ export default function ExpandedPlayer({ onClose, onLyrics, onQueue, onSimilar }
       <div className="psheet-card" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Плеер">
         <div className="psheet-head">
           <span className="muted small">Сейчас играет</span>
-          <button className="icon-btn" onClick={onClose} title="Свернуть">
-            <IconX size={18} />
-          </button>
+          <div className="psheet-head-actions">
+            <button
+              className={'icon-btn' + (snap.sleepTimer.mode !== 'off' ? ' has-timer' : '')}
+              onClick={onSleepTimer}
+              title="Таймер сна"
+            >
+              <IconSleepTimer size={18} />
+            </button>
+            <button className="icon-btn" onClick={onClose} title="Свернуть">
+              <IconX size={18} />
+            </button>
+          </div>
         </div>
 
         {cur ? (
@@ -112,9 +131,7 @@ export default function ExpandedPlayer({ onClose, onLyrics, onQueue, onSimilar }
                 {snap.playing && cur && <span className="eq psheet-eq" aria-hidden="true"><span /><span /><span /><span /></span>}
                 {cur.track.title}
               </div>
-              <div className="psheet-artist" title={artistNames(cur.track.artists)}>
-                {artistNames(cur.track.artists)}
-              </div>
+              <ArtistLink artists={cur.track.artists} className="psheet-artist" />
               <div className="psheet-controls">
                 <button
                   className={'icon-btn' + (snap.shuffle ? ' active' : '')}

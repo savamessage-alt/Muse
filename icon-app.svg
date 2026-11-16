@@ -1,26 +1,26 @@
 <svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#1b1b22"/>
-      <stop offset="55%" stop-color="#101015"/>
-      <stop offset="100%" stop-color="#08080c"/>
+      <stop offset="0%" stop-color="#17171f"/>
+      <stop offset="55%" stop-color="#0d0d12"/>
+      <stop offset="100%" stop-color="#050508"/>
     </linearGradient>
     <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#ff4d4d"/>
-      <stop offset="50%" stop-color="#ff3c00"/>
-      <stop offset="100%" stop-color="#ff9500"/>
+      <stop offset="0%" stop-color="#ff5c4d"/>
+      <stop offset="55%" stop-color="#ff3c00"/>
+      <stop offset="100%" stop-color="#ffa000"/>
     </linearGradient>
-    <linearGradient id="playGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="playGrad" x1="0%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%" stop-color="#ffffff"/>
-      <stop offset="100%" stop-color="#ffe9d6"/>
+      <stop offset="100%" stop-color="#ffe6d2"/>
     </linearGradient>
-    <radialGradient id="vinylShine" cx="35%" cy="28%" r="72%">
-      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.16"/>
-      <stop offset="60%" stop-color="#ffffff" stop-opacity="0.03"/>
-      <stop offset="100%" stop-color="#000000" stop-opacity="0.22"/>
+    <radialGradient id="shine" cx="32%" cy="24%" r="70%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.18"/>
+      <stop offset="55%" stop-color="#ffffff" stop-opacity="0.04"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.28"/>
     </radialGradient>
-    <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="10" result="b"/>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="12" result="b"/>
       <feMerge>
         <feMergeNode in="b"/>
         <feMergeNode in="SourceGraphic"/>
@@ -28,28 +28,23 @@
     </filter>
   </defs>
 
-  <!-- Фон: тёмный «винил» -->
-  <rect width="512" height="512" rx="112" fill="url(#bgGrad)"/>
+  <rect width="512" height="512" rx="116" fill="url(#bgGrad)"/>
 
-  <!-- Кольцо-акцент -->
-  <circle cx="256" cy="256" r="176" fill="none" stroke="url(#ringGrad)" stroke-width="14" opacity="0.95"/>
-  <circle cx="256" cy="256" r="150" fill="none" stroke="#ffffff" stroke-width="3" opacity="0.10"/>
+  <circle cx="256" cy="256" r="196" fill="#08080c"/>
+  <circle cx="256" cy="256" r="196" fill="url(#shine)"/>
 
-  <!-- Винчестер-бороздки пластинки -->
-  <g stroke="#ffffff" stroke-opacity="0.055" stroke-width="2" fill="none">
-    <circle cx="256" cy="256" r="136"/>
-    <circle cx="256" cy="256" r="118"/>
-    <circle cx="256" cy="256" r="100"/>
-    <circle cx="256" cy="256" r="82"/>
+  <circle cx="256" cy="256" r="188" fill="none" stroke="url(#ringGrad)" stroke-width="20" filter="url(#glow)"/>
+
+  <g stroke="#ffffff" stroke-opacity="0.07" stroke-width="2.5" fill="none">
+    <circle cx="256" cy="256" r="160"/>
+    <circle cx="256" cy="256" r="138"/>
+    <circle cx="256" cy="256" r="116"/>
   </g>
 
-  <!-- Блик пластинки -->
-  <circle cx="256" cy="256" r="150" fill="url(#vinylShine)"/>
+  <circle cx="256" cy="256" r="96" fill="#0b0b11" stroke="#ffffff" stroke-opacity="0.16" stroke-width="5"/>
+  <circle cx="256" cy="256" r="96" fill="none" stroke="url(#ringGrad)" stroke-width="2" stroke-opacity="0.55"/>
 
-  <!-- Центральный «трафарет» с кнопкой play -->
-  <circle cx="256" cy="256" r="64" fill="#0d0d12" stroke="#ffffff" stroke-opacity="0.12" stroke-width="3"/>
-  <path d="M240 224 L292 256 L240 288 Z" fill="url(#playGrad)" filter="url(#softGlow)"/>
+  <path d="M228 198 L332 256 L228 314 Z" fill="url(#playGrad)" filter="url(#glow)"/>
 
-  <!-- Тонкая обводка для объёма -->
-  <rect x="3" y="3" width="506" height="506" rx="110" fill="none" stroke="#ffffff" stroke-opacity="0.14" stroke-width="6"/>
+  <rect x="6" y="6" width="500" height="500" rx="112" fill="none" stroke="#ffffff" stroke-opacity="0.10" stroke-width="7"/>
 </svg>

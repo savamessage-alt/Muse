@@ -1,7 +1,8 @@
 // Панель «Очередь» — список следующих треков (как в Яндекс Музыке)
 import { useEffect, useState } from 'react'
 import { player } from '../core/player'
-import { artistNames, coverUrl, PLACEHOLDER_COVER } from '../core/format'
+import { coverUrl, PLACEHOLDER_COVER } from '../core/format'
+import { ArtistLink } from './ArtistLink'
 import { IconX } from './icons'
 
 export default function QueuePanel({ onClose }: { onClose: () => void }) {
@@ -48,7 +49,7 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
                 <div className="queue-meta">
                   <div className="queue-name">{it.track.title}</div>
                   <div className="queue-artist">
-                    {artistNames(it.track.artists)}
+                    <ArtistLink artists={it.track.artists} />
                     {it.source === 'radio' ? ' · радио' : ''}
                   </div>
                 </div>

@@ -6,6 +6,9 @@ import { useApp } from '../state/store'
 
 const LS_KEY = 'ym.resume'
 
+// Module-level flag to prevent multiple resume attempts across StrictMode mounts
+let hasResumed = false
+
 export default function ResumePosition() {
   const restored = useRef(false)
   const showToast = useApp((s) => s.showToast)
@@ -50,6 +53,7 @@ export default function ResumePosition() {
   useEffect(() => {
     if (restored.current) return
     restored.current = true
+    if (hasResumed) return
     if (player.snapshot().queue.length > 0) return // уже что-то играет
     let rec: { id: string; albumId?: string; posMs?: number; ts?: number } | null = null
     try {
@@ -65,6 +69,7 @@ export default function ResumePosition() {
     }
     const key = rec.albumId ? `${rec.id}:${rec.albumId}` : rec.id
     const pos = rec.posMs ?? 0
+    hasResumed = true
     void (async () => {
       try {
         const [t] = await ymClient.tracks([key])

@@ -3,7 +3,7 @@
 // Все методы работают через единый транспорт и менеджер токена.
 // ============================================================
 
-import { ymFetch, YmApiError, YM_CLIENT_HEADER } from './transport'
+import { ymFetch, ymFetchXml, YmApiError, YM_CLIENT_HEADER } from './transport'
 import { tokenManager } from './tokenManager'
 import { signRequest } from './sign'
 import { diag } from './diag'
@@ -46,6 +46,8 @@ export type PlaylistOp =
 class YandexMusicClient {
   private uid: number | null = null
   private uidPromise: Promise<number> | null = null
+  /** Кэш текстов песен: id трека → текст ('' — текста нет) */
+  private lyricsCache = new Map<string, string>()
 
   /** Выполнить запрос с авторизацией и автообновлением токена при 401 */
   private async req<T>(path: string, init: Parameters<typeof ymFetch>[1] = {}): Promise<T> {
@@ -149,12 +151,47 @@ class YandexMusicClient {
   supplement(trackId: string): Promise<Supplement> {
     return this.req(`/tracks/${encodeURIComponent(trackId)}/supplement`)
   }
-  /** Текст песни (с подписью запроса, как в Android-приложении) */
+  /**
+   * Текст песни.
+   * API отдаёт не сам текст, а ссылку downloadUrl на txt-файл — её и скачиваем.
+   * Проверка подписи на стороне Яндекса периодически ложно отвечает 403
+   * «Invalid Sign» на корректный запрос (до половины ответов), поэтому
+   * делаем несколько попыток с новой подписью и кэшируем результат.
+   */
   async trackLyrics(trackId: string): Promise<{ lyric: string }> {
     const numeric = String(trackId).split(':')[0]
-    const sign = signRequest(numeric)
-    const q = new URLSearchParams({ format: 'TEXT', timeStamp: String(sign.timestamp), sign: sign.value })
-    return this.req(`/tracks/${encodeURIComponent(numeric)}/lyrics?${q.toString()}`)
+    const cached = this.lyricsCache.get(numeric)
+    if (cached !== undefined) return { lyric: cached }
+
+    const attempts = 5
+    let lastError: unknown = null
+    for (let i = 0; i < attempts; i++) {
+      const sign = signRequest(numeric)
+      const q = new URLSearchParams({ format: 'TEXT', timeStamp: String(sign.timestamp), sign: sign.value })
+      try {
+        const meta = await this.req<{ downloadUrl?: string }>(
+          `/tracks/${encodeURIComponent(numeric)}/lyrics?${q.toString()}`,
+        )
+        const url = meta?.downloadUrl
+        const text = url ? await ymFetchXml(url) : ''
+        this.lyricsCache.set(numeric, text)
+        return { lyric: text }
+      } catch (e) {
+        lastError = e
+        const msg = e instanceof Error ? e.message : String(e)
+        const errCode = e instanceof YmApiError ? e.code : ''
+        // У трека просто нет текста — кэшируем пустоту и не ретраим
+        if (/no lyrics found/i.test(msg) || errCode === 'not-found') {
+          this.lyricsCache.set(numeric, '')
+          return { lyric: '' }
+        }
+        // Повторяем только на «Invalid Sign» (флапающая проверка подписи)
+        const isInvalidSign = /Invalid Sign/i.test(msg) || errCode === 'Invalid Sign'
+        if (!isInvalidSign || i === attempts - 1) break
+        await new Promise((r) => setTimeout(r, 200))
+      }
+    }
+    throw lastError instanceof Error ? lastError : new YmApiError('Текст песни недоступен', 0)
   }
   tracksSimilar(trackId: string): Promise<{ similarTracks: Track[] }> {
     return this.req(`/tracks/${encodeURIComponent(trackId)}/similar`)
@@ -428,6 +465,22 @@ class YandexMusicClient {
   }
   radioStationTracks(type: string, tag: string): Promise<RadioSessionResume> {
     return this.req(`/rotor/station/${type}:${tag}/tracks?shuffle=true`)
+  }
+  /** Треки станции с seed-параметрами (настроение/энергия/язык/характер «Моей волны»).
+   *  Каждый из массива передаётся как отдельный `&seed=…` — все комбинируются одновременно. */
+  radioStationTracksSeed(type: string, tag: string, seeds?: string[]): Promise<RadioSessionResume> {
+    const params = new URLSearchParams({ shuffle: 'true' })
+    for (const s of seeds ?? []) {
+      params.append('seed', s)
+    }
+    return this.req(`/rotor/station/${type}:${tag}/tracks?${params.toString()}`)
+  }
+  /** Сохранённые настройки станции (только чтение; запись API не даёт) */
+  radioStationSettings(
+    type: string,
+    tag: string,
+  ): Promise<{ language?: string; mood?: number; energy?: number; diversity?: string }> {
+    return this.req(`/rotor/station/${type}:${tag}/settings`)
   }
   radioFeedback(
     type: string,

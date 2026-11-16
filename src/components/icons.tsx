@@ -27,6 +27,11 @@ import {
   Music,
   MoreVertical,
   Trash2,
+  Moon,
+  Clock,
+  Sliders,
+  ChevronDown,
+  Loader2,
 } from 'lucide-react'
 import type { LucideProps } from 'lucide-react'
 
@@ -63,3 +68,10 @@ export const IconError = (p: P) => <CircleAlert {...p} />
 export const IconMusicNote = (p: P) => <Music {...p} />
 export const IconMore = (p: P) => <MoreVertical {...p} />
 export const IconTrash = (p: P) => <Trash2 {...p} />
+export const IconMoon = (p: P) => <Moon {...p} />
+export const IconClock = (p: P) => <Clock {...p} />
+export const IconSliders = (p: P) => <Sliders {...p} />
+export const IconChevronDown = (p: P) => <ChevronDown {...p} />
+export const IconSpinner = (p: P) => <Loader2 className="spin-icon" {...p} />
+/** Таймер сна — луна с часовой стрелкой (заглушка до кастомного SVG) */
+export const IconSleepTimer = (p: P) => <Moon {...p} />

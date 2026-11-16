@@ -2,11 +2,14 @@ import { useEffect, useState } from 'react'
 import { player, type PlayerSnapshot } from '../core/player'
 import { ymClient } from '../core/client'
 import { useApp } from '../state/store'
-import { coverUrl, formatMs, trackKey, PLACEHOLDER_COVER, artistNames } from '../core/format'
+import { coverUrl, formatMs, trackKey, PLACEHOLDER_COVER } from '../core/format'
+import { ArtistLink } from './ArtistLink'
 import { diag } from '../core/diag'
 import QueuePanel from './QueuePanel'
 import SimilarPanel from './SimilarPanel'
+import { LyricsPanel } from './LyricsPanel'
 import ExpandedPlayer from './ExpandedPlayer'
+import SleepTimerSheet from './SleepTimerSheet'
 import {
   IconPlay,
   IconPause,
@@ -24,6 +27,7 @@ import {
   IconMusicNote,
   IconRefresh,
   IconX,
+  IconSleepTimer,
 } from './icons'
 
 function useSnapshot(): PlayerSnapshot {
@@ -45,13 +49,15 @@ export default function PlayerBar() {
   const [lyricsTrackId, setLyricsTrackId] = useState('')
   const [queueOpen, setQueueOpen] = useState(false)
   const [similarOpen, setSimilarOpen] = useState(false)
+  const [sleepOpen, setSleepOpen] = useState(false)
 
   const cur = snap.current
   const liked = cur ? likedKeys.has(trackKey(cur.track)) : false
   const duration = snap.durationMs || 0
   const position = snap.positionMs
 
-  // глобальные хоткеи: пробел — пауза/играть, ←/→ — перемотка на 5 с
+  // глобальные хоткеи: пробел — пауза/играть, ←/→ — перемотка на 5 с,
+  // L — лайк, N/P — следующий/предыдущий, M — mute
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null
@@ -65,11 +71,23 @@ export default function PlayerBar() {
       } else if (e.key === 'ArrowLeft' && snap.current) {
         e.preventDefault()
         player.seek(Math.max(0, snap.positionMs - 5000))
+      } else if ((e.key === 'l' || e.key === 'L' || e.key === 'д' || e.key === 'Д') && cur) {
+        e.preventDefault()
+        void toggleLike(cur.track)
+      } else if ((e.key === 'n' || e.key === 'N') && snap.current) {
+        e.preventDefault()
+        void player.next()
+      } else if ((e.key === 'p' || e.key === 'P') && snap.current) {
+        e.preventDefault()
+        void player.prev()
+      } else if ((e.key === 'm' || e.key === 'M') && snap.current) {
+        e.preventDefault()
+        player.setMuted(!snap.muted)
       }
     }
     window.addEventListener('keydown', h)
     return () => window.removeEventListener('keydown', h)
-  }, [snap.current, snap.positionMs])
+  }, [snap.current, snap.positionMs, snap.muted, cur, toggleLike])
 
   const onSeek = (ms: number) => player.seek(ms)
 
@@ -112,6 +130,14 @@ export default function PlayerBar() {
         did = true
         window.clearTimeout(timer)
         const msg = e instanceof Error ? e.message : String(e)
+        // «No lyrics found» — это не сбой, у трека просто нет текста
+        if (/no lyrics found/i.test(msg)) {
+          diag('lyrics: нет текста у трека')
+          setLyrics('')
+          setLyricsTrackId(trackId)
+          setLyricsLoading(false)
+          return
+        }
         diag('lyrics: ОШИБКА ' + msg.slice(0, 120))
         setLyricsError('Тексты недоступны: ' + msg)
         setLyricsLoading(false)
@@ -144,9 +170,6 @@ export default function PlayerBar() {
     }
   }, [cur, lyricsOpen, lyricsTrackId, lyrics])
 
-  // без таймкодов: [00:12.34] → чисто
-  const cleanLyrics = (lyrics ?? '').replace(/\[\d{2}:\d{2}(\.\d+)?\]/g, '').trim()
-
   return (
     <footer className="playerbar">
       {expanded && (
@@ -154,6 +177,7 @@ export default function PlayerBar() {
           onClose={() => setExpanded(false)}
           onLyrics={toggleLyrics}
           onQueue={() => setQueueOpen((v) => !v)}
+          onSleepTimer={() => setSleepOpen(true)}
           onSimilar={() => {
             if (!cur) {
               showToast('Сначала выберите трек')
@@ -163,6 +187,7 @@ export default function PlayerBar() {
           }}
         />
       )}
+      {sleepOpen && <SleepTimerSheet snap={snap} onClose={() => setSleepOpen(false)} />}
       <div className="pb-track">
         {cur ? (
           <>
@@ -179,9 +204,7 @@ export default function PlayerBar() {
                 {snap.playing && <span className="eq pb-eq" aria-hidden="true"><span /><span /><span /></span>}
                 {cur.track.title}
               </div>
-              <div className="pb-artist" title={artistNames(cur.track.artists)}>
-                {artistNames(cur.track.artists)}
-              </div>
+              <ArtistLink artists={cur.track.artists} className="pb-artist" />
             </div>
             <button
               className={'icon-btn' + (liked ? ' liked' : '')}
@@ -240,7 +263,16 @@ export default function PlayerBar() {
 
       <div className="pb-right">
         {snap.buffering && <span className="buffering" title="Буферизация">…</span>}
-        {snap.error && <span className="pb-error" title={snap.error}>⚠</span>}
+        {snap.error && (
+          <button
+            className="pb-error-btn"
+            title={snap.error + ' — нажмите, чтобы повторить'}
+            onClick={() => void player.reloadCurrent()}
+          >
+            <IconError size={16} />
+            <IconRefresh size={13} />
+          </button>
+        )}
         <button
           className={'icon-btn' + (lyricsOpen ? ' active' : '')}
           onClick={toggleLyrics}
@@ -260,6 +292,13 @@ export default function PlayerBar() {
           title="Похожие треки"
         >
           <IconSimilar size={20} />
+        </button>
+        <button
+          className={'icon-btn' + (sleepOpen ? ' active' : '') + (snap.sleepTimer.mode !== 'off' ? ' has-timer' : '')}
+          onClick={() => setSleepOpen(true)}
+          title="Таймер сна"
+        >
+          <IconSleepTimer size={18} />
         </button>
         <button className={'icon-btn' + (queueOpen ? ' active' : '')} onClick={() => setQueueOpen((v) => !v)} title="Очередь">
           <IconQueue size={20} />
@@ -286,16 +325,18 @@ export default function PlayerBar() {
               <IconX size={16} />
             </button>
           </div>
-          <div className="pb-lyrics-body">
-            {lyricsLoading && (
+          {lyricsLoading && (
+            <div className="pb-lyrics-body">
               <div className="lyrics-loading" aria-label="Загрузка текста">
                 <span className="skeleton-line" style={{ width: '94%' }} />
                 <span className="skeleton-line" style={{ width: '70%' }} />
                 <span className="skeleton-line" style={{ width: '86%' }} />
                 <span className="skeleton-line" style={{ width: '48%' }} />
               </div>
-            )}
-            {!lyricsLoading && lyricsError && (
+            </div>
+          )}
+          {!lyricsLoading && lyricsError && (
+            <div className="pb-lyrics-body">
               <div className="lyrics-state">
                 <IconError size={34} />
                 <div className="lyrics-state-text">{lyricsError}</div>
@@ -303,15 +344,13 @@ export default function PlayerBar() {
                   <IconRefresh size={14} /> Повторить
                 </button>
               </div>
-            )}
-            {!lyricsLoading && !lyricsError && cleanLyrics && <pre className="lyrics-text">{cleanLyrics}</pre>}
-            {!lyricsLoading && !lyricsError && !cleanLyrics && (
-              <div className="lyrics-state">
-                <IconMusicNote size={34} />
-                <div className="lyrics-state-text">Для этого трека текст пока недоступен</div>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
+          {!lyricsLoading && !lyricsError && (
+            <div className="pb-lyrics-body">
+              <LyricsPanel lyric={lyrics ?? ''} />
+            </div>
+          )}
         </div>
       )}
 

@@ -99,14 +99,35 @@ export interface Artist {
   link?: { href?: string; title?: string }
 }
 
+export interface ArtistLink {
+  title?: string
+  href?: string
+  subtitle?: string
+  url?: string
+  type?: string
+  socialNetwork?: string
+}
+
 export interface BriefInfo {
   artist?: Artist
   albums?: Album[]
+  alsoAlbums?: Album[]
   alsoTracks?: Track[]
+  /** реальные популярные треки артиста (alsoTracks часто пуст) */
+  popularTracks?: Track[]
   similarArtists?: Artist[]
-  counts?: { tracks?: number; directAlbums?: number; alsoTracks?: number }
+  counts?: { tracks?: number; directAlbums?: number; alsoTracks?: number; alsoAlbums?: number }
   vinyls?: unknown[]
   playlists?: { kind?: number; title?: string; trackCount?: number; owner?: { uid?: number; login?: string } }[]
+  /** ссылки (сайт/соцсети) */
+  links?: ArtistLink[]
+  /** статистика прослушиваний */
+  stats?: { lastMonthListeners?: number; lastMonthListenersDelta?: number }
+  /** «Моя волна по исполнителю» */
+  customWave?: { title?: string; header?: string; backgroundImageUrl?: string }
+  videos?: unknown[]
+  concerts?: unknown[]
+  lastReleases?: Album[]
 }
 
 export interface Playlist {

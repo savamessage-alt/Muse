@@ -13,6 +13,15 @@ export interface PlayableTrack {
   source?: 'radio' | 'queue' | 'playlist' | 'search'
 }
 
+export interface SleepTimerState {
+  /** off — выключен, time — до времени, track-end — до конца трека */
+  mode: 'off' | 'time' | 'track-end'
+  /** момент срабатывания (ms epoch); null для off и track-end */
+  endsAt: number | null
+  /** изначальная длительность в ms (для отображения) */
+  totalMs: number | null
+}
+
 export interface PlayerSnapshot {
   playing: boolean
   current: PlayableTrack | null
@@ -26,6 +35,9 @@ export interface PlayerSnapshot {
   repeat: 'off' | 'all' | 'one'
   error: string | null
   buffering: boolean
+  sleepTimer: SleepTimerState
+  /** остаток таймера сна в ms (для mode='time'); null если не активен */
+  sleepRemainingMs: number | null
 }
 
 type SnapshotListener = (s: PlayerSnapshot) => void
@@ -43,6 +55,8 @@ const EMPTY: PlayerSnapshot = {
   repeat: 'off',
   error: null,
   buffering: false,
+  sleepTimer: { mode: 'off', endsAt: null, totalMs: null },
+  sleepRemainingMs: null,
 }
 
 class Player {
@@ -61,6 +75,10 @@ class Player {
   // Защита от бесконечного скипа битых треков (в фоне play() может отклоняться)
   private consecutiveFailures = 0
   private lastPersist = 0
+  // Таймер сна
+  private sleepTimer: SleepTimerState = { mode: 'off', endsAt: null, totalMs: null }
+  private sleepFadeStarted = false
+  private preSleepVolume: number | null = null
 
   constructor() {
     const a = this.audio
@@ -76,7 +94,12 @@ class Player {
       this.buffering = true
       this.emit()
     })
-    a.addEventListener('timeupdate', () => this.throttledEmit())
+    a.addEventListener('timeupdate', () => {
+      // Таймер сна проверяем на каждом тике — аудио-события идут и в фоне,
+      // в отличие от setTimeout, который Android троттлит
+      this.checkSleepTimer()
+      this.throttledEmit()
+    })
     a.addEventListener('durationchange', () => this.emit())
     a.addEventListener('volumechange', () => this.emit())
     a.addEventListener('ended', () => void this.onEnded())
@@ -123,6 +146,10 @@ class Player {
   // ---------- публичное API ----------
 
   snapshot(): PlayerSnapshot {
+    const remaining =
+      this.sleepTimer.mode === 'time' && this.sleepTimer.endsAt
+        ? Math.max(0, this.sleepTimer.endsAt - Date.now())
+        : null
     return {
       playing: !this.audio.paused && !this.audio.ended,
       current: this.index >= 0 ? this.queue[this.index] ?? null : null,
@@ -136,6 +163,8 @@ class Player {
       repeat: this.repeat,
       error: this.error,
       buffering: this.buffering,
+      sleepTimer: { ...this.sleepTimer },
+      sleepRemainingMs: remaining,
     }
   }
 
@@ -154,6 +183,7 @@ class Player {
       : null
     this.error = null
     this.consecutiveFailures = 0
+    // Preserve sleep timer when replacing queue
     this.persist(true)
     return this.loadAndPlay(this.queue[this.index])
   }
@@ -266,7 +296,144 @@ class Player {
 
   setRepeat(r: 'off' | 'all' | 'one'): void {
     this.repeat = r
+    this.saveSettings()
     this.emit()
+  }
+
+  // ---------- Таймер сна ----------
+
+  /** Установить таймер на N минут */
+  setSleepTimerMinutes(minutes: number): void {
+    if (!Number.isFinite(minutes) || minutes <= 0) return
+    const ms = Math.round(minutes * 60_000)
+    this.sleepTimer = { mode: 'time', endsAt: Date.now() + ms, totalMs: ms }
+    this.sleepFadeStarted = false
+    this.preSleepVolume = null
+    this.saveSettings()
+    this.emit()
+  }
+
+  /** Остановить воспроизведение по окончании текущего трека */
+  setSleepTimerTrackEnd(): void {
+    this.sleepTimer = { mode: 'track-end', endsAt: null, totalMs: null }
+    this.sleepFadeStarted = false
+    this.preSleepVolume = null
+    this.saveSettings()
+    this.emit()
+  }
+
+  /** Снять таймер */
+  cancelSleepTimer(): void {
+    // если было затухание — вернуть громкость
+    if (this.preSleepVolume !== null) {
+      this.volume = this.preSleepVolume
+      this.audio.volume = this.muted ? 0 : this.volume
+      this.preSleepVolume = null
+    }
+    this.sleepTimer = { mode: 'off', endsAt: null, totalMs: null }
+    this.sleepFadeStarted = false
+    this.saveSettings()
+    this.emit()
+  }
+
+  /** Продлить таймер на N минут (для кнопки «+5 мин») */
+  extendSleepTimer(minutes: number): void {
+    if (this.sleepTimer.mode !== 'time' || !this.sleepTimer.endsAt) return
+    this.sleepTimer = {
+      ...this.sleepTimer,
+      endsAt: this.sleepTimer.endsAt + minutes * 60_000,
+      totalMs: (this.sleepTimer.totalMs ?? 0) + minutes * 60_000,
+    }
+    this.sleepFadeStarted = false
+    if (this.preSleepVolume !== null) {
+      this.volume = this.preSleepVolume
+      this.audio.volume = this.muted ? 0 : this.volume
+      this.preSleepVolume = null
+    }
+    this.saveSettings()
+    this.emit()
+  }
+
+  /** Проверка таймера — вызывается из timeupdate (работает и в фоне, в отличие от setTimeout) */
+  private checkSleepTimer(): void {
+    const rem = this.snapshot().sleepRemainingMs
+    if (rem === null) return
+    const FADE_MS = 20_000
+    // плавное затухание за 20 секунд до конца
+    if (rem <= FADE_MS && rem > 0 && !this.sleepFadeStarted) {
+      this.sleepFadeStarted = true
+      this.preSleepVolume = this.volume
+    }
+    if (this.sleepFadeStarted && this.preSleepVolume !== null) {
+      const k = Math.max(0, rem / FADE_MS)
+      this.audio.volume = this.muted ? 0 : this.preSleepVolume * k
+    }
+    if (rem <= 0) {
+      this.finishSleepTimer()
+    }
+  }
+
+  /** Таймер сработал: стоп, восстановление громкости */
+  private finishSleepTimer(): void {
+    const restore = this.preSleepVolume
+    this.sleepTimer = { mode: 'off', endsAt: null, totalMs: null }
+    this.sleepFadeStarted = false
+    this.preSleepVolume = null
+    this.audio.pause()
+    if (restore !== null) {
+      this.volume = restore
+      this.audio.volume = this.muted ? 0 : restore
+    }
+    this.saveSettings()
+    this.emit()
+  }
+
+  /** Сохранение пользовательских настроек (громкость/шафл/повтор/таймер) */
+  private saveSettings(): void {
+    try {
+      const payload = {
+        volume: this.volume,
+        muted: this.muted,
+        shuffle: this.shuffle,
+        repeat: this.repeat,
+        sleepTimer: this.sleepTimer,
+      }
+      localStorage.setItem('ym.settings', JSON.stringify(payload))
+    } catch {
+      /* ignore */
+    }
+  }
+
+  /** Восстановление настроек при старте */
+  loadSettings(): void {
+    try {
+      const raw = localStorage.getItem('ym.settings')
+      if (!raw) return
+      const d = JSON.parse(raw) as {
+        volume?: number
+        muted?: boolean
+        shuffle?: boolean
+        repeat?: 'off' | 'all' | 'one'
+        sleepTimer?: SleepTimerState
+      }
+      if (typeof d.volume === 'number') {
+        this.volume = Math.max(0, Math.min(1, d.volume))
+        this.audio.volume = d.muted ? 0 : this.volume
+      }
+      if (typeof d.muted === 'boolean') {
+        this.muted = d.muted
+        this.audio.muted = d.muted
+      }
+      if (typeof d.shuffle === 'boolean') this.shuffle = d.shuffle
+      if (d.repeat === 'off' || d.repeat === 'all' || d.repeat === 'one') this.repeat = d.repeat
+      // таймер восстанавливаем только если он ещё не истёк
+      if (d.sleepTimer?.mode === 'time' && d.sleepTimer.endsAt && d.sleepTimer.endsAt > Date.now()) {
+        this.sleepTimer = d.sleepTimer
+      }
+      this.emit()
+    } catch {
+      /* ignore */
+    }
   }
 
   stop(): void {
@@ -313,7 +480,17 @@ class Player {
         const choice = await resolveStreamUrl(cur.track)
         if (choice) {
           this.audio.src = choice.url
-          this.audio.currentTime = Math.max(0, (data.positionMs ?? 0) / 1000)
+          // Позицию ставим только после загрузки метаданных, иначе браузер сбросит её в 0
+          const seekTo = Math.max(0, (data.positionMs ?? 0) / 1000)
+          const applySeek = () => {
+            try {
+              this.audio.currentTime = Math.min(seekTo, this.audio.duration || seekTo)
+            } catch {
+              /* ignore */
+            }
+          }
+          if (this.audio.readyState >= 1) applySeek()
+          else this.audio.addEventListener('loadedmetadata', applySeek, { once: true })
           this.updateMediaSession(cur)
           this.emit()
         }
@@ -406,10 +583,26 @@ class Player {
       this.stop()
       return
     }
-    void this.onEnded(true) // пробуем следующую
+    // пропускаем битый трек, уходя вперёд по очереди
+    void this.step(1)
   }
 
-  private async onEnded(skipError = false): Promise<void> {
+  private async onEnded(): Promise<void> {
+    // «Таймер сна: до конца трека» — останавливаемся вместо перехода
+    if (this.sleepTimer.mode === 'track-end') {
+      const restore = this.preSleepVolume
+      this.sleepTimer = { mode: 'off', endsAt: null, totalMs: null }
+      this.sleepFadeStarted = false
+      this.preSleepVolume = null
+      this.audio.pause()
+      if (restore !== null) {
+        this.volume = restore
+        this.audio.volume = this.muted ? 0 : restore
+      }
+      this.saveSettings()
+      this.emit()
+      return
+    }
     if (this.repeat === 'one' && this.audio.currentSrc) {
       this.audio.currentTime = 0
       void this.audio.play().catch(() => {})
@@ -419,8 +612,7 @@ class Player {
     if (this.repeat === 'all' && this.index >= this.queue.length - 1) {
       this.index = -1
     }
-    const goNext = await this.step(1)
-    void skipError
+    await this.step(1)
   }
 
   /** Состояние для нативного медиа-виджета ведёт mediaControl.ts (полный push). */
@@ -567,6 +759,11 @@ class Player {
 }
 
 export const player = new Player()
+
+// Восстанавливаем громкость/шафл/повтор/таймер при старте
+if (typeof window !== 'undefined') {
+  player.loadSettings()
+}
 
 // e2e-хук: доступ к плееру для тестов (индекс очереди, снапшот)
 if (typeof window !== 'undefined') {

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { player, type PlayableTrack } from '../core/player'
 import { useApp } from '../state/store'
 import { artistNames, coverUrl, formatMs, trackKey, PLACEHOLDER_COVER } from '../core/format'
+import { ArtistLink } from './ArtistLink'
 import type { Track } from '../core/types'
 import { IconPlay, IconHeart, IconHeartFilled, IconMore, IconList, IconPlus, IconTrash } from './icons'
 
@@ -221,7 +222,7 @@ export default function TrackList({ tracks, onPlay, showAlbum = true, showLikes 
               />
               <span className="tc-title-wrap">
                 <span className="tc-name">{t.title}</span>
-                <span className="tc-artists">{artistNames(t.artists)}</span>
+                <ArtistLink artists={t.artists} className="tc-artists" />
               </span>
             </span>
             {showAlbum && (
