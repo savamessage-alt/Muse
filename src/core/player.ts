@@ -118,10 +118,15 @@ class Player {
             code: mediaError ? String(mediaError.code) : '?',
             msg: mediaError ? String(mediaError.message) : '',
             src: String(this.audio.currentSrc ?? this.audio.src ?? '').slice(0, 120),
+            cur: this.queue[this.index]?.track?.id ?? '',
           }),
         }).catch(() => {})
       } catch {
         /* ignore */
+      }
+      // При ошибке медиа в середине трека — пробуем следующий, а не застреваем
+      if (this.queue[this.index]) {
+        void this.failTrack('Не удалось воспроизвести трек')
       }
     })
 
@@ -230,24 +235,30 @@ class Player {
       return this.audio
         .play()
         .then(() => {
-          this.syncBackground()
+          this.emit()
           return true
         })
         .catch(() => false)
     }
     this.audio.pause()
+    this.emit()
     return true
   }
 
   /** пауза (для удалённого управления Ynison) */
   pause(): void {
-    if (!this.audio.paused) this.audio.pause()
+    if (!this.audio.paused) {
+      this.audio.pause()
+      this.emit()
+    }
   }
 
   /** продолжить (для удалённого управления Ynison) */
   resume(): void {
     if (this.audio.paused) {
-      void this.audio.play().then(() => this.syncBackground()).catch(() => {})
+      void this.audio.play().then(() => {
+        this.emit()
+      }).catch(() => {})
     }
   }
 
@@ -281,16 +292,21 @@ class Player {
 
   setVolume(v: number): void {
     this.volume = Math.max(0, Math.min(1, v))
-    this.audio.volume = this.volume
+    this.audio.volume = this.muted ? 0 : this.volume
+    this.saveSettings()
   }
 
   setMuted(m: boolean): void {
     this.muted = m
     this.audio.muted = m
+    this.audio.volume = m ? 0 : this.volume
+    this.saveSettings()
+    this.emit()
   }
 
   setShuffle(s: boolean): void {
     this.shuffle = s
+    this.saveSettings()
     this.emit()
   }
 
@@ -463,8 +479,16 @@ class Player {
         radio?: { type: string; tag: string } | null
       }
       if (!data?.ids?.length) return
-      const full = await ymClient.tracks(data.ids)
-      const byId = new Map((full ?? []).map((t) => [String(t.id), t]))
+      const byId = new Map<string, Track>()
+      for (let i = 0; i < data.ids.length; i += 50) {
+        const chunk = data.ids.slice(i, i + 50)
+        try {
+          const full = await ymClient.tracks(chunk)
+          ;(full ?? []).forEach((t) => byId.set(String(t.id), t))
+        } catch {
+          /* часть очереди могла не загрузиться — продолжаем */
+        }
+      }
       const items: PlayableTrack[] = []
       data.ids.forEach((id, i) => {
         const t = byId.get(String(id))
@@ -477,21 +501,31 @@ class Player {
       this.emit()
       const cur = this.queue[this.index]
       if (cur) {
-        const choice = await resolveStreamUrl(cur.track)
-        if (choice) {
-          this.audio.src = choice.url
-          // Позицию ставим только после загрузки метаданных, иначе браузер сбросит её в 0
-          const seekTo = Math.max(0, (data.positionMs ?? 0) / 1000)
-          const applySeek = () => {
-            try {
-              this.audio.currentTime = Math.min(seekTo, this.audio.duration || seekTo)
-            } catch {
-              /* ignore */
+        try {
+          const choice = await resolveStreamUrl(cur.track)
+          if (choice) {
+            this.audio.src = choice.url
+            this.audio.volume = this.muted ? 0 : this.volume
+            // Позицию ставим только после загрузки метаданных, иначе браузер сбросит её в 0
+            const seekTo = Math.max(0, (data.positionMs ?? 0) / 1000)
+            const applySeek = () => {
+              try {
+                this.audio.currentTime = Math.min(seekTo, this.audio.duration || seekTo)
+              } catch {
+                /* ignore */
+              }
             }
+            if (this.audio.readyState >= 1) applySeek()
+            else this.audio.addEventListener('loadedmetadata', applySeek, { once: true })
+            this.updateMediaSession(cur)
+            this.error = null
+            this.emit()
+          } else {
+            this.error = 'Не удалось восстановить воспроизведение — нажмите play'
+            this.emit()
           }
-          if (this.audio.readyState >= 1) applySeek()
-          else this.audio.addEventListener('loadedmetadata', applySeek, { once: true })
-          this.updateMediaSession(cur)
+        } catch (e) {
+          this.error = (e as Error).message || 'Не удалось восстановить воспроизведение'
           this.emit()
         }
       }
@@ -544,7 +578,6 @@ class Player {
         await this.audio.play()
         void this.diagPlay('playing-ok ' + item.track.id)
         this.consecutiveFailures = 0
-        this.syncBackground()
         this.sendRadioFeedback('trackStarted')
         return true
       } catch (p) {
@@ -614,9 +647,6 @@ class Player {
     }
     await this.step(1)
   }
-
-  /** Состояние для нативного медиа-виджета ведёт mediaControl.ts (полный push). */
-  private syncBackground(): void {}
 
   private async step(dir: 1 | -1): Promise<boolean> {
     if (!this.queue.length) return false

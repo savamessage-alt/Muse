@@ -28,7 +28,7 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
       <div className="queue-panel" onClick={(e) => e.stopPropagation()}>
         <div className="queue-head">
           <span className="queue-title">Очередь · {items.length}</span>
-          <button className="icon-btn small" title="Закрыть" onClick={onClose}>
+          <button className="icon-btn small" title="Закрыть" aria-label="Закрыть очередь" onClick={onClose}>
             <IconX size={16} />
           </button>
         </div>
@@ -39,6 +39,16 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
               <div
                 key={it.track.id + ':' + (it.track.albums?.[0]?.id ?? '') + ':' + i}
                 className={'queue-row' + (isCur ? ' current' : '')}
+                role="button"
+                tabIndex={0}
+                aria-label={it.track.title + ' · ' + (it.track.artists?.map((a) => a.name).join(', ') ?? '—')}
+                aria-current={isCur ? true : undefined}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    void jump(i)
+                  }
+                }}
                 onClick={() => void jump(i)}
               >
                 <img
@@ -56,6 +66,7 @@ export default function QueuePanel({ onClose }: { onClose: () => void }) {
                 <button
                   className="icon-btn small queue-remove"
                   title="Убрать из очереди"
+                  aria-label={`Убрать из очереди: ${it.track.title}`}
                   onClick={(e) => {
                     e.stopPropagation()
                     player.removeIndex(i)

@@ -13,10 +13,10 @@ export const WAVE = { type: 'user', tag: 'onyourwave' } as const
 
 /** Пресеты настроения — через seed-параметр settingMoodEnergy */
 export const MOOD_PRESETS = [
-  { value: 'fun', name: 'Весёлое', seed: 'settingMoodEnergy:fun', icon: '😄' },
-  { value: 'active', name: 'Бодрое', seed: 'settingMoodEnergy:active', icon: '⚡' },
-  { value: 'calm', name: 'Спокойное', seed: 'settingMoodEnergy:calm', icon: '🌙' },
-  { value: 'sad', name: 'Грустное', seed: 'settingMoodEnergy:sad', icon: '💧' },
+  { value: 'fun', name: 'Весёлое', seed: 'settingMoodEnergy:fun', icon: 'smile' },
+  { value: 'active', name: 'Бодрое', seed: 'settingMoodEnergy:active', icon: 'zap' },
+  { value: 'calm', name: 'Спокойное', seed: 'settingMoodEnergy:calm', icon: 'moon' },
+  { value: 'sad', name: 'Грустное', seed: 'settingMoodEnergy:sad', icon: 'droplet' },
 ] as const
 
 /** Уровни энергии — независимая шкала 1..4, комбинируется с настроением */

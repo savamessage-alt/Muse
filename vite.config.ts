@@ -1,5 +1,9 @@
 import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
+import { readFileSync } from 'fs'
+import path from 'path'
+
+const pkg = JSON.parse(readFileSync(path.resolve(import.meta.dirname, 'package.json'), 'utf-8'))
 
 // Диагностика: приложение шлёт POST /__diag с состоянием токена —
 // логируем на сервер, чтобы видеть причину «не пускает в плеер»
@@ -132,5 +136,8 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
+  },
+  define: {
+    'import.meta.env.VITE_APP_VERSION': JSON.stringify(pkg.version),
   },
 })

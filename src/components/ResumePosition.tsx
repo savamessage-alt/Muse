@@ -87,7 +87,7 @@ export default function ResumePosition() {
             if (++tries > 60) clearInterval(iv)
           }, 300)
         }
-        showToast('⏯ Продолжили с того места, где остановились')
+        showToast('Продолжили с того места, где остановились')
       } catch {
         /* нет токена или сети — просто молчим */
       }

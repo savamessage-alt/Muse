@@ -29,7 +29,10 @@ function formatRemaining(ms: number | null): string {
 
 function useSnapshot(): PlayerSnapshot {
   const [snap, setSnap] = useState<PlayerSnapshot>(() => player.snapshot())
-  useEffect(() => player.onChange(setSnap), [])
+  useEffect(() => {
+    const unsub = player.onChange(setSnap)
+    return () => unsub()
+  }, [])
   return snap
 }
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { player, type PlayerSnapshot } from '../core/player'
 import { ymClient } from '../core/client'
 import { useApp } from '../state/store'
@@ -32,7 +32,10 @@ import {
 
 function useSnapshot(): PlayerSnapshot {
   const [snap, setSnap] = useState<PlayerSnapshot>(() => player.snapshot())
-  useEffect(() => player.onChange(setSnap), [])
+  useEffect(() => {
+    const unsub = player.onChange(setSnap)
+    return () => unsub()
+  }, [])
   return snap
 }
 
@@ -41,6 +44,7 @@ export default function PlayerBar() {
   const likedKeys = useApp((s) => s.likedKeys)
   const toggleLike = useApp((s) => s.toggleLike)
   const showToast = useApp((s) => s.showToast)
+  const addListeningTime = useApp((s) => s.addListeningTime)
   const [expanded, setExpanded] = useState(false)
   const [lyricsOpen, setLyricsOpen] = useState(false)
   const [lyrics, setLyrics] = useState<string | null>(null)
@@ -55,6 +59,26 @@ export default function PlayerBar() {
   const liked = cur ? likedKeys.has(trackKey(cur.track)) : false
   const duration = snap.durationMs || 0
   const position = snap.positionMs
+
+  // отслеживание времени прослушивания — каждую секунду при проигрывании
+  const lastPosRef = useRef<number | null>(null)
+  const lastTimeRef = useRef<number>(0)
+  useEffect(() => {
+    if (!cur || !snap.playing) {
+      lastPosRef.current = null
+      return
+    }
+    const now = Date.now()
+    if (lastPosRef.current != null) {
+      const dt = now - lastTimeRef.current
+      const dp = snap.positionMs - lastPosRef.current
+      if (Math.abs(dp) <= 2000 && dt > 0) {
+        addListeningTime(Math.min(dp, dt))
+      }
+    }
+    lastPosRef.current = snap.positionMs
+    lastTimeRef.current = now
+  }, [snap.playing, snap.positionMs, cur, addListeningTime])
 
   // глобальные хоткеи: пробел — пауза/играть, ←/→ — перемотка на 5 с,
   // L — лайк, N/P — следующий/предыдущий, M — mute
@@ -210,6 +234,8 @@ export default function PlayerBar() {
               className={'icon-btn' + (liked ? ' liked' : '')}
               onClick={() => cur && void toggleLike(cur.track)}
               title={liked ? 'Убрать из «Избранное»' : 'В «Избранное»'}
+              aria-label={liked ? 'Убрать из «Избранное»' : 'В «Избранное»'}
+              aria-pressed={liked}
             >
               {liked ? <IconHeartFilled /> : <IconHeart />}
             </button>
@@ -225,22 +251,26 @@ export default function PlayerBar() {
             className={'icon-btn' + (snap.shuffle ? ' active' : '')}
             onClick={() => player.setShuffle(!snap.shuffle)}
             title="Перемешать"
+            aria-label="Перемешивание"
+            aria-pressed={snap.shuffle}
           >
             <IconShuffle size={18} />
           </button>
-          <button className="icon-btn" onClick={() => void player.prev()} title="Предыдущий">
+          <button className="icon-btn" onClick={() => void player.prev()} title="Предыдущий" aria-label="Предыдущий трек">
             <IconPrev size={22} />
           </button>
-          <button className="pb-play" onClick={() => void togglePlay()} title={snap.playing ? 'Пауза' : 'Играть'}>
+          <button className="pb-play" onClick={() => void togglePlay()} title={snap.playing ? 'Пауза' : 'Играть'} aria-label={snap.playing ? 'Пауза' : 'Играть'}>
             {snap.playing ? <IconPause size={24} /> : <IconPlay size={24} />}
           </button>
-          <button className="icon-btn" onClick={() => void player.next()} title="Следующий">
+          <button className="icon-btn" onClick={() => void player.next()} title="Следующий" aria-label="Следующий трек">
             <IconNext size={22} />
           </button>
           <button
             className={'icon-btn' + (snap.repeat !== 'off' ? ' active' : '')}
             onClick={() => player.setRepeat(snap.repeat === 'off' ? 'all' : snap.repeat === 'all' ? 'one' : 'off')}
             title="Повтор: off / все / один"
+            aria-label="Повтор"
+            aria-pressed={snap.repeat !== 'off'}
           >
             <IconRepeat size={18} />
           </button>
@@ -262,14 +292,16 @@ export default function PlayerBar() {
       </div>
 
       <div className="pb-right">
-        {snap.buffering && <span className="buffering" title="Буферизация">…</span>}
+        {snap.buffering && <span className="buffering" title="Буферизация" aria-label="Буферизация">…</span>}
         {snap.error && (
           <button
             className="pb-error-btn"
             title={snap.error + ' — нажмите, чтобы повторить'}
+            aria-label={'Ошибка воспроизведения: ' + snap.error + '. Повторить'}
             onClick={() => void player.reloadCurrent()}
           >
             <IconError size={16} />
+            <span className="pb-error-text">Ошибка</span>
             <IconRefresh size={13} />
           </button>
         )}
@@ -277,6 +309,8 @@ export default function PlayerBar() {
           className={'icon-btn' + (lyricsOpen ? ' active' : '')}
           onClick={toggleLyrics}
           title="Текст песни"
+          aria-label="Текст песни"
+          aria-pressed={lyricsOpen}
         >
           <IconLyrics size={18} />
         </button>
@@ -290,6 +324,8 @@ export default function PlayerBar() {
             setSimilarOpen((v) => !v)
           }}
           title="Похожие треки"
+          aria-label="Похожие треки"
+          aria-pressed={similarOpen}
         >
           <IconSimilar size={20} />
         </button>
@@ -297,12 +333,19 @@ export default function PlayerBar() {
           className={'icon-btn' + (sleepOpen ? ' active' : '') + (snap.sleepTimer.mode !== 'off' ? ' has-timer' : '')}
           onClick={() => setSleepOpen(true)}
           title="Таймер сна"
+          aria-label="Таймер сна"
         >
           <IconSleepTimer size={18} />
         </button>
-        <button className={'icon-btn' + (queueOpen ? ' active' : '')} onClick={() => setQueueOpen((v) => !v)} title="Очередь">
+        <button
+          className={'icon-btn' + (queueOpen ? ' active' : '')}
+          onClick={() => setQueueOpen((v) => !v)}
+          title="Очередь"
+          aria-label="Очередь воспроизведения"
+          aria-pressed={queueOpen}
+        >
           <IconQueue size={20} />
-          {snap.queue.length > 0 && <span className="queue-badge">{snap.queue.length}</span>}
+          {snap.queue.length > 0 && <span className="queue-badge" aria-label={`${snap.queue.length} треков в очереди`}>{snap.queue.length}</span>}
         </button>
         <IconVolume size={18} className="pb-vol-icon" />
         <input
@@ -321,7 +364,7 @@ export default function PlayerBar() {
           <div className="pb-lyrics">
           <div className="pb-lyrics-head">
             <b>Текст песни</b>
-            <button className="icon-btn" onClick={() => setLyricsOpen(false)} title="Закрыть">
+            <button className="icon-btn" onClick={() => setLyricsOpen(false)} title="Закрыть" aria-label="Закрыть текст песни">
               <IconX size={16} />
             </button>
           </div>

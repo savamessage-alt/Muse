@@ -18,6 +18,7 @@ import FavoritesPage from './components/FavoritesPage'
 import HistoryPage from './components/HistoryPage'
 import RadioPage from './components/RadioPage'
 import SettingsPage from './components/SettingsPage'
+import AboutPage from './components/AboutPage'
 import Toasts from './components/Toasts'
 import ErrorBoundary from './components/ErrorBoundary'
 
@@ -108,6 +109,7 @@ export default function App() {
               <Route path="/history" element={<HistoryPage />} />
               <Route path="/radio" element={<RadioPage />} />
               <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/about" element={<AboutPage />} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

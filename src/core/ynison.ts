@@ -132,7 +132,7 @@ export class YnisonClient {
 
   private makeDeviceId(): void {
     const seed = 'ym-player-ynison:' + this.token
-    // hex-хэш, как в исходниках (sha256 → первые 12 символов)
+    // djb2-хэш (не sha256): 32-битный unsigned → hex, первые 12 символов
     let hash = 0
     for (let i = 0; i < seed.length; i++) hash = (hash * 31 + seed.charCodeAt(i)) >>> 0
     this.deviceId = hash.toString(16).padStart(12, '0').slice(0, 12)

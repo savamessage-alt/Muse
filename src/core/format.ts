@@ -3,6 +3,7 @@
 // ============================================================
 
 import type { ArtistBrief, Track } from './types'
+import { trackKey as _trackKey, coverUrl as _coverUrl } from './types'
 
 /** «мс» → «м:сс» / «ч:мм:сс» */
 export function formatMs(ms: number): string {
@@ -21,30 +22,21 @@ export function artistNames(artists?: ArtistBrief[]): string {
   return artists.map((a) => a.name).join(', ')
 }
 
-/** Составной ключ трека */
-export function trackKey(track: Pick<Track, 'id' | 'albums' | 'albumId'>): string {
-  const albumId = track.albums?.[0]?.id ?? track.albumId ?? ''
-  return `${track.id}:${albumId}`
-}
+/** Составной ключ трека (реэкспорт из types.ts) */
+export const trackKey = _trackKey
 
-/** URL обложки по размеру (поддерживает относительные и абсолютные URI) */
-export function coverUrl(uri: string | undefined | null, size = '200x200'): string | undefined {
-  if (!uri) return undefined
-  let u = uri.trim()
-  if (u.startsWith('//')) u = 'https:' + u
-  else if (!/^https?:\/\//i.test(u)) u = 'https://' + u
-  return u.replace(/%%/g, size)
-}
+/** URL обложки по размеру (реэкспорт из types.ts) */
+export const coverUrl = _coverUrl
 
 /** Плейсхолдер-обложка */
 export const PLACEHOLDER_COVER = 'data:image/svg+xml;utf8,' + encodeURIComponent(
-  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect width="200" height="200" fill="#2a2a2a"/><text x="100" y="110" font-size="40" text-anchor="middle" fill="#666" font-family="Arial">♪</text></svg>',
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect width="200" height="200" fill="#2a2a2a"/><path d="M 60 60 L 60 140 L 140 100 Z" fill="#666"/></svg>',
 )
 
 /** Инициалы пользователя для аватара без фото (Яндекс не отдаёт аватар в API) */
 export function userInitials(name?: string | null): string {
   const parts = (name ?? '').trim().split(/\s+/).filter(Boolean)
-  if (!parts.length) return '♪'
+  if (!parts.length) return '??'
   const first = parts[0]?.[0] ?? ''
   const second = parts.length > 1 ? parts[1]?.[0] ?? '' : ''
   return (first + second).toUpperCase()

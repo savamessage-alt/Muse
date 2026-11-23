@@ -1,5 +1,6 @@
 // Иконки — единый набор lucide-react (stroke, currentColor), тёмная тема
 import {
+  ArrowLeft,
   Play,
   Pause,
   SkipForward,
@@ -31,7 +32,15 @@ import {
   Clock,
   Sliders,
   ChevronDown,
+  ChevronUp,
+  Smile,
+  Zap,
+  Droplet,
   Loader2,
+  Info,
+  Phone,
+  Bug,
+  Code,
 } from 'lucide-react'
 import type { LucideProps } from 'lucide-react'
 
@@ -71,7 +80,16 @@ export const IconTrash = (p: P) => <Trash2 {...p} />
 export const IconMoon = (p: P) => <Moon {...p} />
 export const IconClock = (p: P) => <Clock {...p} />
 export const IconSliders = (p: P) => <Sliders {...p} />
+export const IconBack = (p: P) => <ArrowLeft {...p} />
 export const IconChevronDown = (p: P) => <ChevronDown {...p} />
+export const IconChevronUp = (p: P) => <ChevronUp {...p} />
+export const IconSmile = (p: P) => <Smile {...p} />
+export const IconZap = (p: P) => <Zap {...p} />
+export const IconDroplet = (p: P) => <Droplet {...p} />
 export const IconSpinner = (p: P) => <Loader2 className="spin-icon" {...p} />
 /** Таймер сна — луна с часовой стрелкой (заглушка до кастомного SVG) */
 export const IconSleepTimer = (p: P) => <Moon {...p} />
+export const IconInfo = (p: P) => <Info {...p} />
+export const IconPhone = (p: P) => <Phone {...p} />
+export const IconBug = (p: P) => <Bug {...p} />
+export const IconCode = (p: P) => <Code {...p} />

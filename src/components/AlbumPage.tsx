@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { ymClient } from '../core/client'
 import { artistNames, coverUrl, PLACEHOLDER_COVER } from '../core/format'
+import EmptyState from './EmptyState'
+import { IconMusicNote } from './icons'
 import type { Album, Track } from '../core/types'
 import TrackList, { playTracks } from './TrackList'
-import { IconHeart, IconHeartFilled } from './icons'
+import { IconBack, IconHeart, IconHeartFilled, IconPlay } from './icons'
 
 export default function AlbumPage() {
   const { id } = useParams<{ id: string }>()
+  const nav = useNavigate()
   const [album, setAlbum] = useState<Album | null>(null)
   const [tracks, setTracks] = useState<Track[]>([])
   const [err, setErr] = useState<string | null>(null)
@@ -58,12 +61,20 @@ export default function AlbumPage() {
     }
   }
 
-  if (err) return <div className="error-box"><p>{err}</p></div>
+  if (err) return (
+    <div className="error-box">
+      <p>{err}</p>
+      <button className="btn small" onClick={() => void window.location.reload()}>Повторить</button>
+    </div>
+  )
   if (!album) return <div className="spinner" />
 
   return (
     <div className="entity-page">
       <div className="entity-head">
+        <button className="icon-btn small" title="Назад" aria-label="Назад" onClick={() => nav(-1)}>
+          <IconBack size={16} />
+        </button>
         <img
           className="entity-cover"
           src={coverUrl(album.coverUri, '300x300') ?? PLACEHOLDER_COVER}
@@ -81,7 +92,7 @@ export default function AlbumPage() {
           <div className="entity-actions">
             {tracks.length > 0 && (
               <button className="primary-btn" onClick={() => playTracks(tracks, 0, 'queue')}>
-                ▶ Играть
+                <IconPlay size={16} /> Играть
               </button>
             )}
             {likedReady && (
@@ -97,6 +108,15 @@ export default function AlbumPage() {
           </div>
         </div>
       </div>
+      {tracks.length === 0 && (
+        <EmptyState
+          icon={<IconMusicNote size={48} />}
+          title="Треки недоступны"
+          subtitle="В этом альбоме нет доступных треков"
+          actionLabel="Вернуться назад"
+          onAction={() => nav(-1)}
+        />
+      )}
       <TrackList tracks={tracks} emptyText="Треки недоступны" />
     </div>
   )

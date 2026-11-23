@@ -34,6 +34,28 @@ function createWindow() {
   }
 }
 
+// Безопасное хранение токена на Windows: encryptString/decryptString
+// (electron.safeStorage). Фолбэк — plain string, если safeStorage недоступен.
+ipcMain.handle('safe-encrypt', async (_event, plaintext) => {
+  try {
+    const buffer = Buffer.from(plaintext, 'utf8')
+    const encrypted = require('electron').safeStorage.encryptString(buffer)
+    return { ok: true, data: encrypted.toString('base64') }
+  } catch (err) {
+    return { ok: false, error: String(err) }
+  }
+})
+
+ipcMain.handle('safe-decrypt', async (_event, base64Cipher) => {
+  try {
+    const encrypted = Buffer.from(base64Cipher, 'base64')
+    const decrypted = require('electron').safeStorage.decryptString(encrypted)
+    return { ok: true, data: Buffer.from(decrypted).toString('utf8') }
+  } catch (err) {
+    return { ok: false, error: String(err) }
+  }
+})
+
 // Запросы из рендера → net.fetch в main-процессе (обход CORS)
 ipcMain.handle('ym-request', async (_event, url, init) => {
   const controller = new AbortController()

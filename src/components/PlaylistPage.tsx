@@ -6,11 +6,14 @@ import { coverUrl, formatCount, PLACEHOLDER_COVER } from '../core/format'
 import type { Playlist, Track, TrackShort } from '../core/types'
 import { useApp } from '../state/store'
 import TrackList, { playTracks } from './TrackList'
-import { IconTrash, IconX } from './icons'
+import { IconBack, IconPlay, IconTrash, IconX } from './icons'
+import EmptyState from './EmptyState'
+import { IconMusicNote } from './icons'
 
 export default function PlaylistPage() {
   const { kind } = useParams<{ kind: string }>()
   const nav = useNavigate()
+
   const [playlist, setPlaylist] = useState<Playlist | null>(null)
   const [tracks, setTracks] = useState<Track[]>([])
   const [err, setErr] = useState<string | null>(null)
@@ -59,7 +62,12 @@ export default function PlaylistPage() {
     nav('/playlists')
   }
 
-  if (err) return <div className="error-box"><p>{err}</p></div>
+  if (err) return (
+    <div className="error-box">
+      <p>{err}</p>
+      <button className="btn small" onClick={() => void window.location.reload()}>Повторить</button>
+    </div>
+  )
   if (!playlist) return <div className="spinner" />
 
   const uri = playlist.cover?.uri ?? playlist.coverUri
@@ -85,7 +93,7 @@ export default function PlaylistPage() {
           <div className="entity-actions">
             {tracks.length > 0 && (
               <button className="primary-btn" onClick={() => playTracks(tracks, 0, 'playlist')}>
-                ▶ Играть
+                <IconPlay size={16} /> Играть
               </button>
             )}
             <button className="delete-playlist-btn" onClick={() => setConfirmDel(true)} title="Удалить плейлист">

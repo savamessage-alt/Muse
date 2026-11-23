@@ -4,7 +4,7 @@ import { expandTracks } from '../core/tracks'
 import type { Album, Artist, Playlist, SearchResult, Track, TrackShort } from '../core/types'
 import TrackList, { playTracks } from './TrackList'
 import { AlbumCard, ArtistCard, Grid, PlaylistCard } from './cards'
-import { IconSearch, IconX } from './icons'
+import { IconPlay, IconSearch, IconX } from './icons'
 
 type Tab = 'tracks' | 'albums' | 'artists' | 'playlists'
 
@@ -22,9 +22,12 @@ export default function SearchPage() {
     if (!q) {
       setResult(null)
       setTracks([])
+      setErr(null)
+      setLoading(false)
       return
     }
     setLoading(true)
+    setErr(null)
     window.clearTimeout(timer.current)
     timer.current = window.setTimeout(async () => {
       try {
@@ -44,9 +47,9 @@ export default function SearchPage() {
 
   const tabs: { id: Tab; label: string; count?: number }[] = [
     { id: 'tracks', label: 'Треки', count: result?.tracks?.total },
-    { id: 'albums', label: 'Альбомы', count: result?.albums?.total ?? 0 },
-    { id: 'artists', label: 'Артисты', count: result?.artists?.total ?? 0 },
-    { id: 'playlists', label: 'Плейлисты', count: result?.playlists?.total ?? 0 },
+    { id: 'albums', label: 'Альбомы', count: result?.albums?.total },
+    { id: 'artists', label: 'Артисты', count: result?.artists?.total },
+    { id: 'playlists', label: 'Плейлисты', count: result?.playlists?.total },
   ]
 
   const albums: Album[] = result?.albums?.items ?? []
@@ -63,58 +66,98 @@ export default function SearchPage() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           autoFocus
+          aria-label="Поиск по музыке"
         />
         {query && (
-          <button className="icon-btn small" onClick={() => setQuery('')} title="Очистить">
+          <button className="icon-btn small" onClick={() => setQuery('')} title="Очистить" aria-label="Очистить поиск">
             <IconX size={16} />
           </button>
         )}
       </div>
       {err && <div className="error-box"><p>{err}</p></div>}
 
+      {!query.trim() && (
+        <div className="search-empty-hint muted pad">
+          Введите запрос, чтобы найти треки, альбомы, артистов и плейлисты.
+        </div>
+      )}
+
       {query.trim() && (
         <>
-          <div className="tabs">
+          <div className="tabs" role="tablist" aria-label="Категории поиска">
             {tabs.map((t) => (
-              <button key={t.id} className={'tab' + (tab === t.id ? ' active' : '')} onClick={() => setTab(t.id)}>
+              <button
+                key={t.id}
+                role="tab"
+                aria-selected={tab === t.id}
+                className={'tab' + (tab === t.id ? ' active' : '')}
+                onClick={() => setTab(t.id)}
+              >
                 {t.label}
-                {t.count ? <span className="tab-count">{t.count}</span> : null}
+                {typeof t.count === 'number' ? <span className="tab-count">{t.count}</span> : null}
               </button>
             ))}
           </div>
 
-          {loading && <div className="spinner" />}
+          {loading && <div className="spinner" aria-label="Загрузка результатов поиска" />}
 
           {!loading && tab === 'tracks' && (
             <>
               {tracks.length > 0 && (
                 <button className="primary-btn small" onClick={() => playTracks(tracks, 0, 'search')}>
-                  ▶ Играть всё
+                  <IconPlay size={14} /> Играть всё
                 </button>
               )}
               <TrackList tracks={tracks} emptyText="Треки не найдены" />
             </>
           )}
-          {!loading && tab === 'albums' && (
-            <Grid>
-              {albums.map((a) => (
-                <AlbumCard key={a.id} album={a} />
-              ))}
-            </Grid>
+          {tab === 'albums' && (
+            loading ? (
+              <div className="list-loading" role="status" aria-label="Загрузка альбомов">
+                <div className="spinner" />
+                <span className="muted small">Загружаем альбомы…</span>
+              </div>
+            ) : albums.length > 0 ? (
+              <Grid>
+                {albums.map((a) => (
+                  <AlbumCard key={a.id} album={a} />
+                ))}
+              </Grid>
+            ) : (
+              <p className="muted pad">Альбомы не найдены</p>
+            )
           )}
-          {!loading && tab === 'artists' && (
-            <Grid>
-              {artists.map((a) => (
-                <ArtistCard key={a.id} artist={a} />
-              ))}
-            </Grid>
+          {tab === 'artists' && (
+            loading ? (
+              <div className="list-loading" role="status" aria-label="Загрузка артистов">
+                <div className="spinner" />
+                <span className="muted small">Загружаем артистов…</span>
+              </div>
+            ) : artists.length > 0 ? (
+              <Grid>
+                {artists.map((a) => (
+                  <ArtistCard key={a.id} artist={a} />
+                ))}
+              </Grid>
+            ) : (
+              <p className="muted pad">Артисты не найдены</p>
+            )
           )}
-          {!loading && tab === 'playlists' && (
-            <Grid>
-              {playlists.map((p) => (
-                <PlaylistCard key={p.kind} playlist={p} />
-              ))}
-            </Grid>
+          {tab === 'playlists' && (
+            loading ? (
+              <div className="list-loading" role="status" aria-label="Загрузка плейлистов">
+                <div className="spinner" />
+                <span className="muted small">Загружаем плейлисты…</span>
+              </div>
+            ) : playlists.length > 0 ? (
+              <Grid>
+                {playlists.map((p) => (
+                  <PlaylistCard key={p.kind} playlist={p} />
+                ))}
+              </Grid>
+            ) : (
+              <p className="muted pad">Плейлисты не найдены</p>
+            )
           )}
         </>
       )}

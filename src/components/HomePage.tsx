@@ -8,7 +8,7 @@ import { ArtistLink } from './ArtistLink'
 import WaveSettings, { type WaveChoice } from './WaveSettings'
 import { buildSeeds, findWaveStation, fetchWaveTracks, fetchGenreTracks, GENRES, WAVE } from '../core/wave'
 import type { Track } from '../core/types'
-import { IconDislike, IconHeart, IconHeartFilled, IconList, IconNext, IconPause, IconPlay, IconShuffle, IconSliders } from './icons'
+import { IconDislike, IconHeart, IconHeartFilled, IconList, IconNext, IconPause, IconPlay, IconShuffle, IconSliders, IconSpinner } from './icons'
 
 interface Wave {
   type: string
@@ -78,7 +78,7 @@ export default function HomePage() {
         0,
         picked.genre ? { type: 'genre', tag: picked.genre } : { type: WAVE.type, tag: WAVE.tag },
       )
-      showToast('🎵 ' + picked.label + ' — играет')
+      showToast(picked.label + ' — играет')
     } catch (e) {
       showToast('Ошибка волны: ' + (e as Error).message, 'error')
     } finally {
@@ -149,7 +149,7 @@ export default function HomePage() {
           />
           <span className="wave-disc-glass" />
           <span className="wave-disc-center">
-            {loadingWave ? '…' : playing ? <IconPause size={30} /> : <IconPlay size={30} />}
+            {loadingWave ? <IconSpinner size={30} className="spin-icon" /> : playing ? <IconPause size={30} /> : <IconPlay size={30} />}
           </span>
         </button>
 
@@ -195,7 +195,7 @@ export default function HomePage() {
             </button>
           )}
           <button className="wave-playbig" onClick={() => void onHeroPlay()} disabled={loadingWave}>
-            {loadingWave ? '…' : playing ? <IconPause size={28} /> : <IconPlay size={28} />}
+            {loadingWave ? <IconSpinner size={28} className="spin-icon" /> : playing ? <IconPause size={28} /> : <IconPlay size={28} />}
           </button>
           {cur?.source === 'radio' && (
             <button className="wave-ctl" onClick={() => void player.next()} title="Дальше">

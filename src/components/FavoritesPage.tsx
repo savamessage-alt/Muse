@@ -6,8 +6,10 @@ import type { Track, TrackShort } from '../core/types'
 import { plural } from '../core/format'
 import TrackList, { playTracks } from './TrackList'
 import { PlaylistCard, Section } from './cards'
-import { IconPlus } from './icons'
+import { IconPlay, IconPlus } from './icons'
 import { diag } from '../core/diag'
+import EmptyState from './EmptyState'
+import { IconHeart } from './icons'
 
 /**
  * «Избранное»: сверху — лента «Моих плейлистов» (открываются отдельной
@@ -57,7 +59,7 @@ export default function FavoritesPage() {
     <div className="entity-page">
       <div className="entity-head">
         <div className="entity-info">
-          <div className="entity-type">Коллекция</div>
+          <div className="entity-type">Избранное</div>
           <h1 className="entity-title">Избранное</h1>
           <div className="entity-sub">
             {playlists.length > 0
@@ -68,7 +70,7 @@ export default function FavoritesPage() {
           </div>
           {tracks.length > 0 && (
             <button className="primary-btn" onClick={() => playTracks(tracks, 0, 'queue')}>
-              ▶ Играть всё
+              <IconPlay size={16} /> Играть всё
             </button>
           )}
         </div>
@@ -110,9 +112,19 @@ export default function FavoritesPage() {
 
       {err && <div className="error-box"><p>{err}</p></div>}
 
-      <Section title={'Избранные треки' + (tracks.length ? ` · ${tracks.length}` : '')}>
-        <TrackList tracks={tracks} loading={loading} emptyText="Пока нет избранных треков" />
-      </Section>
+      {tracks.length === 0 && playlists.length === 0 ? (
+        <EmptyState
+          icon={<IconHeart size={48} />}
+          title="Избранное пока пусто"
+          subtitle="Добавляйте треки в «Избранное» лайком на любой странице"
+          actionLabel="Перейти в поиск"
+          onAction={() => window.location.hash = '#/search'}
+        />
+      ) : (
+        <Section title={'Избранные треки' + (tracks.length ? ` · ${tracks.length}` : '')}>
+          <TrackList tracks={tracks} loading={loading} emptyText="Пока нет избранных треков" />
+        </Section>
+      )}
     </div>
   )
 }

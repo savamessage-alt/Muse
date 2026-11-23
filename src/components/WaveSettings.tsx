@@ -37,6 +37,7 @@ export default function WaveSettings({ current, onApply, onClose }: Props) {
   const [langSeed, setLangSeed] = useState<string | null | undefined>(current.langSeed)
   const [divSeed, setDivSeed] = useState<string | undefined>(current.divSeed)
   const [genre, setGenre] = useState<string | undefined>(current.genre)
+  const [applying, setApplying] = useState(false)
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
@@ -54,23 +55,28 @@ export default function WaveSettings({ current, onApply, onClose }: Props) {
 
   const genreName = genre ? GENRE_CATEGORIES.flatMap(c => c.genres).find((g) => g.tag === genre)?.name ?? genre : null
 
-  const applyNow = () => {
-    const parts: string[] = []
-    if (genreName) parts.push(genreName)
-    if (activeCount === 0) {
-      onApply({ label: 'Моя волна' })
-    } else {
-      const label = parts.length ? parts.join(' · ') : 'Моя волна'
-      onApply({
-        moodSeed,
-        energySeed,
-        langSeed: langSeed ?? null,
-        divSeed,
-        genre,
-        label,
-      })
+  const applyNow = async () => {
+    setApplying(true)
+    try {
+      const parts: string[] = []
+      if (genreName) parts.push(genreName)
+      if (activeCount === 0) {
+        onApply({ label: 'Моя волна' })
+      } else {
+        const label = parts.length ? parts.join(' · ') : 'Моя волна'
+        onApply({
+          moodSeed,
+          energySeed,
+          langSeed: langSeed ?? null,
+          divSeed,
+          genre,
+          label,
+        })
+      }
+    } finally {
+      setApplying(false)
+      onClose()
     }
-    onClose()
   }
 
   const clearAll = () => {
@@ -79,6 +85,7 @@ export default function WaveSettings({ current, onApply, onClose }: Props) {
     setLangSeed(undefined)
     setDivSeed(undefined)
     setGenre(undefined)
+    setApplying(false)
   }
 
   // Energy bar click handler - map X position to 1..4
@@ -177,7 +184,7 @@ export default function WaveSettings({ current, onApply, onClose }: Props) {
                   <button
                     key={l.value}
                     className={'ws-chip' + (langSeed === l.seed ? ' active' : '')}
-                    onClick={() => setLangSeed(langSeed === l.seed ? undefined : l.seed ?? undefined)}
+                    onClick={() => setLangSeed(langSeed === l.seed ? undefined : l.seed)}
                   >
                     {l.name}
                   </button>

@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { ymClient } from '../core/client'
 import { coverUrl, formatCount, PLACEHOLDER_COVER } from '../core/format'
 import type { Album, Artist, BriefInfo, Track } from '../core/types'
 import TrackList, { playTracks } from './TrackList'
 import { AlbumCard, ArtistCard, Grid, Section } from './cards'
-import { IconHeart, IconHeartFilled, IconExternal, IconPlay, IconShuffle, IconSpinner } from './icons'
+import { IconBack, IconChevronDown, IconChevronUp, IconExternal, IconHeart, IconHeartFilled, IconMusicNote, IconPlay, IconShuffle, IconSpinner } from './icons'
+import EmptyState from './EmptyState'
 
 /** Описание артиста приходит строкой или объектом {text, uri} */
 function descriptionText(d: unknown): string {
@@ -20,6 +21,7 @@ function descriptionText(d: unknown): string {
 
 export default function ArtistPage() {
   const { id } = useParams<{ id: string }>()
+  const nav = useNavigate()
   const [info, setInfo] = useState<BriefInfo | null>(null)
   const [err, setErr] = useState<string | null>(null)
   const [liked, setLiked] = useState(false)
@@ -138,7 +140,7 @@ export default function ArtistPage() {
               {formatCount(listeners)} слушателей за месяц
               {delta != null && delta !== 0 && (
                 <span className={'artist-delta' + (delta > 0 ? ' up' : ' down')}>
-                  {delta > 0 ? '▲' : '▼'} {formatCount(Math.abs(delta))}
+                  {delta > 0 ? <IconChevronUp size={12} fill="currentColor" /> : <IconChevronDown size={12} fill="currentColor" />} {formatCount(Math.abs(delta))}
                 </span>
               )}
             </div>

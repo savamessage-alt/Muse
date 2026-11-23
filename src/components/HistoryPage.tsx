@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { ymClient } from '../core/client'
 import { expandTracks } from '../core/tracks'
 import { coverUrl, formatMs, PLACEHOLDER_COVER } from '../core/format'
@@ -7,6 +8,8 @@ import type { HistoryItem, Track } from '../core/types'
 import { playTracks } from './TrackList'
 import { IconPlay } from './icons'
 import { diag } from '../core/diag'
+import EmptyState from './EmptyState'
+import { IconHistory } from './icons'
 
 interface Row {
   item: HistoryItem
@@ -15,6 +18,7 @@ interface Row {
 }
 
 export default function HistoryPage() {
+  const navigate = useNavigate()
   const [rows, setRows] = useState<Row[]>([])
   const [err, setErr] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -79,12 +83,20 @@ export default function HistoryPage() {
           <h1 className="entity-title">История прослушивания</h1>
           {tracks.length > 0 && (
             <button className="primary-btn" onClick={() => playTracks(tracks, 0)}>
-              ▶ Играть всё
+              <IconPlay size={16} /> Играть всё
             </button>
           )}
         </div>
       </div>
-      {rows.length === 0 && <p className="muted pad">История пока пуста</p>}
+      {rows.length === 0 && (
+        <EmptyState
+          icon={<IconHistory size={48} />}
+          title="История пока пуста"
+          subtitle="Начните слушать музыку, и здесь появятся прослушанные треки"
+          actionLabel="Перейти на радио"
+          onAction={() => navigate('/radio')}
+        />
+      )}
       <div className="history-list">
         {rows.map((r, i) => {
           const t = r.track

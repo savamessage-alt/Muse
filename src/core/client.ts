@@ -57,12 +57,19 @@ class YandexMusicClient {
       'X-Yandex-Music-Client': YM_CLIENT_HEADER,
       ...init.headers,
     }
+    const unwrap = (payload: unknown): T => {
+      if (payload && typeof payload === 'object') {
+        const obj = payload as ApiResponse<T>
+        if (obj.error) {
+          throw new YmApiError(obj.error.message || 'API error', 0, obj.error.name)
+        }
+        if ('result' in obj) return obj.result as T
+      }
+      return payload as T
+    }
     try {
       const data = await ymFetch<ApiResponse<T>>(path, { ...init, headers })
-      if (data && typeof data === 'object' && 'error' in data && data.error) {
-        throw new YmApiError(data.error.message || 'API error', 0, data.error.name)
-      }
-      return (data?.result ?? data) as T
+      return unwrap(data)
     } catch (e) {
       if (e instanceof YmApiError && (e.status === 401 || e.code === 'Unauthorized')) {
         const token2 = await tokenManager.getAccessToken(true)
@@ -70,10 +77,7 @@ class YandexMusicClient {
           ...init,
           headers: { ...headers, Authorization: `OAuth ${token2}` },
         })
-        if (data2 && typeof data2 === 'object' && 'error' in data2 && data2.error) {
-          throw new YmApiError(data2.error.message || 'API error', 0, data2.error.name)
-        }
-        return (data2?.result ?? data2) as T
+        return unwrap(data2)
       }
       // Телеметрия ошибок запросов (403 и пр.) — видим точный ответ API
       diag('req-err: ' + path + ' | ' + (e instanceof Error ? e.message : String(e)).slice(0, 160))
@@ -100,11 +104,15 @@ class YandexMusicClient {
     this.uid = null
     this.uidPromise = null
   }
-  /** Информация об аккаунте. Внимание: эндпоинта /me в API нет —
-   *  используем /account/status, который возвращает и аккаунт, и подписку */
+  /** Информация об аккаунте. Сначала пробуем /me, фолбэк — /account/status */
   async me(): Promise<{ account: User; permissions?: unknown }> {
-    const status = await this.accountStatus()
-    return { account: status.account ?? {}, permissions: status.permissions }
+    try {
+      const me = await this.req<{ account: User; permissions?: unknown }>('/me')
+      return me
+    } catch {
+      const status = await this.accountStatus()
+      return { account: status.account ?? {}, permissions: status.permissions }
+    }
   }
   accountStatus(): Promise<AccountStatus> {
     return this.req('/account/status')
@@ -132,7 +140,7 @@ class YandexMusicClient {
           // API непоследователен: bitrate_in_kbps (snake), но downloadInfoUrl (camel) — читаем оба
           bitrateInKbps: (r.bitrate_in_kbps ?? r.bitrateInKbps) as number | undefined,
           directLink: (r.direct_link ?? r.directLink) as string | undefined,
-          url: (r.url ?? r.url) as string | undefined,
+          url: (r.direct_link ?? r.directLink ?? r.url) as string | undefined,
           downloadInfoUrl: (r.download_info_url ?? r.downloadInfoUrl) as string | undefined,
           direct: !!(r.direct ?? r.direct),
           gain: !!(r.gain ?? r.gain),

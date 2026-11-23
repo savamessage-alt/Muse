@@ -104,22 +104,24 @@ export async function resolveStreamUrl(track: Track): Promise<StreamChoice | nul
   // учёт ограничения качества: MP3 не выше cap, остальные не ограничиваем
   const best =
     sorted.find((i) => i.codec !== 'mp3' || (i.bitrateInKbps ?? 320) <= cap) ??
-    sorted.find((i) => i.codec === 'mp3') ??
+    sorted.find((i) => i.codec === 'mp3' && (i.bitrateInKbps ?? 320) <= cap) ??
     sorted[0]
   if (!best) return null
 
-  const url = await urlOf(best, info)
-  if (!url) {
-    diag('urlOf=null codec=' + String(best.codec) + ' url=' + String(best.url ?? '') + ' durl=' + String(best.downloadInfoUrl ?? '').slice(0, 60))
-  }
-  return url
-    ? {
+  // пробуем варианты по порядку веса, пока не получится валидная ссылка
+  for (const candidate of sorted) {
+    const url = await urlOf(candidate, info)
+    if (url) {
+      return {
         url,
-        codec: String(best.codec ?? 'unknown'),
-        bitrate: best.bitrateInKbps ?? 0,
-        direct: !!best.url || !!best.directLink,
+        codec: String(candidate.codec ?? 'unknown'),
+        bitrate: candidate.bitrateInKbps ?? 0,
+        direct: !!candidate.url || !!candidate.directLink,
       }
-    : null
+    }
+    diag('urlOf=null codec=' + String(candidate.codec) + ' url=' + String(candidate.url ?? '') + ' durl=' + String(candidate.downloadInfoUrl ?? '').slice(0, 60))
+  }
+  return null
 }
 
 /** Есть ли у трека доступная прямая ссылка (без подписки — только 30 сек) */

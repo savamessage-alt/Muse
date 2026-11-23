@@ -1,4 +1,4 @@
-﻿// ============================================================
+// ============================================================
 // Глобальное состояние UI: пользователь, лайки, плейлисты, тосты
 // ============================================================
 
@@ -43,6 +43,9 @@ interface AppState {
   showToast: (text: string, kind?: Toast['kind']) => void
   dismissToast: (id: number) => void
   logout: () => void
+  /** Статистика прослушивания (мс) */
+  listeningStats: { today: number; week: number; month: number; all: number }
+  addListeningTime: (ms: number) => void
 }
 
 let toastSeq = 1
@@ -56,6 +59,7 @@ export const useApp = create<AppState>((set, get) => ({
   likedKeys: new Set(),
   toasts: [],
   busy: false,
+  listeningStats: { today: 0, week: 0, month: 0, all: 0 },
 
   boot: async () => {
     tokenManager.load()
@@ -136,7 +140,7 @@ export const useApp = create<AppState>((set, get) => ({
 
   refreshLikes: async () => {
     const shorts = await ymClient.usersLikesTracks()
-    set({ likedKeys: new Set(shorts.filter((s) => s.id).map((s) => `${s.id}:${s.albumId}`)) })
+    set({ likedKeys: new Set(shorts.filter((s) => s.id).map((s) => `${s.id}:${s.albumId ?? ''}`)) })
   },
 
   refreshPlaylists: async () => {
@@ -147,8 +151,9 @@ export const useApp = create<AppState>((set, get) => ({
   toggleLike: async (track: Track) => {
     const key = trackKey(track)
     const liked = get().likedKeys.has(key)
-    // оптимистичное обновление
-    const next = new Set(get().likedKeys)
+    // оптимистичное обновление (сохраняем исходное состояние для надёжного отката)
+    const previous = new Set(get().likedKeys)
+    const next = new Set(previous)
     if (liked) next.delete(key)
     else next.add(key)
     set({ likedKeys: next })
@@ -156,11 +161,8 @@ export const useApp = create<AppState>((set, get) => ({
       if (liked) await ymClient.likesRemoveTracks([key])
       else await ymClient.likesAddTracks([key])
     } catch (e) {
-      // откат
-      const rollback = new Set(get().likedKeys)
-      if (liked) rollback.add(key)
-      else rollback.delete(key)
-      set({ likedKeys: rollback })
+      // откат к состоянию до оптимистичного обновления
+      set({ likedKeys: previous })
       get().showToast('Не удалось изменить лайк: ' + (e as Error).message, 'error')
     }
   },
@@ -277,6 +279,32 @@ export const useApp = create<AppState>((set, get) => ({
   },
 
   dismissToast: (id) => set({ toasts: get().toasts.filter((t) => t.id !== id) }),
+
+  addListeningTime: (ms) => {
+    const now = Date.now()
+    const todayKey = `stats:${new Date(now).toISOString().slice(0, 10)}`
+    const weekKey = `stats:week:${Math.floor(now / (7 * 24 * 3600 * 1000))}`
+    const monthKey = `stats:month:${new Date(now).toISOString().slice(0, 7)}`
+    const allKey = 'stats:all'
+
+    const add = (key: string) => {
+      const cur = Number(localStorage.getItem(key)) || 0
+      localStorage.setItem(key, String(cur + ms))
+    }
+    add(todayKey)
+    add(weekKey)
+    add(monthKey)
+    add(allKey)
+
+    set((s) => ({
+      listeningStats: {
+        today: Number(localStorage.getItem(todayKey)) || 0,
+        week: Number(localStorage.getItem(weekKey)) || 0,
+        month: Number(localStorage.getItem(monthKey)) || 0,
+        all: Number(localStorage.getItem(allKey)) || 0,
+      },
+    }))
+  },
 
   logout: () => {
     player.stop()

@@ -1,6 +1,4 @@
-/* ============================================================
-   Muse вЂ” С‚С‘РјРЅР°СЏ С‚РµРјР° РІ РґСѓС…Рµ РЇРЅРґРµРєСЃ РњСѓР·С‹РєРё
-   ============================================================ */
+/* ============================================================ Muse : , , ============================================================ */
 
 :root {
   --bg: #121212;
@@ -11,7 +9,7 @@
   --text: #ffffff;
   --text-dim: #b3b3b3;
   --text-faint: #7a7a7a;
-  --accent: #f33; /* РєСЂР°СЃРЅС‹Р№ Р°РєС†РµРЅС‚ */
+  --accent: #f33; /* акцентный цвет */
   --accent-2: #ff7a00;
   --good: #1DB954;
   --danger: #f0506e;
@@ -46,10 +44,10 @@ button { font-family: inherit; }
 .pad { padding: 12px 4px; }
 .hint { color: var(--text-faint); font-size: 12.5px; }
 
-/* ---------- РєР°СЂРєР°СЃ ---------- */
+/* ---------- ---------- */
 .app { height: 100vh; display: grid; grid-template-rows: 1fr var(--player-h); grid-template-columns: minmax(0, 1fr); width: 100%; overflow-x: clip; }
 .body { display: flex; min-height: 0; min-width: 0; }
-.mobile-nav { display: none; } /* РІРєР»СЋС‡Р°РµС‚СЃСЏ С‚РѕР»СЊРєРѕ РЅР° С‚РµР»РµС„РѕРЅРµ */
+.mobile-nav { display: none; } /* , */
 
 .sidebar {
   width: var(--sidebar-w);
@@ -122,7 +120,7 @@ button { font-family: inherit; }
 .page-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 .now-station { color: var(--accent); font-weight: 700; }
 
-/* ---------- РєРЅРѕРїРєРё ---------- */
+/* ---------- ---------- */
 .primary-btn {
   display: inline-flex; align-items: center; gap: 8px;
   background: var(--text); color: #000; font-weight: 700;
@@ -133,7 +131,7 @@ button { font-family: inherit; }
 .primary-btn:disabled { opacity: .5; cursor: default; transform: none; }
 .primary-btn.small { padding: 7px 16px; font-size: 14px; border-radius: 18px; }
 
-/* РґРµР№СЃС‚РІРёСЏ РІ С€Р°РїРєРµ СЃСѓС‰РЅРѕСЃС‚Рё (Р°Р»СЊР±РѕРј/Р°СЂС‚РёСЃС‚): РєРЅРѕРїРєРё Р»Р°Р№РєРѕРІ */
+/* ( / ): */
 .entity-actions { display: flex; align-items: center; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
 .liked-outline {
   display: inline-grid; place-items: center;
@@ -164,7 +162,7 @@ button { font-family: inherit; }
 .icon-btn.liked:hover { color: var(--accent); background: rgba(255,51,99,.16); }
 .icon-btn.liked svg { animation: heart-pop .38s cubic-bezier(.25,1.6,.4,1); }
 .icon-btn.active { color: var(--accent); }
-/* Кнопка таймера сна с активным таймером — акцентный фон + пульсация */
+/* + */
 .icon-btn.has-timer {
   color: var(--accent);
   background: rgba(255,51,51,.14);
@@ -186,7 +184,7 @@ button { font-family: inherit; }
 }
 .link-btn:hover { color: var(--text); text-decoration: underline; }
 
-/* ---------- С„РѕСЂРјС‹ ---------- */
+/* ---------- ---------- */
 .input {
   background: var(--bg-card); color: var(--text);
   border: 1px solid var(--border); border-radius: 24px;
@@ -209,7 +207,7 @@ button { font-family: inherit; }
 }
 .radio-row:hover { color: var(--text); }
 
-/* ---------- РєР°СЂС‚РѕС‡РєРё ---------- */
+/* ---------- ---------- */
 .cards {
   display: grid; gap: 16px;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -254,7 +252,7 @@ button { font-family: inherit; }
   display: grid; place-items: center; color: var(--text-dim);
 }
 
-/* ---------- С‚СЂРµРєРё ---------- */
+/* ---------- ---------- */
 .tracklist { margin-top: 18px; }
 .trackrow {
   display: grid;
@@ -308,7 +306,7 @@ button { font-family: inherit; }
 .track-menu-item.danger { color: #ff6b6b; margin-bottom: 4px; padding-bottom: 9px; border-bottom: 1px solid var(--border); border-radius: 8px 8px 0 0; }
 .track-menu-item.danger:hover { background: rgba(255, 107, 107, .12); }
 
-/* ---------- СЃСѓС‰РЅРѕСЃС‚Рё (Р°Р»СЊР±РѕРј/РїР»РµР№Р»РёСЃС‚/Р°СЂС‚РёСЃС‚) ---------- */
+/* ---------- ( / / ) ---------- */
 .entity-page { padding-top: 8px; }
 .entity-head { display: flex; gap: 26px; align-items: flex-end; margin-bottom: 26px; flex-wrap: wrap; }
 .entity-cover { width: 210px; height: 210px; border-radius: 12px; object-fit: cover; box-shadow: 0 10px 30px rgba(0,0,0,.5); }
@@ -318,7 +316,7 @@ button { font-family: inherit; }
 .entity-title { margin: 6px 0 10px; font-size: clamp(22px, 6vw, 38px); font-weight: 900; line-height: 1.05; overflow-wrap: anywhere; }
 .entity-sub { color: var(--text-dim); margin-bottom: 18px; }
 
-/* ---------- РёСЃС‚РѕСЂРёСЏ ---------- */
+/* ---------- ---------- */
 .history-list { margin-top: 12px; }
 .history-row {
   display: flex; align-items: center; gap: 14px;
@@ -332,7 +330,7 @@ button { font-family: inherit; }
 .history-time { color: var(--text-faint); font-size: 13px; }
 .history-play { color: var(--text-faint); }
 
-/* ---------- РїР°РЅРµР»СЊ РїР»РµРµСЂР° ---------- */
+/* ---------- ---------- */
 .playerbar {
   position: relative;
   display: grid;
@@ -368,7 +366,7 @@ button { font-family: inherit; }
   display: grid; place-items: center; padding: 0 3px;
 }
 
-/* ---------- СЃР»Р°Р№РґРµСЂС‹ ---------- */
+/* ---------- ---------- */
 .range {
   -webkit-appearance: none; appearance: none;
   height: 4px; border-radius: 2px;
@@ -382,7 +380,7 @@ button { font-family: inherit; }
 }
 .range:disabled { opacity: .4; }
 
-/* ---------- РІРєР»Р°РґРєРё ---------- */
+/* ---------- ---------- */
 .tabs { display: flex; gap: 6px; margin: 18px 0; flex-wrap: wrap; }
 .tab {
   background: none; border: none; color: var(--text-dim);
@@ -393,11 +391,11 @@ button { font-family: inherit; }
 .tab.active { background: var(--bg-hover); color: var(--text); }
 .tab-count { color: var(--text-faint); margin-left: 5px; font-size: 12px; }
 
-/* ---------- СЃРµРєС†РёРё ---------- */
+/* ---------- ---------- */
 .section { margin-bottom: 30px; }
 .section-title { font-size: clamp(16px, 3.6vw, 20px); font-weight: 800; margin: 0 0 14px; }
 
-/* ---------- РЅР°СЃС‚СЂРѕР№РєРё ---------- */
+/* ---------- ---------- */
 .settings-card {
   background: var(--bg-panel); border: 1px solid var(--border);
   border-radius: 14px; padding: 20px; margin-bottom: 18px; max-width: 720px;
@@ -412,7 +410,7 @@ button { font-family: inherit; }
 }
 .badge.plus { background: rgba(29,185,84,.15); color: var(--good); border-color: var(--good); }
 
-/* ---------- РІС…РѕРґ ---------- */
+/* ---------- ---------- */
 .login-wrap {
   min-height: 100dvh; min-height: 100vh;
   display: grid; place-items: center;
@@ -485,7 +483,7 @@ button { font-family: inherit; }
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
   text-align: left;
 }
-/* Р±РѕР»СЊС€Р°СЏ РіСЂР°РґРёРµРЅС‚РЅР°СЏ РєРЅРѕРїРєР° В«РђРІС‚РѕСЂРёР·РѕРІР°С‚СЊСЃСЏВ» вЂ” РЅР° welcome Рё РЅР° РІС…РѕРґРµ */
+/* welcome */
 .primary-btn.cta-gradient {
   background: linear-gradient(120deg, var(--accent), var(--accent-2));
   color: #fff; border-radius: 26px;
@@ -495,7 +493,7 @@ button { font-family: inherit; }
 .primary-btn.cta-gradient:hover { transform: translateY(-1px) scale(1.02); box-shadow: 0 18px 46px rgba(255, 60, 0, .45); }
 .primary-btn.cta-gradient:disabled { opacity: .5; transform: none; }
 
-/* ---------- В«РњРѕСЏ РІРѕР»РЅР°В» вЂ” РІРµСЃСЊ РіР»Р°РІРЅС‹Р№ СЌРєСЂР°РЅ ---------- */
+/* ---------- ---------- */
 .wave {
   position: relative; overflow: hidden; border-radius: 26px;
   min-height: calc(100vh - 150px);
@@ -603,7 +601,7 @@ button { font-family: inherit; }
 .wave-playbig:hover { transform: scale(1.06); box-shadow: 0 12px 44px rgba(255,51,51,.62); }
 .wave-playbig:disabled { opacity: .6; cursor: wait; }
 
-/* ---------- РїР°РЅРµР»СЊ В«РћС‡РµСЂРµРґСЊВ» ---------- */
+/* ---------- ---------- */
 .queue-badge {
   position: absolute; top: -4px; right: -6px; min-width: 16px; height: 16px;
   padding: 0 4px; border-radius: 999px; font-size: 10px; line-height: 16px;
@@ -653,7 +651,7 @@ button { font-family: inherit; }
 .queue-actions .btn:disabled { opacity: .5; cursor: default; }
 .queue-play { color: var(--text-dim); flex: none; }
 
-/* ---------- РїСЂРµРјСЊРµСЂС‹ (РЅР° СЃС‚СЂР°РЅРёС†Рµ В«Р Р°РґРёРѕВ») ---------- */
+/* ---------- ( ) ---------- */
 .premieres { display: flex; flex-direction: column; gap: 10px; }
 .premiere-card {
   display: flex; align-items: center; gap: 14px; width: 100%;
@@ -668,7 +666,7 @@ button { font-family: inherit; }
 .premiere-title { font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .premiere-play { color: var(--accent); font-weight: 600; font-size: 14px; flex-shrink: 0; }
 
-/* ---------- СѓРІРµРґРѕРјР»РµРЅРёСЏ ---------- */
+/* ---------- ---------- */
 .toasts {
   position: fixed; top: 16px; right: 16px; z-index: 1000;
   display: flex; flex-direction: column; gap: 8px; max-width: 380px;
@@ -684,7 +682,7 @@ button { font-family: inherit; }
 .toast-success { border-color: var(--good); }
 @keyframes toast-in { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
 
-/* ---------- РїСЂРѕС‡РµРµ ---------- */
+/* ---------- ---------- */
 .spinner {
   width: 30px; height: 30px; margin: 24px auto;
   border: 3px solid var(--border); border-top-color: var(--accent);
@@ -699,7 +697,7 @@ button { font-family: inherit; }
   gap: 6px; color: var(--text-dim);
 }
 
-/* ---------- С‚РµРєСЃС‚С‹ РїРµСЃРµРЅ ---------- */
+/* ---------- ---------- */
 .pb-lyrics {
   position: absolute; bottom: calc(100% + 8px); right: 12px;
   width: min(440px, calc(100% - 24px));
@@ -730,7 +728,7 @@ button { font-family: inherit; }
   font-family: inherit; font-size: 15px; line-height: 1.6; color: var(--text);
 }
 
-/* СЃРєРµР»РµС‚РѕРЅ Р·Р°РіСЂСѓР·РєРё Рё СЃРѕСЃС‚РѕСЏРЅРёСЏ (РѕС€РёР±РєР° / РїСѓСЃС‚Рѕ) */
+/* ( / ) */
 .lyrics-loading {
   display: flex; flex-direction: column; gap: 10px; padding: 8px 2px;
 }
@@ -771,9 +769,7 @@ button { font-family: inherit; }
 }
 .lyrics-plain-line:last-child { margin-bottom: 0; }
 
-/* ============================================================
-   Караоке-текст: подсветка слова, которое сейчас играет
-   ============================================================ */
+/* ============================================================ - : , ============================================================ */
 .lyrics-timer {
   margin-bottom: 8px; font-size: 12.5px; color: var(--text-dim);
   text-align: center; font-weight: 600;
@@ -803,11 +799,9 @@ button { font-family: inherit; }
   font-style: italic;
 }
 
-/* ============================================================
-   РђР”РђРџРўРР’РќРћРЎРўР¬
-   ============================================================ */
+/* ============================================================ ============================================================ */
 
-/* ---------- РїР»Р°РЅС€РµС‚: СЃР°Р№РґР±Р°СЂ РІ РІРёРґРµ СѓР·РєРёС… РёРєРѕРЅРѕРє ---------- */
+/* ---------- : ---------- */
 @media (max-width: 1024px) {
   :root { --sidebar-w: 64px; }
   .sidebar { padding: 14px 6px; align-items: center; }
@@ -823,7 +817,7 @@ button { font-family: inherit; }
   .playerbar .pb-right input[type="range"] { display: none; }
 }
 
-/* ---------- С‚РµР»РµС„РѕРЅ: РЅРёР¶РЅСЏСЏ РЅР°РІРёРіР°С†РёСЏ, РїР»РµРµСЂ СЃРІРµСЂС…Сѓ РЅРµС‘ ---------- */
+/* ---------- : , ---------- */
 @media (max-width: 640px) {
   :root { --player-h: 62px; --nav-h: 58px; }
 
@@ -848,7 +842,7 @@ button { font-family: inherit; }
     border-radius: 10px;
   }
 
-  /* РєРѕРјРїР°РєС‚РЅС‹Р№ РїР»РµРµСЂ: С‚СЂРµРє | prev-play-next | СЃРµСЂРґС†Рµ-РїРѕС…РѕР¶РёРµ-РѕС‡РµСЂРµРґСЊ */
+  /* : | prev-play-next | - - */
   .playerbar {
     grid-template-columns: minmax(0, 1fr) auto auto;
     gap: 4px; padding: 0 8px;
@@ -861,7 +855,7 @@ button { font-family: inherit; }
   .pb-controls .icon-btn svg { width: 18px; height: 18px; }
   .pb-play { width: 42px; height: 42px; margin: 0 2px; }
   .pb-play svg { width: 20px; height: 20px; }
-  /* РїРµСЂРµРјРµС€РёРІР°РЅРёРµ/РїРѕРІС‚РѕСЂ РЅР° С‚РµР»РµС„РѕРЅРµ вЂ” РЅР° В«РњРѕРµР№ РІРѕР»РЅРµВ», РІ РїР»РµРµСЂРµ Р»РёС€РЅРёРµ */
+  /* / , */
   .pb-controls .icon-btn:first-child,
   .pb-controls .icon-btn:last-child { display: none; }
   .pb-vol-icon, .pb-right input[type="range"] { display: none; }
@@ -871,23 +865,23 @@ button { font-family: inherit; }
   .pb-track .icon-btn { width: 32px; height: 32px; }
   .pb-title { font-size: 13px; }
   .pb-artist { font-size: 11.5px; }
-  /* С€С‚РѕСЂРєРё (РѕС‡РµСЂРµРґСЊ/РїРѕС…РѕР¶РёРµ) РІС‹С€Рµ РїР»РµРµСЂР° Рё РЅР°РІРёРіР°С†РёРё */
+  /* ( / ) */
   .queue-panel {
     margin-bottom: calc(var(--player-h) + var(--nav-h) + 10px);
     max-height: calc(100vh - var(--player-h) - var(--nav-h) - 30px);
   }
-  /* РїРѕРґРїРёСЃРё РЅРёР¶РЅРµР№ РЅР°РІРёРіР°С†РёРё (РїР»Р°РЅС€РµС‚РЅРѕРµ РїСЂР°РІРёР»Рѕ РёС… СЃРєСЂС‹РІР°Р»Рѕ) */
+  /* ( ) */
   .mobile-nav .nav-link { color: var(--text-dim); font-size: 10.5px; letter-spacing: .2px; }
   .mobile-nav .nav-link span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
   .mobile-nav .nav-link.active { color: var(--accent); }
 
-  /* СЃРїРёСЃРєРё С‚СЂРµРєРѕРІ: Р±РµР· РєРѕР»РѕРЅРєРё В«Р°Р»СЊР±РѕРјВ» Рё РІСЂРµРјРµРЅРё */
+  /* : */
   .trackrow { grid-template-columns: 30px minmax(0, 1fr) 60px; gap: 8px; padding: 6px 8px; }
   .trackhead { display: none; }
   .tc-album, .tc-time { display: none; }
   .tc-cover { width: 40px; height: 40px; }
 
-  /* РєР°СЂС‚РѕС‡РєРё/РіСЂРёРґС‹ */
+  /* / */
   .radio-grid { grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 12px; }
   .card-title { font-size: 13px; }
   .card-sub { font-size: 12px; }
@@ -913,11 +907,9 @@ button { font-family: inherit; }
   .pb-lyrics { right: 8px; width: calc(100% - 16px); max-height: 40vh; }
 }
 
-/* ============================================================
-   РџРћР›РР РћР’РљРђ Р”РР—РђР™РќРђ: РєРЅРѕРїРєРё Рё РґРµС‚Р°Р»Рё (РІ РґСѓС…Рµ РЇ.РњСѓР·С‹РєРё)
-   ============================================================ */
+/* ============================================================ : ( . ) ============================================================ */
 
-/* РґРѕСЃС‚СѓРїРЅРѕСЃС‚СЊ: РІРёРґРёРјРѕРµ РєРѕР»СЊС†Рѕ РїСЂРё РЅР°РІРёРіР°С†РёРё СЃ РєР»Р°РІРёР°С‚СѓСЂС‹ */
+/* : */
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
@@ -944,14 +936,14 @@ button { font-family: inherit; }
 .btn:active { transform: scale(.97); }
 .btn.danger:hover { background: rgba(240, 80, 110, .12); }
 
-/* РёРєРѕРЅРєРё-РєРЅРѕРїРєРё вЂ” РѕС‚РєР»РёРє РЅР° РЅР°Р¶Р°С‚РёРµ, СЃРѕСЃС‚РѕСЏРЅРёСЏ disabled */
+/* - , disabled */
 .icon-btn { transition: color .15s, background .15s, transform .08s; }
 .icon-btn:active:not(:disabled) { transform: scale(.9); }
 .icon-btn:disabled { opacity: .45; cursor: default; }
 .icon-btn:disabled:hover { color: var(--text-dim); background: transparent; }
 .icon-btn.active { background: rgba(255, 51, 51, .12); }
 
-/* РІРєР»Р°РґРєРё вЂ” Р°РєС‚РёРІРЅР°СЏ РєР°Рє Р±РµР»Р°СЏ В«РїРёР»СЋР»СЏВ» (РєР°Рє РІ РЇ.РњСѓР·С‹РєРµ) */
+/* ( . ) */
 .tab { transition: background .15s, color .15s, transform .08s; }
 .tab:active { transform: scale(.96); }
 .tab.active {
@@ -1032,9 +1024,7 @@ button { font-family: inherit; }
   box-shadow: 0 10px 30px rgba(0,0,0,.55);
 }
 
-/* ============================================================
-   Р­РљР РђРќ-РџР РР’Р•РўРЎРўР’РР• (РЅРµС‚ С‚РѕРєРµРЅР°): Р»РѕРіРѕ-РґРёСЃРє, СЃР»РѕРіР°РЅ, РІС…РѕРґ
-   ============================================================ */
+/* ============================================================ - ( ): - , , ============================================================ */
 .welcome {
   min-height: 100dvh; min-height: 100vh;
   display: flex; align-items: center; justify-content: center;
@@ -1082,9 +1072,7 @@ button { font-family: inherit; }
 }
 .welcome-hint { margin: clamp(20px, 5vh, 28px) auto 0; max-width: 330px; }
 
-/* ============================================================
-   Р РђР—Р’РЃР РќРЈРўР«Р™ РџР›Р•Р•Р  (bottom-sheet, РїР°С‚С‚РµСЂРЅ spotube/nuclear)
-   ============================================================ */
+/* ============================================================ (bottom-sheet, spotube/nuclear) ============================================================ */
 .psheet {
   position: fixed; inset: 0; z-index: 50;
   display: flex; align-items: center; justify-content: center;
@@ -1136,7 +1124,7 @@ button { font-family: inherit; }
 .psheet-foot .icon-btn { position: relative; }
 .psheet-vol { display: inline-flex; align-items: center; gap: 8px; flex: 0 0 160px; margin-left: 6px; }
 
-/* РјРѕР±РёР»СЊРЅС‹Р№ РІРёРґ: Р»РёСЃС‚ РѕС‚ РЅРёР·Р° СЌРєСЂР°РЅР° */
+/* : */
 @media (max-width: 640px) {
   .psheet { align-items: flex-end; padding: 0; }
   .psheet-card { width: 100%; max-height: 88vh; border-radius: 20px 20px 0 0; padding: 14px 16px 16px; }
@@ -1147,7 +1135,7 @@ button { font-family: inherit; }
   .psheet-vol { flex-basis: 130px; }
 }
 
-/* ==================== РџРѕР»РёСЂРѕРІРєР°: Р°РІР°С‚Р°СЂ, Р»РѕР°РґРµСЂС‹, Р·Р°СЃС‚Р°РІРєР°, РІС…РѕРґ ==================== */
+/* ==================== : , , , ==================== */
 .user-avatar.inline {
   display: inline-flex; align-items: center; justify-content: center;
   color: #fff; font-weight: 800; font-size: 13px; letter-spacing: .02em;
@@ -1162,17 +1150,17 @@ button { font-family: inherit; }
   padding: 34px 16px;
 }
 
-/* Р°РЅРёРјР°С†РёСЏ РїРѕСЏРІР»РµРЅРёСЏ СЃС‚СЂР°РЅРёС† вЂ” РїР»Р°РІРЅС‹Р№ В«РІС…РѕРґВ» СЃ Р»С‘РіРєРёРј СЃРґРІРёРіРѕРј */
+/* Анимация входа страницы */
 .content > * { animation: pageIn .4s cubic-bezier(.2, .7, .3, 1) both; }
 @keyframes pageIn {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: none; }
 }
 
-/* Р·Р°СЃС‚Р°РІРєР° РїСЂРё РІС…РѕРґРµ РІ РїСЂРёР»РѕР¶РµРЅРёРµ (РїСѓР»СЊСЃРёСЂСѓСЋС‰РёР№ РґРёСЃРє-Р»РѕРіРѕС‚РёРї + РіР°С€РµРЅРёРµ) */
+/* Анимация появления контента */
 
 
-/* РїСЂРёРІРµС‚СЃС‚РІРёРµ РЅР° В«РњРѕРµР№ РІРѕР»РЅРµВ» */
+/* " " */
 .wave-greet { display: flex; flex-direction: column; gap: 3px; margin-bottom: 6px; }
 .wave-greet-hello {
   font-size: clamp(19px, 5vw, 26px); font-weight: 800; color: #fff;
@@ -1180,7 +1168,7 @@ button { font-family: inherit; }
 }
 .wave-greet-sub { font-size: 13.5px; color: rgba(255, 255, 255, .62); letter-spacing: .02em; }
 
-/* РїР»Р°РІРЅС‹Р№ В«РІС…РѕРґВ» РЅР° РіР»Р°РІРЅС‹Р№ СЌРєСЂР°РЅ РїРѕСЃР»Рµ Р·Р°СЃС‚Р°РІРєРё: РґРёСЃРє РІСЃРїР»С‹РІР°РµС‚, РїСЂРёРІРµС‚СЃС‚РІРёРµ РїРѕРґРЅРёРјР°РµС‚СЃСЏ */
+/* ( ) */
 .wave { animation: waveIn .6s cubic-bezier(.2, .8, .3, 1) .05s both; }
 @keyframes waveIn {
   from { opacity: 0; transform: scale(.965) translateY(16px); }
@@ -1199,8 +1187,7 @@ button { font-family: inherit; }
   to   { opacity: 1; transform: none; }
 }
 
-/* Р±С‹СЃС‚СЂС‹Р№ РґРѕСЃС‚СѓРї Рє В«РњРѕРёРј РїР»РµР№Р»РёСЃС‚Р°РјВ» РЅР° РіР»Р°РІРЅРѕР№ вЂ” РІРёРґРµРЅ С‚РѕР»СЊРєРѕ РЅР° С‚РµР»РµС„РѕРЅРµ
-   (РЅР° РґРµСЃРєС‚РѕРїРµ РїР»РµР№Р»РёСЃС‚С‹ Рё С‚Р°Рє РІ СЃР°Р№РґР±Р°СЂРµ; СЃРЅРёР·Сѓ Рё С‚Р°Рє РјРЅРѕРіРѕ РєРЅРѕРїРѕРє) */
+/* " " */
 .wave-quick { display: none; margin-top: 2px; animation: greetIn .5s cubic-bezier(.2, .8, .3, 1) .34s both; }
 .wave-quick-chip {
   display: inline-flex; align-items: center; gap: 8px;
@@ -1216,7 +1203,7 @@ button { font-family: inherit; }
   .wave-quick { display: flex; justify-content: center; }
 }
 
-/* В«РР·Р±СЂР°РЅРЅРѕРµВ»: Р»РµРЅС‚Р° РїР»РµР№Р»РёСЃС‚РѕРІ СЃРІРµСЂС…Сѓ (РіРѕСЂРёР·РѕРЅС‚Р°Р»СЊРЅС‹Р№ СЃРєСЂРѕР»Р» Р±РµР· РїРѕР»РѕСЃС‹) */
+/* favourites- ( ) */
 .fav-row {
   display: flex; gap: 14px; overflow-x: auto;
   scrollbar-width: none; padding: 2px 2px 12px;
@@ -1230,7 +1217,7 @@ button { font-family: inherit; }
   font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
-/* CTA В«РЎРѕР·РґР°С‚СЊ РїРµСЂРІС‹Р№ РїР»РµР№Р»РёСЃС‚В» РІ В«РР·Р±СЂР°РЅРЅРѕРјВ», РєРѕРіРґР° РїР»РµР№Р»РёСЃС‚РѕРІ РµС‰С‘ РЅРµС‚ */
+/* (CTA) */
 .fav-create-btn {
   display: inline-flex; align-items: center; gap: 10px;
   padding: 15px 22px; border-radius: 16px;
@@ -1243,7 +1230,7 @@ button { font-family: inherit; }
 .fav-create-btn:hover { background: rgba(255, 255, 255, .08); border-color: var(--accent); transform: translateY(-1px); }
 .fav-create-btn:active { transform: scale(.98); }
 
-/* РЈРґР°Р»РµРЅРёРµ РїР»РµР№Р»РёСЃС‚Р°: РєРЅРѕРїРєР° РЅР° СЃС‚СЂР°РЅРёС†Рµ + РјРѕРґР°Р»СЊРЅРѕРµ РїРѕРґС‚РІРµСЂР¶РґРµРЅРёРµ */
+/* ( / ) */
 .entity-actions { display: flex; align-items: center; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
 .delete-playlist-btn {
   display: inline-flex; align-items: center; gap: 7px;
@@ -1273,7 +1260,7 @@ button { font-family: inherit; }
 .primary-btn.danger { background: #e5484d; }
 .primary-btn.danger:hover { background: #d63c41; }
 
-/* РЎРІР°Р№Рї-Р·РѕРЅР° РѕР±Р»РѕР¶РєРё РІ РїР»РµРµСЂРµ */
+/* bottom-sheet */
 .psheet-cover-wrap {
   position: relative; touch-action: none; user-select: none;
   -webkit-user-select: none; flex-shrink: 0;
@@ -1283,11 +1270,9 @@ button { font-family: inherit; }
   font-size: 11px; opacity: .55; letter-spacing: 1px; pointer-events: none;
   white-space: nowrap;
 }
-/* ============================================================
-   Полировка в духе Telegram/современных нативных приложений
-   ============================================================ */
+/* ============================================================ Telegram/ ============================================================ */
 
-/* фокус-кольца для доступности */
+/* - */
 button:focus-visible, a:focus-visible, input:focus-visible, [tabindex]:focus-visible {
   outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px;
 }
@@ -1303,17 +1288,17 @@ button:focus-visible, a:focus-visible, input:focus-visible, [tabindex]:focus-vis
 .primary-btn:active, .btn:active, .link-btn:active { transform: scale(.97); }
 .icon-btn:active:not(:disabled) { transform: scale(.88); }
 
-/* карточки: тонкая рамка и приподъём */
+/* : */
 .card { border: 1px solid rgba(255,255,255,.05); }
 .card:hover { border-color: rgba(255,255,255,.12); box-shadow: 0 10px 28px rgba(0,0,0,.4); }
 
-/* заголовки секций: воздух */
+/* : */
 .section-title { letter-spacing: .2px; }
 
-/* подложка-«таблетка» активного пункта нижней навигации (телефон) */
+/* - ( ) */
 .mobile-nav .nav-link.active { background: rgba(255,51,51,.14); }
 
-/* ---------- эквалайзер (уникальная фишка: анимация «сейчас играет») ---------- */
+/* ---------- ( : ) ---------- */
 .eq { display: inline-flex; align-items: flex-end; gap: 2px; height: 14px; }
 .eq span { width: 3px; border-radius: 2px; background: var(--accent); animation: eq-bounce 1s ease-in-out infinite; }
 .eq span:nth-child(2) { animation-delay: .18s; }
@@ -1321,10 +1306,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, [tabindex]:focus-vis
 .eq span:nth-child(4) { animation-delay: .54s; }
 @keyframes eq-bounce { 0%, 100% { height: 4px; } 50% { height: 14px; } }
 
-/* уведомительная точка у «Избранного», когда есть свежие лайки — не требуется */
-/* ============================================================
-   Таймер сна (Sleep Timer)
-   ============================================================ */
+/* , */
+/* ============================================================ (Sleep Timer) ============================================================ */
 .st-overlay {
   position: fixed; inset: 0; z-index: 120;
   background: rgba(0,0,0,.6);
@@ -1385,9 +1368,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, [tabindex]:focus-vis
 .st-apply { width: 100%; }
 .st-apply:disabled { opacity: .45; cursor: not-allowed; }
 
-/* ============================================================
-   Настройки «Моей волны»
-   ============================================================ */
+/* ============================================================ ============================================================ */
 .ws-overlay {
   position: fixed; inset: 0; z-index: 120;
   background: rgba(0,0,0,.62);
@@ -1396,8 +1377,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, [tabindex]:focus-vis
 }
 .ws-sheet {
   width: 100%; max-width: 460px;
-  /* высота фиксирована, прокручивается только тело (.ws-body),
-     поэтому шапка с крестиком и футер всегда на экране */
+  /* , (.ws-body), */
   height: min(88vh, 780px);
   display: flex; flex-direction: column;
   overflow: hidden;
@@ -1419,7 +1399,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, [tabindex]:focus-vis
   border-bottom: 1px solid rgba(255,255,255,.07);
   border-radius: 20px 20px 0 0;
 }
-/* прокручиваемое тело панели (секции настроек / жанры) */
+/* ( / ) */
 .ws-body {
   flex: 1 1 auto;
   min-height: 0;
@@ -1524,8 +1504,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, [tabindex]:focus-vis
   border: 2px solid transparent;
   transition: background .15s, border-color .15s, transform .15s, box-shadow .15s;
 }
-/* прогрессивная яркость точек: 1-я тусклая → 4-я яркая
-   DOM: 1=fill, 2=mark1, 3=mark2, 4=mark3, 5=mark4, 6=labels */
+/* : 1- 4- DOM: 1=fill, 2=mark1, 3=mark2, 4=mark3, 5=mark4, 6=labels */
 .ws-energy-bar > .ws-energy-mark:nth-of-type(1) .ws-energy-dot { background: rgba(255,255,255,.12); }
 .ws-energy-bar > .ws-energy-mark:nth-of-type(2) .ws-energy-dot { background: rgba(255,255,255,.3); }
 .ws-energy-bar > .ws-energy-mark:nth-of-type(3) .ws-energy-dot { background: rgba(255,255,255,.55); }
@@ -1535,12 +1514,12 @@ button:focus-visible, a:focus-visible, input:focus-visible, [tabindex]:focus-vis
   transform: scale(1.25);
   box-shadow: 0 0 0 4px rgba(255,60,0,.25), 0 0 12px rgba(255,60,0,.4);
 }
-/* убираем надписи "Ниже / Выше" */
+/* " / " */
 .ws-energy-labels { display: none; }
 .ws-hint { color: var(--text-faint); font-size: 11.5px; line-height: 1.45; margin: 12px 0 0; }
 .ws-loading { display: flex; align-items: center; gap: 10px; padding: 26px 4px; color: var(--text-dim); font-size: 14px; }
 
-/* футер панели — всегда внизу, не скроллится */
+/* , */
 .ws-footer {
   display: flex; align-items: center; gap: 10px;
   flex: none;
@@ -1550,7 +1529,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, [tabindex]:focus-vis
 }
 .ws-apply { flex: 1; }
 
-/* основная кнопка (используется в «Настроить волну» и таймере сна) */
+/* ( ) */
 .primary-btn {
   padding: 12px 18px; border-radius: 12px; cursor: pointer;
   background: linear-gradient(135deg, var(--accent), var(--accent-2));
@@ -1573,9 +1552,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, [tabindex]:focus-vis
 .wave-settings-btn:hover { background: rgba(255,255,255,.16); color: #fff; }
 .wave-settings-btn:active { transform: scale(.9); }
 
-/* ============================================================
-   Страница артиста: статистика, биография, ссылки
-   ============================================================ */
+/* ============================================================ : , , ============================================================ */
 .artist-listeners {
   font-size: 13px; color: var(--text-dim); margin: 4px 0 2px;
   display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
@@ -1618,4 +1595,40 @@ button:focus-visible, a:focus-visible, input:focus-visible, [tabindex]:focus-vis
   color: #ff9aa6;
 }
 .pb-error-btn:hover { background: rgba(255,123,138,.26); }
+
+/* ============================================================ ============================================================ */
+.about-page { max-width: 700px; margin: 0 auto; padding: 20px 16px 40px; }
+.about-header { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
+.about-disc { width: 64px; height: 64px; border-radius: 50%; background: conic-gradient(from 200deg, var(--accent), var(--accent-2), #ffd28a, var(--accent)); display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 16px 40px rgba(255,60,0,.4); }
+.about-disc-core { width: 100%; height: 100%; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #2a2a32, #121217 70%); display: flex; align-items: center; justify-content: center; }
+.about-name { font-size: 26px; font-weight: 800; letter-spacing: .4px; background: linear-gradient(180deg, #fff, #b9b9c8); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; margin: 0 0 2px; }
+.about-version { font-size: 13px; color: var(--text-dim); margin: 0; }
+
+.about-card { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 20px; padding: 20px; margin-bottom: 16px; }
+.about-section-title { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; color: var(--accent); margin: 0 0 16px; text-transform: uppercase; letter-spacing: .5px; }
+.about-section-title svg { flex-shrink: 0; }
+.about-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.04); }
+.about-row:last-child { border-bottom: none; }
+.about-label { font-size: 13px; color: var(--text-dim); white-space: nowrap; }
+.about-value { font-size: 13.5px; color: var(--text); text-align: right; max-width: 55%; }
+
+/* Статистика прослушивания */
+.about-stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.about-stat { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.06); border-radius: 14px; padding: 14px 12px; text-align: center; }
+.about-stat-value { font-size: 20px; font-weight: 800; color: var(--accent); margin: 0 0 4px; }
+.about-stat-label { font-size: 11.5px; color: var(--text-dim); margin: 0; text-transform: uppercase; letter-spacing: .4px; }
+@media (max-width: 480px) {
+  .about-stats-grid { grid-template-columns: 1fr; }
+}
+
+.about-actions { display: flex; gap: 10px; margin-top: 8px; }
+.about-actions .btn { flex: 1; }
+
+.about-footer { margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--border); text-align: center; }
+.about-copyright { font-size: 12px; color: var(--text-dim); margin: 4px 0; }
+.about-copyright.small { font-size: 11px; color: rgba(255,255,255,.45); }
+
+/* primary */
+.btn.primary { background: linear-gradient(120deg, var(--accent), var(--accent-2)); color: #fff; }
+.btn.primary:hover { filter: brightness(1.1); }
 

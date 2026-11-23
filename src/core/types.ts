@@ -23,9 +23,19 @@ export interface Cover {
   error?: string
 }
 
-export function coverUrl(uri: string | undefined, size = '200x200'): string | undefined {
+/** URL обложки по размеру (поддерживает относительные и абсолютные URI) */
+export function coverUrl(uri: string | undefined | null, size = '200x200'): string | undefined {
   if (!uri) return undefined
-  return `https://${uri.replace(/%%/g, size)}`
+  let u = uri.trim()
+  if (u.startsWith('//')) u = 'https:' + u
+  else if (!/^https?:\/\//i.test(u)) u = 'https://' + u
+  return u.replace(/%%/g, size)
+}
+
+/** Составной ключ трека «trackId:albumId» */
+export function trackKey(track: Pick<Track, 'id' | 'albums' | 'albumId'>): string {
+  const albumId = track.albums?.[0]?.id ?? track.albumId ?? ''
+  return `${track.id}:${albumId}`
 }
 
 export interface Track {
@@ -49,12 +59,6 @@ export interface Track {
   ogImage?: string
   versions?: { original?: unknown; alternative?: unknown; companion?: unknown[] }
   albumId?: string
-}
-
-/** Составной идентификатор трека «trackId:albumId» */
-export function trackKey(track: Track): string {
-  const albumId = track.albums?.[0]?.id ?? track.albumId ?? ''
-  return `${track.id}:${albumId}`
 }
 
 export interface TrackShort {

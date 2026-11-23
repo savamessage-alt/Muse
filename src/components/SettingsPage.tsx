@@ -1,17 +1,21 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useApp } from '../state/store'
 import { tokenManager } from '../core/tokenManager'
 import { player } from '../core/player'
 import UserAvatar from './UserAvatar'
+import { IconInfo } from './icons'
 
 export default function SettingsPage() {
   const user = useApp((s) => s.user)
   const status = useApp((s) => s.status)
   const logout = useApp((s) => s.logout)
+  const navigate = useNavigate()
   const showToast = useApp((s) => s.showToast)
 
   const token = tokenManager.getToken()
   const [quality, setQuality] = useState(() => localStorage.getItem('ym.quality') ?? 'mp3-320')
+  const [refreshingToken, setRefreshingToken] = useState(false)
 
   const setQualityLocal = (q: string) => {
     localStorage.setItem('ym.quality', q)
@@ -21,11 +25,15 @@ export default function SettingsPage() {
   }
 
   const refreshNow = async () => {
+    if (refreshingToken) return
+    setRefreshingToken(true)
     try {
       await tokenManager.getAccessToken(true)
       showToast('Токен обновлён')
     } catch (e) {
       showToast('Не удалось обновить токен: ' + (e as Error).message, 'error')
+    } finally {
+      setRefreshingToken(false)
     }
   }
 
@@ -71,8 +79,8 @@ export default function SettingsPage() {
           )}
         </div>
         <div className="settings-actions">
-          <button className="btn" onClick={() => void refreshNow()}>
-            Обновить токен сейчас
+          <button className="btn" onClick={() => void refreshNow()} disabled={refreshingToken}>
+            {refreshingToken ? 'Обновляем…' : 'Обновить токен сейчас'}
           </button>
           <button className="btn danger" onClick={logout}>
             Выйти из аккаунта
@@ -101,6 +109,15 @@ export default function SettingsPage() {
           </label>
         ))}
         <p className="hint">Изменение применится к новому треку; текущий трек будет перезапущен в новом качестве.</p>
+      </section>
+
+      <section className="settings-card">
+        <h2>О приложении</h2>
+        <div className="settings-actions">
+          <button className="btn primary" onClick={() => navigate('/about')}>
+            <IconInfo size={16} fill="currentColor" /> О Muse
+          </button>
+        </div>
       </section>
     </div>
   )

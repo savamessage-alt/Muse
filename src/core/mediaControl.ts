@@ -33,7 +33,10 @@ export function buildPlaybackState(): PlaybackState | null {
     durationMs: Math.round(snap.durationMs),
     liked,
     canPrev: snap.index > 0 || (snap.shuffle && snap.queue.length > 1),
-    canNext: snap.index < snap.queue.length - 1 || (snap.repeat === 'all' && snap.queue.length > 1),
+    canNext:
+      snap.queue.length > 1 && snap.index < snap.queue.length - 1 ||
+      (snap.queue.length > 1 && snap.repeat === 'all') ||
+      (snap.queue.length > 0 && snap.repeat === 'one'),
   }
 }
 
@@ -76,12 +79,10 @@ function handleAction(a: PlaybackAction): void {
       break
     }
     case 'stop':
-      player.pause()
+      player.stop()
       break
   }
 }
-
-let timer: number | null = null
 
 /** Однократная инициализация медиа-контроля (вызывается из App на старте). */
 export function initMediaControl(): void {
@@ -95,16 +96,15 @@ export function initMediaControl(): void {
     return
   }
 
-  player.onChange(() => pushState())
+  const unsubMedia = player.onChange(() => pushState())
+  window.addEventListener('beforeunload', () => {
+    unsubMedia()
+  })
   useApp.subscribe((s, p) => {
     if (s.likedKeys !== p.likedKeys) pushState()
   })
   backgroundPlayback.onAction(handleAction)
 
-  // push при старте и периодически (страховка по позиции)
+  // push при старте (изменения уже приходят через onChange / subscribe)
   pushState()
-  timer = window.setInterval(() => pushState(), 1500)
-  window.addEventListener('beforeunload', () => {
-    if (timer != null) window.clearInterval(timer)
-  })
 }

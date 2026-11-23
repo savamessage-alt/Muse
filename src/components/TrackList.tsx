@@ -178,7 +178,17 @@ export default function TrackList({ tracks, onPlay, showAlbum = true, showLikes 
           <div
             key={t.id + (t.albums?.[0]?.id ?? '')}
             className={'trackrow' + (snap.current?.track.id === t.id ? ' current' : '')}
-            onDoubleClick={() => (onPlay ? onPlay(i) : playTracks(tracks, i, playSource))}
+            role="button"
+            tabIndex={0}
+            aria-label={t.title + (t.artists?.length ? ' · ' + t.artists.map((a) => a.name).join(', ') : '') + ', трек ' + (i + 1) + ' из ' + tracks.length}
+            aria-current={snap.current?.track.id === t.id ? true : undefined}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                if (onPlay) onPlay(i)
+                else playTracks(tracks, i, playSource)
+              }
+            }}
             onClick={() => {
               if (Date.now() - lastRowSwipeAt < 400) return
               if (onPlay) onPlay(i)
@@ -241,7 +251,9 @@ export default function TrackList({ tracks, onPlay, showAlbum = true, showLikes 
                     e.stopPropagation()
                     void toggleLike(t)
                   }}
-                  title={liked ? 'Убрать лайк' : 'Лайк'}
+                  title={liked ? 'Убрать из «Избранное»' : 'В «Избранное»'}
+                  aria-label={liked ? 'Убрать из «Избранное»' : 'В «Избранное»'}
+                  aria-pressed={liked}
                 >
                   {liked ? <IconHeartFilled size={16} /> : <IconHeart size={16} />}
                 </button>

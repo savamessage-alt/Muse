@@ -4,10 +4,11 @@ import { player } from '../core/player'
 import { coverUrl, PLACEHOLDER_COVER } from '../core/format'
 import type { RadioStation, Track, TrackShort } from '../core/types'
 import { useApp } from '../state/store'
-import { IconRadio } from './icons'
+import { IconPlay, IconRadio, IconSpinner } from './icons'
 import { Section } from './cards'
 import TrackList, { playTracks } from './TrackList'
 import { expandTracks } from '../core/tracks'
+import EmptyState from './EmptyState'
 
 interface Premiere {
   kind: number
@@ -138,7 +139,7 @@ export default function RadioPage() {
     setChartBusy(true)
     try {
       await player.playQueue(chart.tracks.map((t) => ({ track: t, source: 'queue' })), 0)
-      showToast('🎵 Чарт — играет')
+      showToast('Чарт — играет')
     } catch (e) {
       showToast('Ошибка чарта: ' + (e as Error).message, 'error')
     } finally {
@@ -147,6 +148,7 @@ export default function RadioPage() {
   }
 
   const playStation = async (s: RadioStation) => {
+    if (busy) return
     const type = s.station?.id?.type ?? s.id?.type ?? ''
     const tag = s.station?.id?.tag ?? s.id?.tag ?? ''
     const name = s.station?.name ?? 'Станция'
@@ -190,7 +192,13 @@ export default function RadioPage() {
           <span className="muted small">Загружаем станции…</span>
         </div>
       ) : stations.length === 0 && !err && !busy ? (
-        <p className="muted pad">Станции не найдены. Возможно, нужна подписка на музыку.</p>
+        <EmptyState
+          icon={<IconRadio size={48} />}
+          title="Станции не найдены"
+          subtitle="Возможно, нужна подписка на музыку."
+          actionLabel="Попробовать снова"
+          onAction={() => void window.location.reload()}
+        />
       ) : null}
 
       <div className="radio-grid">
@@ -209,7 +217,7 @@ export default function RadioPage() {
                 ) : (
                   <div className="radio-fallback"><IconRadio size={48} /></div>
                 )}
-                <div className="card-play">▶</div>
+                <div className="card-play"><IconPlay size={14} /></div>
               </div>
               <div className="card-title">{name}</div>
             </button>
@@ -228,7 +236,7 @@ export default function RadioPage() {
                     alt=""
                     onError={(e) => ((e.target as HTMLImageElement).src = PLACEHOLDER_COVER)}
                   />
-                  <div className="card-play">{loadingPl === x.kind ? '…' : '▶'}</div>
+                  <div className="card-play">{loadingPl === x.kind ? <IconSpinner size={14} className="spin-icon" /> : <IconPlay size={14} />}</div>
                 </div>
                 <div className="card-title">{x.title ?? 'Подборка'}</div>
               </button>
@@ -259,7 +267,7 @@ export default function RadioPage() {
                     {p.trackCount ? `${p.trackCount} треков` : ''} · нажмите, чтобы слушать
                   </span>
                 </span>
-                <span className="premiere-play">{loadingPl === p.kind ? '…' : '▶ Слушать'}</span>
+                <span className="premiere-play">{loadingPl === p.kind ? <IconSpinner size={14} className="spin-icon" /> : <><IconPlay size={14} /> Слушать</>}</span>
               </button>
             ))}
           </div>
@@ -269,7 +277,7 @@ export default function RadioPage() {
       {chart && chart.tracks.length > 0 && (
         <Section title={chart.title ?? 'Чарт'}>
           <button className="primary-btn small" onClick={() => void playChart()} disabled={chartBusy}>
-            {chartBusy ? '…' : '▶ Играть всё'}
+            {chartBusy ? <IconSpinner size={14} className="spin-icon" /> : <><IconPlay size={14} /> Играть всё</>}
           </button>
           <TrackList
             tracks={chart.tracks.slice(0, 50)}
