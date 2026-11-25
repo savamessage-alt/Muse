@@ -29,3 +29,17 @@ e2e/
 
 # рабочие файлы агентов (worktrees, скриншоты проверок)
 .agents/
+
+# отладочные скрипты в корне (разовые проверки API/плеера)
+test-*.mjs
+test-*.cjs
+test-*.js
+test-results/
+probe-*.mjs
+probe-*.cjs
+
+# скриншоты проверок в корне
+/*.png
+
+# артефакты сборки TypeScript
+*.tsbuildinfo
