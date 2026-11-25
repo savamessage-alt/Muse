@@ -92,10 +92,7 @@ export default function LoginPage() {
           <span className="logo-dot" /> Muse
         </div>
         <h1>Вход в аккаунт</h1>
-        <p className="muted">
-          Плеер работает с вашим музыкальным аккаунтом: лайки, плейлисты и история синхронизируются.
-          Токен обновляется автоматически, а если вход не удался — просто войдите ещё раз.
-        </p>
+        <p className="muted">Лайки, плейлисты и история синхронизируются автоматически.</p>
 
         {step === 'idle' && (
           <>
@@ -109,6 +106,8 @@ export default function LoginPage() {
               <div className="manual-box">
                 <input
                   className="input"
+                  type="password"
+                  autoComplete="off"
                   placeholder="Вставьте токен (access_token)"
                   value={manual}
                   onChange={(e) => setManual(e.target.value)}
@@ -124,7 +123,7 @@ export default function LoginPage() {
         {step === 'waiting' && code && (
           <div className="code-box">
             <div className="code-display">{code.userCode}</div>
-            <p className="muted">Откройте страницу и введите код (откройте ссылку кнопкой):</p>
+            <p className="muted">Введите код на странице входа:</p>
             <div className="code-url">
               <span>{code.verificationUrl}</span>
               <button className="icon-btn" onClick={openPage} title="Открыть страницу входа">
@@ -144,11 +143,6 @@ export default function LoginPage() {
             </button>
           </div>
         )}
-
-        <p className="hint">
-          Нет аккаунта с подпиской? Часть треков будет недоступна — статус покажем на странице
-          настроек после входа.
-        </p>
       </div>
     </div>
   )

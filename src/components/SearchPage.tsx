@@ -4,6 +4,7 @@ import { expandTracks } from '../core/tracks'
 import type { Album, Artist, Playlist, SearchResult, Track, TrackShort } from '../core/types'
 import TrackList, { playTracks } from './TrackList'
 import { AlbumCard, ArtistCard, Grid, PlaylistCard } from './cards'
+import LoadingBlock from './LoadingBlock'
 import { IconPlay, IconSearch, IconX } from './icons'
 
 type Tab = 'tracks' | 'albums' | 'artists' | 'playlists'
@@ -113,10 +114,7 @@ export default function SearchPage() {
           )}
           {tab === 'albums' && (
             loading ? (
-              <div className="list-loading" role="status" aria-label="Загрузка альбомов">
-                <div className="spinner" />
-                <span className="muted small">Загружаем альбомы…</span>
-              </div>
+              <LoadingBlock label="Загрузка альбомов" text="Загружаем альбомы…" />
             ) : albums.length > 0 ? (
               <Grid>
                 {albums.map((a) => (
@@ -129,10 +127,7 @@ export default function SearchPage() {
           )}
           {tab === 'artists' && (
             loading ? (
-              <div className="list-loading" role="status" aria-label="Загрузка артистов">
-                <div className="spinner" />
-                <span className="muted small">Загружаем артистов…</span>
-              </div>
+              <LoadingBlock label="Загрузка артистов" text="Загружаем артистов…" />
             ) : artists.length > 0 ? (
               <Grid>
                 {artists.map((a) => (
@@ -145,10 +140,7 @@ export default function SearchPage() {
           )}
           {tab === 'playlists' && (
             loading ? (
-              <div className="list-loading" role="status" aria-label="Загрузка плейлистов">
-                <div className="spinner" />
-                <span className="muted small">Загружаем плейлисты…</span>
-              </div>
+              <LoadingBlock label="Загрузка плейлистов" text="Загружаем плейлисты…" />
             ) : playlists.length > 0 ? (
               <Grid>
                 {playlists.map((p) => (

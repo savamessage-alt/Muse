@@ -9,6 +9,7 @@ import { playTracks } from './TrackList'
 import { IconPlay } from './icons'
 import { diag } from '../core/diag'
 import EmptyState from './EmptyState'
+import LoadingBlock from './LoadingBlock'
 import { IconHistory } from './icons'
 
 interface Row {
@@ -65,15 +66,13 @@ export default function HistoryPage() {
             <h1 className="entity-title">История прослушивания</h1>
           </div>
         </div>
-        <div className="list-loading" role="status" aria-label="Загрузка истории">
-          <div className="spinner" />
-          <span className="muted small">Загружаем…</span>
-        </div>
+        <LoadingBlock label="Загрузка истории" />
       </div>
     )
   }
 
-  const tracks = rows.map((r) => r.track).filter((t): t is Track => !!t)
+  const playableRows = rows.filter((r): r is Row & { track: Track } => !!r.track)
+  const tracks = playableRows.map((r) => r.track)
 
   return (
     <div className="entity-page">
@@ -98,15 +97,23 @@ export default function HistoryPage() {
         />
       )}
       <div className="history-list">
-        {rows.map((r, i) => {
+        {playableRows.map((r, i) => {
           const t = r.track
-          if (!t) return null
           return (
             <div
               key={t.id + i}
               className="history-row"
+              role="button"
+              tabIndex={0}
               onClick={() => playTracks(tracks, i)}
+              onKeyDown={(e) => {
+                if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
+                  e.preventDefault()
+                  playTracks(tracks, i)
+                }
+              }}
               title="Играть"
+              aria-label={`Играть: ${t.title}`}
             >
               <img
                 src={coverUrl(t.coverUri, '80x80') ?? PLACEHOLDER_COVER}
@@ -118,7 +125,7 @@ export default function HistoryPage() {
                 <ArtistLink artists={t.artists} className="history-sub" />
               </div>
               <span className="history-time">{formatMs(t.durationMs ?? 0)}</span>
-              <span className="history-play"><IconPlay size={16} /></span>
+              <span className="history-play" aria-hidden="true"><IconPlay size={16} /></span>
             </div>
           )
         })}

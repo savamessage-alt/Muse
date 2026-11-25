@@ -18,6 +18,7 @@ function sanitize(token: StoredToken | null): Record<string, unknown> | null {
 }
 
 export function diag(fact: string, token?: StoredToken | null): void {
+  if (!import.meta.env.DEV) return
   try {
     const payload = JSON.stringify({
       fact,

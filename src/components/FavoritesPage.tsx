@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { ymClient } from '../core/client'
 import { expandTracks } from '../core/tracks'
 import { useApp } from '../state/store'
@@ -16,6 +17,7 @@ import { IconHeart } from './icons'
  * страницей), ниже — избранные треки (лайки).
  */
 export default function FavoritesPage() {
+  const navigate = useNavigate()
   const [tracks, setTracks] = useState<Track[]>([])
   const [err, setErr] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -118,7 +120,7 @@ export default function FavoritesPage() {
           title="Избранное пока пусто"
           subtitle="Добавляйте треки в «Избранное» лайком на любой странице"
           actionLabel="Перейти в поиск"
-          onAction={() => window.location.hash = '#/search'}
+          onAction={() => navigate('/search')}
         />
       ) : (
         <Section title={'Избранные треки' + (tracks.length ? ` · ${tracks.length}` : '')}>

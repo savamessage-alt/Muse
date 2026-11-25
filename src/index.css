@@ -319,8 +319,9 @@ button { font-family: inherit; }
 /* ---------- ---------- */
 .history-list { margin-top: 12px; }
 .history-row {
+  width: 100%; border: 0; color: inherit; font: inherit; text-align: left;
   display: flex; align-items: center; gap: 14px;
-  padding: 8px 12px; border-radius: 8px; cursor: pointer;
+  padding: 8px 12px; border-radius: 8px; cursor: pointer; background: transparent;
 }
 .history-row:hover { background: var(--bg-hover); }
 .history-row img { width: 46px; height: 46px; border-radius: 6px; object-fit: cover; }
@@ -1070,7 +1071,6 @@ button { font-family: inherit; }
   padding: clamp(13px, 3.8vw, 16px) 22px;
   font-size: clamp(15px, 4.6vw, 17px);
 }
-.welcome-hint { margin: clamp(20px, 5vh, 28px) auto 0; max-width: 330px; }
 
 /* ============================================================ (bottom-sheet, spotube/nuclear) ============================================================ */
 .psheet {

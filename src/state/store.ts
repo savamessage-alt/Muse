@@ -62,12 +62,15 @@ export const useApp = create<AppState>((set, get) => ({
   listeningStats: { today: 0, week: 0, month: 0, all: 0 },
 
   boot: async () => {
-    tokenManager.load()
+    // ВАЖНО: ждём чтения из хранилища. На Android (Capacitor Preferences)
+    // чтение асинхронное и медленнее, чем на вебе, — без await токен
+    // выглядел отсутствующим и приложение просило вход при каждом запуске.
+    await tokenManager.load()
     // Токен есть, но истёк и нечем обновить — не пускаем в плеер, нужен вход
     const stored = tokenManager.getToken()
     if (stored && stored.expiresAt > 0 && stored.expiresAt <= Date.now() && !stored.refreshToken) {
       console.warn('[Muse] Сохранённый токен истёк и не имеет refresh_token — требуется новый вход')
-      tokenManager.clear()
+      await tokenManager.clear()
       set({ booted: true, authenticated: false })
       return
     }

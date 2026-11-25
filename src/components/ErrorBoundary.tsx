@@ -10,7 +10,7 @@ interface State {
   error: Error | null
 }
 
-/** Перехватывает ошибки отрисовки: показывает текст вместо «чёрного экрана» и шлёт в телеметрию */
+/** Перехватывает ошибки отрисовки: показывает читаемое сообщение вместо «чёрного экрана». */
 export default class ErrorBoundary extends Component<Props, State> {
   state: State = { error: null }
 
@@ -22,16 +22,18 @@ export default class ErrorBoundary extends Component<Props, State> {
     console.error('[Muse] Ошибка отрисовки:', error, info.componentStack)
     try {
       diag('render-error', tokenManager.getToken())
-      void fetch('/__diag', {
-        method: 'POST',
-        body: JSON.stringify({
-          fact: 'render-error',
-          href: location.href,
-          message: String(error?.message ?? error),
-          stack: String(error?.stack ?? '').slice(0, 800),
-          component: String(info?.componentStack ?? '').slice(0, 400),
-        }),
-      }).catch(() => {})
+      if (import.meta.env.DEV) {
+        void fetch('/__diag', {
+          method: 'POST',
+          body: JSON.stringify({
+            fact: 'render-error',
+            href: location.href,
+            message: String(error?.message ?? error),
+            stack: String(error?.stack ?? '').slice(0, 800),
+            component: String(info?.componentStack ?? '').slice(0, 400),
+          }),
+        }).catch(() => {})
+      }
     } catch {
       /* не критично */
     }
@@ -46,7 +48,7 @@ export default class ErrorBoundary extends Component<Props, State> {
             {String(this.state.error.message || this.state.error)}
           </p>
           <p className="muted small">
-            Ошибка отправлена разработчику. Если она повторяется — нажмите «Перезагрузить».
+            Если ошибка повторяется — нажмите «Перезагрузить».
           </p>
           <button className="btn" onClick={() => location.reload()}>
             Перезагрузить

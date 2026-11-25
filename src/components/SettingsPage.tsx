@@ -38,7 +38,7 @@ export default function SettingsPage() {
   }
 
   const sub = status?.subscription
-  const hasPlus = !!status?.plus?.hasPlus || !!status?.account?.hasPlus || !sub?.expired
+  const hasPlus = !!status?.plus?.hasPlus || !!status?.account?.hasPlus || (!!sub && !sub.expired)
 
   return (
     <div>

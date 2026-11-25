@@ -27,7 +27,7 @@ export default function Layout() {
             <span className="logo-dot" />
             Muse
           </div>
-          <nav className="nav">
+          <nav className="nav" aria-label="Основная навигация">
             {nav.map(({ to, label, icon: Icon, end }) => (
               <NavLink key={to} to={to} end={end} className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')}>
                 <Icon size={20} />
@@ -66,7 +66,7 @@ export default function Layout() {
         </main>
       </div>
       <PlayerBar />
-      <nav className="mobile-nav">
+      <nav className="mobile-nav" aria-label="Мобильная навигация">
         {[...nav, { to: '/settings', label: 'Настройки', icon: IconSettings }].map(({ to, label, icon: Icon, end }) => (
           <NavLink key={to} to={to} end={end} className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')}>
             <Icon size={20} />

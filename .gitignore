@@ -26,3 +26,6 @@ e2e/
 .chrome-cdp/
 .chrome-profile/
 .cdp-profile/
+
+# рабочие файлы агентов (worktrees, скриншоты проверок)
+.agents/

@@ -1,6 +1,4 @@
 // Универсальное пустое состояние: иконка + заголовок + описание + кнопка действия
-import { useNavigate } from 'react-router-dom'
-
 type Props = {
   icon: React.ReactNode
   title: string
@@ -11,7 +9,6 @@ type Props = {
 }
 
 export default function EmptyState({ icon, title, subtitle, actionLabel, onAction, className }: Props) {
-  const nav = useNavigate()
   return (
     <div className={'empty-state ' + (className ?? '')}>
       <div className="empty-icon">{icon}</div>

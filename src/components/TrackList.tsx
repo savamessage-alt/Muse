@@ -4,6 +4,7 @@ import { player, type PlayableTrack } from '../core/player'
 import { useApp } from '../state/store'
 import { artistNames, coverUrl, formatMs, trackKey, PLACEHOLDER_COVER } from '../core/format'
 import { ArtistLink } from './ArtistLink'
+import LoadingBlock from './LoadingBlock'
 import type { Track } from '../core/types'
 import { IconPlay, IconHeart, IconHeartFilled, IconMore, IconList, IconPlus, IconTrash } from './icons'
 
@@ -149,12 +150,7 @@ export default function TrackList({ tracks, onPlay, showAlbum = true, showLikes 
   const [menuSignal, setMenuSignal] = useState<{ id: string; n: number } | null>(null)
 
   if (loading) {
-    return (
-      <div className="list-loading" role="status" aria-label="Загрузка">
-        <div className="spinner" />
-        <span className="muted small">Загружаем…</span>
-      </div>
-    )
+    return <LoadingBlock label="Загрузка" />
   }
 
   if (!tracks.length) {

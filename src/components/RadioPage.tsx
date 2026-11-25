@@ -9,6 +9,7 @@ import { Section } from './cards'
 import TrackList, { playTracks } from './TrackList'
 import { expandTracks } from '../core/tracks'
 import EmptyState from './EmptyState'
+import LoadingBlock from './LoadingBlock'
 
 interface Premiere {
   kind: number
@@ -187,10 +188,7 @@ export default function RadioPage() {
       {busy && <div className="spinner" />}
 
       {stationsLoading ? (
-        <div className="list-loading" role="status" aria-label="Загрузка радио">
-          <div className="spinner" />
-          <span className="muted small">Загружаем станции…</span>
-        </div>
+        <LoadingBlock label="Загрузка радио" text="Загружаем станции…" />
       ) : stations.length === 0 && !err && !busy ? (
         <EmptyState
           icon={<IconRadio size={48} />}

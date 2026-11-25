@@ -56,10 +56,13 @@ async function saveTokenToStorage(key: string, value: string): Promise<void> {
       console.warn('[tokenManager] safeEncrypt failed, fallback to localStorage:', result.error)
     }
   } else if (isCapacitor()) {
-    // Android: Capacitor Preferences
+    // Android: Capacitor Preferences (надёжнее localStorage в WebView).
+    // Дополнительно дублируем в localStorage — если мост ещё не готов
+    // на самом раннем старте, токен не потеряется.
     try {
       const { Preferences } = await import('@capacitor/preferences')
       await Preferences.set({ key, value })
+      localStorage.setItem(key, value)
       return
     } catch (e) {
       console.warn('[tokenManager] Capacitor Preferences set failed, fallback to localStorage:', e)
@@ -102,10 +105,11 @@ async function removeTokenFromStorage(key: string): Promise<void> {
     try {
       const { Preferences } = await import('@capacitor/preferences')
       await Preferences.remove({ key })
-      return
     } catch (e) {
       console.warn('[tokenManager] Capacitor Preferences remove failed, fallback to localStorage:', e)
     }
+    localStorage.removeItem(key)
+    return
   }
   localStorage.removeItem(key)
 }
