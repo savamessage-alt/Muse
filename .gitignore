@@ -40,6 +40,14 @@ probe-*.cjs
 
 # скриншоты проверок в корне
 /*.png
+/*.jpg
+
+# иконки приложения (нужны для сборки) — не игнорируем
+!/public/*.png
+!/electron/build/*.png
+
+# маркетинговые скриншоты RuStore (не код)
+store/
 
 # артефакты сборки TypeScript
 *.tsbuildinfo
