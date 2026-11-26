@@ -28,6 +28,22 @@
   --z-toast: 1600;
 }
 
+/* ===== Светлая тема: переопределяем только токены-цвета ===== */
+:root[data-theme="light"] {
+  --bg: #f5f5f7;
+  --bg-panel: #ffffff;
+  --bg-card: #ffffff;
+  --bg-hover: #ececf0;
+  --border: #dcdce1;
+  --text: #1a1a1e;
+  --text-dim: #55555f;
+  --text-faint: #8a8a95;
+  --accent: #e6002d;
+  --accent-2: #ff7a00;
+  --good: #1a9c46;
+  --danger: #d6294a;
+}
+
 * { box-sizing: border-box; }
 
 html, body, #root {

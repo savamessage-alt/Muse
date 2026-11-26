@@ -5,6 +5,7 @@ import { tokenManager } from '../core/tokenManager'
 import { player } from '../core/player'
 import UserAvatar from './UserAvatar'
 import { IconInfo } from './icons'
+import { getTheme, setTheme, type Theme } from '../core/theme'
 
 export default function SettingsPage() {
   const user = useApp((s) => s.user)
@@ -18,6 +19,12 @@ export default function SettingsPage() {
   const [refreshingToken, setRefreshingToken] = useState(false)
   const [cacheBusy, setCacheBusy] = useState(false)
   const [cacheLabel, setCacheLabel] = useState('0 МБ')
+  const [theme, setThemeState] = useState(() => getTheme())
+
+  const setThemeLocal = (t: Theme) => {
+    setTheme(t)
+    setThemeState(t)
+  }
 
   const fmtSize = (b: number) => (b >= 1024 * 1024 ? (b / 1024 / 1024).toFixed(1) + ' МБ' : Math.round(b / 1024) + ' КБ')
 
@@ -121,6 +128,27 @@ export default function SettingsPage() {
           </button>
         </div>
         <p className="hint">Access-токен живёт ограниченное время. При истечении плеер автоматически обновляет его по refresh-токену; если это не удалось — появится экран повторного входа.</p>
+      </section>
+
+      <section className="settings-card">
+        <h2>Тема оформления</h2>
+        {(
+          [
+            ['dark', 'Тёмная'],
+            ['light', 'Светлая'],
+          ] as const
+        ).map(([val, label]) => (
+          <label key={val} className="radio-row">
+            <input
+              type="radio"
+              name="theme"
+              checked={theme === val}
+              onChange={() => setThemeLocal(val)}
+            />
+            <span>{label}</span>
+          </label>
+        ))}
+        <p className="hint">Смена темы применяется сразу ко всему интерфейсу.</p>
       </section>
 
       <section className="settings-card">

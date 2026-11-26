@@ -2,6 +2,10 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App'
+import { initTheme } from './core/theme'
+
+// Тема применяется до первого рендера — без мигания светлой вспышки
+initTheme()
 
 // Глобальный перехват ошибок → телеметрия (для отладки «чёрного экрана»)
 window.addEventListener('error', (e) => {
