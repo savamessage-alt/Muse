@@ -259,6 +259,19 @@ button { font-family: inherit; }
   padding: 12px; cursor: pointer; transition: background .15s; min-width: 0;
 }
 .card:hover { background: var(--bg-hover); }
+.card-wrap { position: relative; min-width: 0; }
+.card-wrap .card { width: 100%; }
+.card-more {
+  position: absolute; top: 6px; right: 6px;
+  width: 30px; height: 30px; z-index: 2;
+  background: rgba(0,0,0,.55); color: #fff;
+  backdrop-filter: blur(6px);
+  opacity: 0; transition: opacity .15s, background .15s, transform .08s;
+}
+.card-wrap:hover .card-more, .card-more.active, .card-more:focus-visible { opacity: 1; }
+.card-more:hover { background: rgba(0,0,0,.75); }
+.card-more:active { transform: scale(.92); }
+@media (hover: none) { .card-more { opacity: 1; } }
 .card-cover { position: relative; }
 .card-cover img {
   width: 100%; aspect-ratio: 1; object-fit: cover;

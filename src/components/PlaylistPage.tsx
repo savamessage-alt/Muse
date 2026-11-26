@@ -20,6 +20,7 @@ export default function PlaylistPage() {
   const [confirmDel, setConfirmDel] = useState(false)
   const removeFromPlaylist = useApp((s) => s.removeFromPlaylist)
   const deletePlaylist = useApp((s) => s.deletePlaylist)
+  const ownUid = useApp((s) => s.user?.uid)
 
   useEffect(() => {
     if (!kind) return
@@ -72,6 +73,7 @@ export default function PlaylistPage() {
 
   const uri = playlist.cover?.uri ?? playlist.coverUri
   const totalDur = tracks.reduce((s, t) => s + (t.durationMs ?? 0), 0)
+  const isOwn = playlist.owner?.uid != null && playlist.owner.uid === ownUid
 
   return (
     <div className="entity-page">
@@ -96,9 +98,11 @@ export default function PlaylistPage() {
                 <IconPlay size={16} /> Играть
               </button>
             )}
-            <button className="delete-playlist-btn" onClick={() => setConfirmDel(true)} title="Удалить плейлист">
-              <IconTrash size={15} /> Удалить плейлист
-            </button>
+            {isOwn && (
+              <button className="delete-playlist-btn" onClick={() => setConfirmDel(true)} title="Удалить плейлист">
+                <IconTrash size={15} /> Удалить плейлист
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -106,7 +110,7 @@ export default function PlaylistPage() {
       <TrackList
         tracks={tracks}
         emptyText="В плейлисте нет треков"
-        removeFromPlaylist={onRemove}
+        removeFromPlaylist={isOwn ? onRemove : undefined}
       />
 
       {confirmDel && (
