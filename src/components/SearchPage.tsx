@@ -7,6 +7,28 @@ import { AlbumCard, ArtistCard, Grid, PlaylistCard } from './cards'
 import LoadingBlock from './LoadingBlock'
 import { IconPlay, IconSearch, IconX } from './icons'
 
+const SEARCH_HISTORY_KEY = 'muse.search.history'
+const MAX_HISTORY = 8
+
+function loadSearchHistory(): string[] {
+  try {
+    const raw = localStorage.getItem(SEARCH_HISTORY_KEY)
+    if (!raw) return []
+    const arr = JSON.parse(raw)
+    if (!Array.isArray(arr)) return []
+    return arr.filter((x) => typeof x === 'string').slice(0, MAX_HISTORY)
+  } catch {
+    return []
+  }
+}
+function saveSearchHistory(items: string[]): void {
+  try {
+    localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(items.slice(0, MAX_HISTORY)))
+  } catch {
+    /* ignore */
+  }
+}
+
 type Tab = 'tracks' | 'albums' | 'artists' | 'playlists'
 
 export default function SearchPage() {
@@ -16,7 +38,33 @@ export default function SearchPage() {
   const [tab, setTab] = useState<Tab>('tracks')
   const [loading, setLoading] = useState(false)
   const [err, setErr] = useState<string | null>(null)
+  const [history, setHistory] = useState<string[]>(loadSearchHistory)
+  const [suggestions, setSuggestions] = useState<string[]>([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
   const timer = useRef<number | undefined>(undefined)
+  const suggestTimer = useRef<number | undefined>(undefined)
+  const suggestRef = useRef<HTMLDivElement | null>(null)
+
+  // закрыть подсказки при клике вне поля/списка
+  useEffect(() => {
+    const h = (e: MouseEvent) => {
+      if (suggestRef.current && !suggestRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false)
+      }
+    }
+    document.addEventListener('mousedown', h)
+    return () => document.removeEventListener('mousedown', h)
+  }, [])
+
+  const commitHistory = (q: string) => {
+    const trimmed = q.trim()
+    if (!trimmed) return
+    setHistory((prev) => {
+      const next = [trimmed, ...prev.filter((x) => x !== trimmed)].slice(0, MAX_HISTORY)
+      saveSearchHistory(next)
+      return next
+    })
+  }
 
   useEffect(() => {
     const q = query.trim()
@@ -25,6 +73,8 @@ export default function SearchPage() {
       setTracks([])
       setErr(null)
       setLoading(false)
+      setSuggestions([])
+      setShowSuggestions(false)
       return
     }
     setLoading(true)
@@ -37,6 +87,7 @@ export default function SearchPage() {
         const shorts: TrackShort[] = res.tracks?.items ?? []
         const full = await expandTracks(shorts)
         setTracks(full)
+        commitHistory(q)
       } catch (e) {
         setErr((e as Error).message)
       } finally {
@@ -44,6 +95,31 @@ export default function SearchPage() {
       }
     }, 450)
     return () => window.clearTimeout(timer.current)
+  }, [query])
+
+  // подсказки поиска (debounce 200мс)
+  useEffect(() => {
+    const q = query.trim()
+    if (q.length < 2) {
+      setSuggestions([])
+      setShowSuggestions(false)
+      return
+    }
+    window.clearTimeout(suggestTimer.current)
+    suggestTimer.current = window.setTimeout(async () => {
+      try {
+        const res = await ymClient.searchSuggest(q)
+        const s = (res as { suggestions?: string[] })?.suggestions ?? []
+        if (s.length > 0) {
+          setSuggestions(s.slice(0, 8))
+          setShowSuggestions(true)
+        }
+        // не затираем старые подсказки пустым ответом — список остаётся видимым
+      } catch {
+        /* игнорируем: оставляем предыдущие подсказки */
+      }
+    }, 200)
+    return () => window.clearTimeout(suggestTimer.current)
   }, [query])
 
   const tabs: { id: Tab; label: string; count?: number }[] = [
@@ -58,7 +134,7 @@ export default function SearchPage() {
   const playlists: Playlist[] = result?.playlists?.items ?? []
 
   return (
-    <div>
+    <div ref={suggestRef}>
       <div className="search-bar">
         <IconSearch size={20} className="search-icon" />
         <input
@@ -75,11 +151,54 @@ export default function SearchPage() {
           </button>
         )}
       </div>
+      {showSuggestions && suggestions.length > 0 && (
+        <div className="search-suggest">
+          {suggestions.map((s) => (
+            <button
+              key={s}
+              className="search-suggest-item"
+              onClick={() => {
+                setQuery(s)
+                setShowSuggestions(false)
+              }}
+            >
+              <IconSearch size={14} /> {s}
+            </button>
+          ))}
+        </div>
+      )}
       {err && <div className="error-box"><p>{err}</p></div>}
 
       {!query.trim() && (
         <div className="search-empty-hint muted pad">
           Введите запрос, чтобы найти треки, альбомы, артистов и плейлисты.
+          {history.length > 0 && (
+            <div className="search-history">
+              <div className="search-history-head">
+                <span className="muted small">Недавние запросы</span>
+                <button
+                  className="link-btn small"
+                  onClick={() => {
+                    setHistory([])
+                    saveSearchHistory([])
+                  }}
+                >
+                  Очистить
+                </button>
+              </div>
+              <div className="search-history-chips">
+                {history.map((h) => (
+                  <button
+                    key={h}
+                    className="chip"
+                    onClick={() => setQuery(h)}
+                  >
+                    {h}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

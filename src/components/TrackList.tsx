@@ -5,6 +5,7 @@ import { useApp } from '../state/store'
 import { artistNames, coverUrl, formatMs, trackKey, PLACEHOLDER_COVER } from '../core/format'
 import { ArtistLink } from './ArtistLink'
 import LoadingBlock from './LoadingBlock'
+import DropdownMenu from './DropdownMenu'
 import type { Track } from '../core/types'
 import { IconPlay, IconHeart, IconHeartFilled, IconMore, IconList, IconPlus, IconTrash } from './icons'
 
@@ -47,25 +48,15 @@ function TrackMenu({
   const addToPlaylist = useApp((s) => s.addToPlaylist)
   const nav = useNavigate()
   const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
+  const [anchor, setAnchor] = useState<HTMLElement | null>(null)
+  const btnRef = useRef<HTMLButtonElement | null>(null)
 
   useEffect(() => {
-    if (openSignal && openSignal > 0) setOpen(true)
+    if (openSignal && openSignal > 0) {
+      setAnchor(btnRef.current)
+      setOpen(true)
+    }
   }, [openSignal])
-
-  useEffect(() => {
-    if (!open) return
-    const onDoc = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', onDoc)
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
-    document.addEventListener('keydown', onKey)
-    return () => {
-      document.removeEventListener('mousedown', onDoc)
-      document.removeEventListener('keydown', onKey)
-    }
-  }, [open])
 
   const pick = (kind: string) => {
     setOpen(false)
@@ -73,11 +64,13 @@ function TrackMenu({
   }
 
   return (
-    <div className="track-menu" ref={ref}>
+    <div className="track-menu">
       <button
+        ref={btnRef}
         className={'icon-btn small' + (open ? ' active' : '')}
         onClick={(e) => {
           e.stopPropagation()
+          setAnchor(e.currentTarget)
           setOpen((v) => !v)
         }}
         title="Действия с треком"
@@ -87,53 +80,45 @@ function TrackMenu({
       >
         <IconMore size={16} />
       </button>
-      {open && (
-        <div className="track-menu-pop" role="menu" onClick={(e) => e.stopPropagation()}>
-          {onRemoveFromPlaylist && index != null && (
+      <DropdownMenu open={open} anchor={anchor} onClose={() => setOpen(false)} minWidth={236}>
+        {onRemoveFromPlaylist && index != null && (
+          <>
             <button
-              className="track-menu-item danger"
+              className="dropdown-item danger"
               role="menuitem"
-              onClick={(e) => {
-                e.stopPropagation()
+              onClick={() => {
                 setOpen(false)
                 onRemoveFromPlaylist(index)
               }}
             >
               <IconTrash size={15} /> Убрать из плейлиста
             </button>
-          )}
-          <div className="track-menu-title">Добавить в плейлист</div>
-          <div className="track-menu-list">
-            {playlists.length === 0 && <div className="muted small track-menu-empty">Плейлистов пока нет</div>}
-            {playlists.slice(0, 40).map((pl) => (
-              <button
-                key={pl.kind}
-                className="track-menu-item"
-                role="menuitem"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  pick(String(pl.kind))
-                }}
-              >
-                <IconList size={15} />
-                <span className="track-menu-item-name">{pl.title || 'Без названия'}</span>
-                {pl.trackCount != null && <span className="muted small">{pl.trackCount}</span>}
-              </button>
-            ))}
-            <button
-              className="track-menu-item create"
-              role="menuitem"
-              onClick={(e) => {
-                e.stopPropagation()
-                setOpen(false)
-                nav('/playlists')
-              }}
-            >
-              <IconPlus size={15} /> Создать плейлист
+            <div className="dropdown-sep" />
+          </>
+        )}
+        <div className="dropdown-title">Добавить в плейлист</div>
+        <div className="dropdown-list">
+          {playlists.length === 0 && <div className="dropdown-empty">Плейлистов пока нет</div>}
+          {playlists.slice(0, 40).map((pl) => (
+            <button key={pl.kind} className="dropdown-item" role="menuitem" onClick={() => pick(String(pl.kind))}>
+              <IconList size={15} />
+              <span className="dropdown-item-name">{pl.title || 'Без названия'}</span>
+              {pl.trackCount != null && <span className="dropdown-count">{pl.trackCount}</span>}
             </button>
-          </div>
+          ))}
         </div>
-      )}
+        <div className="dropdown-sep" />
+        <button
+          className="dropdown-item"
+          role="menuitem"
+          onClick={() => {
+            setOpen(false)
+            nav('/playlists')
+          }}
+        >
+          <IconPlus size={15} /> Создать плейлист
+        </button>
+      </DropdownMenu>
     </div>
   )
 }

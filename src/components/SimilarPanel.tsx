@@ -70,7 +70,7 @@ export default function SimilarPanel({ trackTitle, onClose }: { trackTitle: stri
             <button className="btn small" onClick={() => void playAll()} disabled={!tracks.length || busy}>
               <IconPlay size={14} /> Играть всё
             </button>
-            <button className="icon-btn small" title="Закрыть" aria-label="Закрыть похожие треки" onClick={onClose}>
+            <button className="panel-close" title="Закрыть" aria-label="Закрыть похожие треки" onClick={onClose}>
               <IconX size={16} />
             </button>
           </span>

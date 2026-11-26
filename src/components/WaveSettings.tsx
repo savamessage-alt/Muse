@@ -103,7 +103,7 @@ export default function WaveSettings({ current, onApply, onClose }: Props) {
       <div className="ws-sheet" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Настроить волну">
         <div className="ws-head">
           <span className="ws-title">Настроить волну</span>
-          <button className="icon-btn" onClick={onClose} title="Закрыть">
+          <button className="panel-close" onClick={onClose} title="Закрыть" aria-label="Закрыть настройки волны">
             <IconX size={16} />
           </button>
         </div>

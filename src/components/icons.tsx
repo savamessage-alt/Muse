@@ -33,6 +33,7 @@ import {
   Sliders,
   ChevronDown,
   ChevronUp,
+  Check,
   Smile,
   Zap,
   Droplet,
@@ -83,6 +84,8 @@ export const IconSliders = (p: P) => <Sliders {...p} />
 export const IconBack = (p: P) => <ArrowLeft {...p} />
 export const IconChevronDown = (p: P) => <ChevronDown {...p} />
 export const IconChevronUp = (p: P) => <ChevronUp {...p} />
+/** Галочка (выбранный пункт меню) */
+export const IconCheck = (p: P) => <Check {...p} />
 export const IconSmile = (p: P) => <Smile {...p} />
 export const IconZap = (p: P) => <Zap {...p} />
 export const IconDroplet = (p: P) => <Droplet {...p} />

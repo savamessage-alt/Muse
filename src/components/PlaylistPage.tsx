@@ -114,7 +114,7 @@ export default function PlaylistPage() {
           <div className="confirm-box" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Удаление плейлиста">
             <div className="confirm-head">
               <span className="muted small">Удаление</span>
-              <button className="icon-btn small" onClick={() => setConfirmDel(false)} title="Закрыть">
+              <button className="panel-close" onClick={() => setConfirmDel(false)} title="Закрыть" aria-label="Закрыть">
                 <IconX size={16} />
               </button>
             </div>

@@ -16,6 +16,16 @@
   --sidebar-w: 240px;
   --player-h: 88px;
   --radius: 10px;
+
+  /* Шкала слоёв (z-index) — единый порядок наложения блоков:
+     страница → плеер → полноэкранный плеер (sheet) → панели/шторки (panel)
+     → модалки (modal) → выпадающие меню (menu) → тосты (toast). */
+  --z-player: 20;
+  --z-sheet: 50;
+  --z-panel: 60;
+  --z-modal: 120;
+  --z-menu: 1400;
+  --z-toast: 1600;
 }
 
 * { box-sizing: border-box; }
@@ -198,6 +208,38 @@ button { font-family: inherit; }
 .search-input { padding-left: 44px; }
 .search-bar .search-icon { position: absolute; left: 14px; }
 
+/* ===== Подсказки поиска ===== */
+.search-suggest {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 40;
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 8px; border-radius: 14px;
+  background: linear-gradient(180deg, #22222b, #16161d);
+  border: 1px solid rgba(255,255,255,.10);
+  box-shadow: 0 20px 50px rgba(0,0,0,.65), 0 0 0 1px rgba(255,51,51,.08);
+  animation: fade-in .18s ease;
+  max-height: 280px; overflow-y: auto;
+  backdrop-filter: blur(12px);
+}
+.search-suggest-item {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; padding: 9px 12px; border: none; border-radius: 9px;
+  background: transparent; color: var(--text); cursor: pointer;
+  font-size: 14.5px; text-align: left; font-weight: 500;
+  transition: background .12s, color .12s, transform .08s;
+}
+.search-suggest-item:hover { background: rgba(255, 51, 51, .12); color: var(--accent); transform: translateX(2px); }
+.search-suggest-item svg { opacity: .6; flex-shrink: 0; color: var(--accent); }
+.search-suggest-item + .search-suggest-item { border-top: 1px solid rgba(255,255,255,.04); }
+
+/* ===== Шапка полноэкранного плеера ===== */
+.psheet-head-actions { display: flex; gap: 8px; }
+.panel-close.has-timer {
+  color: var(--accent);
+  border-color: rgba(255, 51, 51, .4);
+  background: rgba(255, 51, 51, .14);
+  animation: sleep-pulse 2.5s ease-in-out infinite;
+}
+
 .manual-box { display: flex; gap: 10px; margin-top: 12px; }
 .create-box { display: flex; gap: 10px; margin: 14px 0 20px; }
 
@@ -282,29 +324,141 @@ button { font-family: inherit; }
 .tc-time { color: var(--text-dim); font-size: 13px; text-align: right; }
 .tc-like { display: inline-flex; align-items: center; justify-content: center; gap: 2px; text-align: center; }
 .track-menu { position: relative; display: inline-flex; }
-.track-menu-pop {
-  position: absolute; right: 0; top: calc(100% + 8px); z-index: 60;
-  min-width: 224px; max-width: 290px;
-  background: var(--bg-panel);
-  border: 1px solid var(--border); border-radius: 14px;
-  padding: 8px; box-shadow: 0 18px 50px rgba(0, 0, 0, .6);
+
+/* ============================================================
+   Выпадающие меню (.dropdown-*) — рендерятся в body через portal,
+   поэтому не обрезаются контейнерами с overflow. Слой — --z-menu.
+   ============================================================ */
+.dropdown-menu {
+  position: fixed; z-index: var(--z-menu);
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 6px;
+  border-radius: 13px;
+  background: linear-gradient(180deg, #23232c, #16161c);
+  border: 1px solid rgba(255, 255, 255, .11);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, .66), 0 0 0 1px rgba(255, 51, 51, .06);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  animation: dropdown-in .14s ease;
+  transform-origin: top right;
 }
-.track-menu-title { font-size: 12px; color: var(--text-dim); padding: 4px 10px 8px; letter-spacing: .3px; text-transform: uppercase; }
-.track-menu-list { max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
-.track-menu-empty { padding: 6px 10px 10px; }
-.track-menu-item {
-  display: flex; align-items: center; gap: 9px; width: 100%;
-  padding: 8px 10px; border: none; border-radius: 8px; background: none;
-  color: var(--text); font-size: 13.5px; cursor: pointer; text-align: left;
+.dropdown-menu.up { transform-origin: bottom right; animation-name: dropdown-in-up; }
+@keyframes dropdown-in {
+  from { opacity: 0; transform: translateY(-4px) scale(.98); }
+  to { opacity: 1; transform: none; }
 }
-.track-menu-item:hover { background: var(--bg-hover); }
-.track-menu-item-name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.track-menu-item.create {
-  color: var(--accent-2); margin-top: 4px; padding-top: 10px;
-  border-top: 1px solid var(--border); border-radius: 0 0 8px 8px;
+@keyframes dropdown-in-up {
+  from { opacity: 0; transform: translateY(4px) scale(.98); }
+  to { opacity: 1; transform: none; }
 }
-.track-menu-item.danger { color: #ff6b6b; margin-bottom: 4px; padding-bottom: 9px; border-bottom: 1px solid var(--border); border-radius: 8px 8px 0 0; }
-.track-menu-item.danger:hover { background: rgba(255, 107, 107, .12); }
+.dropdown-title {
+  padding: 6px 10px 5px;
+  font-size: 11.5px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase;
+  color: var(--text-faint);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.dropdown-label {
+  padding: 5px 10px 7px;
+  font-size: 13px; font-weight: 600; color: var(--text-dim);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px;
+}
+.dropdown-item {
+  display: flex; align-items: center; gap: 9px;
+  width: 100%; padding: 9px 10px;
+  border: none; border-radius: 8px;
+  background: transparent; color: var(--text);
+  font: inherit; font-size: 13.5px; font-weight: 500; text-align: left;
+  cursor: pointer;
+  transition: background .12s, color .12s;
+}
+.dropdown-item:hover { background: rgba(255, 255, 255, .08); color: var(--accent); }
+.dropdown-item:active { background: rgba(255, 255, 255, .12); }
+.dropdown-item svg { flex: none; opacity: .9; }
+.dropdown-item-name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dropdown-item.selected { color: var(--accent); background: rgba(255, 51, 51, .10); }
+.dropdown-item.selected svg { opacity: 1; }
+.dropdown-item.danger { color: #ff8f8f; }
+.dropdown-item.danger:hover { background: rgba(255, 107, 107, .14); color: #ffb3b3; }
+.dropdown-count {
+  flex: none; font-size: 11.5px; color: var(--text-faint);
+  background: rgba(255, 255, 255, .07); border-radius: 999px; padding: 1px 7px;
+}
+.dropdown-sep { height: 1px; margin: 4px 6px; background: rgba(255, 255, 255, .09); }
+.dropdown-list {
+  display: flex; flex-direction: column; gap: 2px;
+  max-height: min(46vh, 260px); overflow-y: auto; overscroll-behavior: contain;
+}
+.dropdown-empty { padding: 7px 10px 9px; font-size: 12.5px; color: var(--text-faint); }
+.dropdown-compact .dropdown-item { justify-content: space-between; min-width: 0; }
+
+/* ===== Меню «все функции плеера» (нижняя панель) ===== */
+.pb-more {
+  width: 40px; height: 40px;
+  background: rgba(255, 255, 255, .05);
+  border: 1px solid var(--border);
+  transition: background .15s, color .15s, border-color .15s, transform .08s;
+}
+.pb-more:hover { background: rgba(255, 255, 255, .10); border-color: rgba(255, 255, 255, .18); }
+.pb-more:active { transform: scale(.93); }
+.pb-more.active {
+  color: var(--accent); border-color: rgba(255, 51, 51, .45);
+  background: rgba(255, 51, 51, .14);
+}
+.pb-menu { padding: 8px 8px 10px; }
+.speed-chips {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px;
+  padding: 4px 8px 6px;
+}
+.speed-chip {
+  display: grid; place-items: center;
+  height: 28px; padding: 0 4px;
+  border: 1px solid var(--border); border-radius: 7px;
+  background: rgba(255, 255, 255, .05); color: var(--text-dim);
+  font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer;
+  transition: background .13s, color .13s, border-color .13s;
+}
+.speed-chip:hover { background: rgba(255, 255, 255, .11); color: var(--text); }
+.speed-chip.active {
+  color: #fff; border-color: transparent;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+}
+.dropdown-vol {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px 6px; color: var(--text-dim);
+}
+.dropdown-vol .range { flex: 1; min-width: 0; }
+
+/* Кнопка скорости воспроизведения («1×») — вместо нативного <select> */
+.speed-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 40px; height: 28px; padding: 0 8px;
+  border: 1px solid var(--border); border-radius: 8px;
+  background: rgba(255, 255, 255, .05); color: var(--text-dim);
+  font: inherit; font-size: 12.5px; font-weight: 700; letter-spacing: .2px;
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s, transform .08s;
+}
+.speed-btn:hover { background: rgba(255, 255, 255, .10); color: var(--text); }
+.speed-btn:active { transform: scale(.94); }
+.speed-btn.active {
+  color: var(--accent); border-color: rgba(255, 51, 51, .45);
+  background: rgba(255, 51, 51, .12);
+}
+
+/* Единая кнопка закрытия панелей/шторок */
+.panel-close {
+  display: inline-grid; place-items: center;
+  width: 32px; height: 32px; flex: none;
+  border: 1px solid var(--border); border-radius: 9px;
+  background: rgba(255, 255, 255, .05); color: var(--text-dim);
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s, transform .08s;
+}
+.panel-close:hover {
+  background: rgba(255, 51, 51, .16); color: var(--accent);
+  border-color: rgba(255, 51, 51, .38);
+}
+.panel-close:active { transform: scale(.9); }
 
 /* ---------- ( / / ) ---------- */
 .entity-page { padding-top: 8px; }
@@ -610,7 +764,7 @@ button { font-family: inherit; }
 }
 .playerbar .icon-btn, .pb-controls .icon-btn { position: relative; }
 .queue-overlay {
-  position: fixed; inset: 0; z-index: 60;
+  position: fixed; inset: 0; z-index: var(--z-panel);
   background: rgba(0, 0, 0, .5);
   display: flex; align-items: flex-end; justify-content: center;
   backdrop-filter: blur(3px);
@@ -641,13 +795,21 @@ button { font-family: inherit; }
 }
 .queue-row:hover { background: rgba(255, 255, 255, .07); }
 .queue-row.current { background: rgba(255, 51, 51, .14); }
-.queue-row img { width: 40px; height: 40px; border-radius: 10px; object-fit: cover; flex: none; }
+.queue-row img { width: 42px; height: 42px; border-radius: 10px; object-fit: cover; flex: none; }
 .queue-meta { min-width: 0; flex: 1; }
 .queue-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .queue-artist { font-size: 12.5px; color: var(--muted, #a6a6b1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.queue-remove { flex: none; opacity: .7; }
-.queue-remove:hover { opacity: 1; }
-.queue-actions { display: flex; align-items: center; gap: 8px; }
+.queue-actions { display: flex; align-items: center; gap: 8px; flex: none; }
+.queue-row.menu-open { background: rgba(255, 255, 255, .08); }
+/* На тач-устройствах кнопка «…» видна всегда, на десктопе — по наведению */
+.queue-more { flex: none; opacity: 1; }
+@media (hover: hover) {
+  .queue-more { opacity: 0; }
+  .queue-row:hover .queue-more,
+  .queue-row.menu-open .queue-more,
+  .queue-row:focus-within .queue-more { opacity: 1; }
+}
+.queue-more.active { background: rgba(255, 51, 51, .16); color: var(--accent); }
 .queue-actions .btn { padding: 6px 14px; font-size: 13px; }
 .queue-actions .btn:disabled { opacity: .5; cursor: default; }
 .queue-play { color: var(--text-dim); flex: none; }
@@ -669,7 +831,7 @@ button { font-family: inherit; }
 
 /* ---------- ---------- */
 .toasts {
-  position: fixed; top: 16px; right: 16px; z-index: 1000;
+  position: fixed; top: 16px; right: 16px; z-index: var(--z-toast);
   display: flex; flex-direction: column; gap: 8px; max-width: 380px;
 }
 .toast {
@@ -710,7 +872,7 @@ button { font-family: inherit; }
   border-radius: 14px;
   display: flex; flex-direction: column;
   box-shadow: 0 12px 40px rgba(0,0,0,.55);
-  z-index: 60;
+  z-index: var(--z-panel);
   overflow: hidden;
   animation: pop-in .18s ease;
   transform-origin: bottom right;
@@ -859,6 +1021,8 @@ button { font-family: inherit; }
   /* / , */
   .pb-controls .icon-btn:first-child,
   .pb-controls .icon-btn:last-child { display: none; }
+  .speed-btn { min-width: 34px; height: 26px; padding: 0 6px; font-size: 11.5px; }
+  .pb-more { width: 36px; height: 36px; }
   .pb-vol-icon, .pb-right input[type="range"] { display: none; }
   .pb-right { gap: 2px; }
   .pb-right .icon-btn { width: 32px; height: 32px; }
@@ -1074,7 +1238,7 @@ button { font-family: inherit; }
 
 /* ============================================================ (bottom-sheet, spotube/nuclear) ============================================================ */
 .psheet {
-  position: fixed; inset: 0; z-index: 50;
+  position: fixed; inset: 0; z-index: var(--z-sheet);
   display: flex; align-items: center; justify-content: center;
   padding: 18px;
   background: rgba(8, 8, 12, .62);
@@ -1133,6 +1297,8 @@ button { font-family: inherit; }
   .psheet-title { font-size: 18px; }
   .psheet-artist { margin-bottom: 12px; }
   .psheet-vol { flex-basis: 130px; }
+  .psheet-controls { gap: 8px; }
+  .psheet-controls .speed-btn { min-width: 34px; height: 26px; padding: 0 6px; font-size: 11.5px; }
 }
 
 /* ==================== : , , , ==================== */
@@ -1240,7 +1406,7 @@ button { font-family: inherit; }
 }
 .delete-playlist-btn:hover { background: rgba(255, 107, 107, .18); }
 .confirm-overlay {
-  position: fixed; inset: 0; z-index: 500;
+  position: fixed; inset: 0; z-index: var(--z-modal);
   background: rgba(0, 0, 0, .6); backdrop-filter: blur(3px);
   display: grid; place-items: center; padding: 24px;
 }
@@ -1309,7 +1475,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, [tabindex]:focus-vis
 /* , */
 /* ============================================================ (Sleep Timer) ============================================================ */
 .st-overlay {
-  position: fixed; inset: 0; z-index: 120;
+  position: fixed; inset: 0; z-index: var(--z-modal);
   background: rgba(0,0,0,.6);
   display: flex; align-items: flex-end; justify-content: center;
   animation: st-fade .18s ease;
@@ -1370,7 +1536,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, [tabindex]:focus-vis
 
 /* ============================================================ ============================================================ */
 .ws-overlay {
-  position: fixed; inset: 0; z-index: 120;
+  position: fixed; inset: 0; z-index: var(--z-modal);
   background: rgba(0,0,0,.62);
   display: flex; align-items: flex-end; justify-content: center;
   animation: st-fade .18s ease;

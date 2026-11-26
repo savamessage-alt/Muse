@@ -3,6 +3,8 @@ import { player, type PlayerSnapshot } from '../core/player'
 import { useApp } from '../state/store'
 import { coverUrl, formatMs, PLACEHOLDER_COVER, trackKey } from '../core/format'
 import { ArtistLink } from './ArtistLink'
+import DropdownMenu from './DropdownMenu'
+import { SPEEDS } from './SpeedMenu'
 import {
   IconPlay,
   IconPause,
@@ -19,6 +21,8 @@ import {
   IconQueue,
   IconMoon,
   IconSleepTimer,
+  IconMore,
+  IconCheck,
 } from './icons'
 
 function formatRemaining(ms: number | null): string {
@@ -47,6 +51,16 @@ interface Props {
 /** Полноэкранный плеер «bottom-sheet»: крупная обложка, управление, быстрый доступ ко всем панелям */
 export default function ExpandedPlayer({ onClose, onLyrics, onQueue, onSimilar, onSleepTimer }: Props) {
   const snap = useSnapshot()
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null)
+
+  const repeatLabel = snap.repeat === 'off' ? 'выкл' : snap.repeat === 'all' ? 'все' : 'один'
+  const sleepLabel =
+    snap.sleepTimer.mode === 'off'
+      ? 'выкл'
+      : snap.sleepTimer.mode === 'track-end'
+        ? 'после трека'
+        : `${Math.max(0, Math.round((snap.sleepRemainingMs ?? 0) / 60000))} мин`
   const likedKeys = useApp((s) => s.likedKeys)
   const toggleLike = useApp((s) => s.toggleLike)
   const cur = snap.current
@@ -101,14 +115,15 @@ export default function ExpandedPlayer({ onClose, onLyrics, onQueue, onSimilar, 
           <span className="muted small">Сейчас играет</span>
           <div className="psheet-head-actions">
             <button
-              className={'icon-btn' + (snap.sleepTimer.mode !== 'off' ? ' has-timer' : '')}
+              className={'panel-close' + (snap.sleepTimer.mode !== 'off' ? ' has-timer' : '')}
               onClick={onSleepTimer}
               title="Таймер сна"
+              aria-label="Таймер сна"
             >
-              <IconSleepTimer size={18} />
+              <IconSleepTimer size={17} />
             </button>
-            <button className="icon-btn" onClick={onClose} title="Свернуть">
-              <IconX size={18} />
+            <button className="panel-close" onClick={onClose} title="Свернуть" aria-label="Свернуть плеер">
+              <IconX size={17} />
             </button>
           </div>
         </div>
@@ -187,15 +202,18 @@ export default function ExpandedPlayer({ onClose, onLyrics, onQueue, onSimilar, 
           >
             {liked ? <IconHeartFilled size={20} /> : <IconHeart size={20} />}
           </button>
-          <button className={'icon-btn' + ''} onClick={onLyrics} title="Текст песни" disabled={!cur}>
-            <IconLyrics size={19} />
-          </button>
-          <button className="icon-btn" onClick={onSimilar} title="Похожие треки" disabled={!cur}>
-            <IconSimilar size={20} />
-          </button>
-          <button className="icon-btn" onClick={onQueue} title="Очередь">
-            <IconQueue size={20} />
-            {snap.queue.length > 0 && <span className="queue-badge">{snap.queue.length}</span>}
+          <button
+            className="icon-btn"
+            onClick={(e) => {
+              setMenuAnchor(e.currentTarget)
+              setMenuOpen((v) => !v)
+            }}
+            title="Все функции"
+            aria-label="Все функции плеера"
+            aria-haspopup="menu"
+            aria-expanded={menuOpen}
+          >
+            <IconMore size={20} />
           </button>
           <div className="psheet-vol">
             <IconVolume size={18} className="pb-vol-icon" />
@@ -211,6 +229,83 @@ export default function ExpandedPlayer({ onClose, onLyrics, onQueue, onSimilar, 
             />
           </div>
         </div>
+
+        <DropdownMenu open={menuOpen} anchor={menuAnchor} onClose={() => setMenuOpen(false)} minWidth={280} className="pb-menu">
+          <div className="dropdown-title">Скорость</div>
+          <div className="speed-chips">
+            {SPEEDS.map((s) => (
+              <button
+                key={s}
+                className={'speed-chip' + (snap.playbackRate === s ? ' active' : '')}
+                onClick={() => player.setPlaybackRate(s)}
+                aria-pressed={snap.playbackRate === s}
+              >
+                {s}×
+              </button>
+            ))}
+          </div>
+
+          <div className="dropdown-sep" />
+
+          <button className="dropdown-item" onClick={() => player.setShuffle(!snap.shuffle)}>
+            <IconShuffle size={16} />
+            <span className="dropdown-item-name">Перемешать</span>
+            {snap.shuffle && <IconCheck size={15} />}
+          </button>
+          <button
+            className="dropdown-item"
+            onClick={() => player.setRepeat(snap.repeat === 'off' ? 'all' : snap.repeat === 'all' ? 'one' : 'off')}
+          >
+            <IconRepeat size={16} />
+            <span className="dropdown-item-name">Повтор</span>
+            <span className="dropdown-count">{repeatLabel}</span>
+          </button>
+
+          <div className="dropdown-sep" />
+
+          <button
+            className="dropdown-item"
+            onClick={() => {
+              onLyrics()
+              setMenuOpen(false)
+            }}
+          >
+            <IconLyrics size={16} />
+            <span className="dropdown-item-name">Текст песни</span>
+          </button>
+          <button
+            className="dropdown-item"
+            onClick={() => {
+              onSimilar()
+              setMenuOpen(false)
+            }}
+          >
+            <IconSimilar size={16} />
+            <span className="dropdown-item-name">Похожие треки</span>
+          </button>
+          <button
+            className="dropdown-item"
+            onClick={() => {
+              onQueue()
+              setMenuOpen(false)
+            }}
+          >
+            <IconQueue size={16} />
+            <span className="dropdown-item-name">Очередь</span>
+            <span className="dropdown-count">{snap.queue.length}</span>
+          </button>
+          <button
+            className="dropdown-item"
+            onClick={() => {
+              onSleepTimer()
+              setMenuOpen(false)
+            }}
+          >
+            <IconSleepTimer size={16} />
+            <span className="dropdown-item-name">Таймер сна</span>
+            {snap.sleepTimer.mode !== 'off' && <span className="dropdown-count">{sleepLabel}</span>}
+          </button>
+        </DropdownMenu>
       </div>
     </div>
   )

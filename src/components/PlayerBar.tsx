@@ -10,6 +10,8 @@ import SimilarPanel from './SimilarPanel'
 import { LyricsPanel } from './LyricsPanel'
 import ExpandedPlayer from './ExpandedPlayer'
 import SleepTimerSheet from './SleepTimerSheet'
+import DropdownMenu from './DropdownMenu'
+import { SPEEDS } from './SpeedMenu'
 import {
   IconPlay,
   IconPause,
@@ -28,6 +30,8 @@ import {
   IconRefresh,
   IconX,
   IconSleepTimer,
+  IconMore,
+  IconCheck,
 } from './icons'
 
 function useSnapshot(): PlayerSnapshot {
@@ -54,11 +58,23 @@ export default function PlayerBar() {
   const [queueOpen, setQueueOpen] = useState(false)
   const [similarOpen, setSimilarOpen] = useState(false)
   const [sleepOpen, setSleepOpen] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null)
 
   const cur = snap.current
   const liked = cur ? likedKeys.has(trackKey(cur.track)) : false
   const duration = snap.durationMs || 0
   const position = snap.positionMs
+
+  const repeatLabel = snap.repeat === 'off' ? 'выкл' : snap.repeat === 'all' ? 'все' : 'один'
+  const sleepLabel =
+    snap.sleepTimer.mode === 'off'
+      ? 'выкл'
+      : snap.sleepTimer.mode === 'track-end'
+        ? 'после трека'
+        : `${Math.max(0, Math.round((snap.sleepRemainingMs ?? 0) / 60000))} мин`
+
+  const closeMenu = () => setMenuOpen(false)
 
   // отслеживание времени прослушивания — каждую секунду при проигрывании
   const lastPosRef = useRef<number | null>(null)
@@ -247,15 +263,6 @@ export default function PlayerBar() {
 
       <div className="pb-center">
         <div className="pb-controls">
-          <button
-            className={'icon-btn' + (snap.shuffle ? ' active' : '')}
-            onClick={() => player.setShuffle(!snap.shuffle)}
-            title="Перемешать"
-            aria-label="Перемешивание"
-            aria-pressed={snap.shuffle}
-          >
-            <IconShuffle size={18} />
-          </button>
           <button className="icon-btn" onClick={() => void player.prev()} title="Предыдущий" aria-label="Предыдущий трек">
             <IconPrev size={22} />
           </button>
@@ -264,15 +271,6 @@ export default function PlayerBar() {
           </button>
           <button className="icon-btn" onClick={() => void player.next()} title="Следующий" aria-label="Следующий трек">
             <IconNext size={22} />
-          </button>
-          <button
-            className={'icon-btn' + (snap.repeat !== 'off' ? ' active' : '')}
-            onClick={() => player.setRepeat(snap.repeat === 'off' ? 'all' : snap.repeat === 'all' ? 'one' : 'off')}
-            title="Повтор: off / все / один"
-            aria-label="Повтор"
-            aria-pressed={snap.repeat !== 'off'}
-          >
-            <IconRepeat size={18} />
           </button>
         </div>
         <div className="pb-seek">
@@ -306,65 +304,133 @@ export default function PlayerBar() {
           </button>
         )}
         <button
-          className={'icon-btn' + (lyricsOpen ? ' active' : '')}
-          onClick={toggleLyrics}
-          title="Текст песни"
-          aria-label="Текст песни"
-          aria-pressed={lyricsOpen}
+          className={
+            'icon-btn pb-more' +
+            (menuOpen ? ' active' : '') +
+            (snap.sleepTimer.mode !== 'off' ? ' has-timer' : '')
+          }
+          onClick={(e) => {
+            setMenuAnchor(e.currentTarget)
+            setMenuOpen((v) => !v)
+          }}
+          title="Все функции плеера"
+          aria-label="Все функции плеера"
+          aria-haspopup="menu"
+          aria-expanded={menuOpen}
         >
-          <IconLyrics size={18} />
+          <IconMore size={20} />
+          {snap.queue.length > 0 && (
+            <span className="queue-badge" aria-label={`${snap.queue.length} треков в очереди`}>
+              {snap.queue.length}
+            </span>
+          )}
+        </button>
+      </div>
+
+      <DropdownMenu open={menuOpen} anchor={menuAnchor} onClose={closeMenu} minWidth={280} className="pb-menu">
+        <div className="dropdown-title">Скорость</div>
+        <div className="speed-chips">
+          {SPEEDS.map((s) => (
+            <button
+              key={s}
+              className={'speed-chip' + (snap.playbackRate === s ? ' active' : '')}
+              onClick={() => player.setPlaybackRate(s)}
+              aria-pressed={snap.playbackRate === s}
+            >
+              {s}×
+            </button>
+          ))}
+        </div>
+
+        <div className="dropdown-sep" />
+
+        <button className="dropdown-item" onClick={() => player.setShuffle(!snap.shuffle)}>
+          <IconShuffle size={16} />
+          <span className="dropdown-item-name">Перемешать</span>
+          {snap.shuffle && <IconCheck size={15} />}
         </button>
         <button
-          className={'icon-btn' + (similarOpen ? ' active' : '')}
+          className="dropdown-item"
+          onClick={() => player.setRepeat(snap.repeat === 'off' ? 'all' : snap.repeat === 'all' ? 'one' : 'off')}
+        >
+          <IconRepeat size={16} />
+          <span className="dropdown-item-name">Повтор</span>
+          <span className="dropdown-count">{repeatLabel}</span>
+        </button>
+
+        <div className="dropdown-sep" />
+
+        <button
+          className="dropdown-item"
+          onClick={() => {
+            toggleLyrics()
+            closeMenu()
+          }}
+        >
+          <IconLyrics size={16} />
+          <span className="dropdown-item-name">Текст песни</span>
+          {lyricsOpen && <IconCheck size={15} />}
+        </button>
+        <button
+          className="dropdown-item"
           onClick={() => {
             if (!cur) {
               showToast('Сначала выберите трек')
+              closeMenu()
               return
             }
             setSimilarOpen((v) => !v)
+            closeMenu()
           }}
-          title="Похожие треки"
-          aria-label="Похожие треки"
-          aria-pressed={similarOpen}
         >
-          <IconSimilar size={20} />
+          <IconSimilar size={16} />
+          <span className="dropdown-item-name">Похожие треки</span>
         </button>
         <button
-          className={'icon-btn' + (sleepOpen ? ' active' : '') + (snap.sleepTimer.mode !== 'off' ? ' has-timer' : '')}
-          onClick={() => setSleepOpen(true)}
-          title="Таймер сна"
-          aria-label="Таймер сна"
+          className="dropdown-item"
+          onClick={() => {
+            setQueueOpen((v) => !v)
+            closeMenu()
+          }}
         >
-          <IconSleepTimer size={18} />
+          <IconQueue size={16} />
+          <span className="dropdown-item-name">Очередь</span>
+          <span className="dropdown-count">{snap.queue.length}</span>
         </button>
         <button
-          className={'icon-btn' + (queueOpen ? ' active' : '')}
-          onClick={() => setQueueOpen((v) => !v)}
-          title="Очередь"
-          aria-label="Очередь воспроизведения"
-          aria-pressed={queueOpen}
+          className="dropdown-item"
+          onClick={() => {
+            setSleepOpen(true)
+            closeMenu()
+          }}
         >
-          <IconQueue size={20} />
-          {snap.queue.length > 0 && <span className="queue-badge" aria-label={`${snap.queue.length} треков в очереди`}>{snap.queue.length}</span>}
+          <IconSleepTimer size={16} />
+          <span className="dropdown-item-name">Таймер сна</span>
+          {snap.sleepTimer.mode !== 'off' && <span className="dropdown-count">{sleepLabel}</span>}
         </button>
-        <IconVolume size={18} className="pb-vol-icon" />
-        <input
-          type="range"
-          className="range thin"
-          min={0}
-          max={1}
-          step={0.01}
-          value={snap.muted ? 0 : snap.volume}
-          onChange={(e) => player.setVolume(Number(e.target.value))}
-          aria-label="Громкость"
-        />
-      </div>
+
+        <div className="dropdown-sep" />
+
+        <div className="dropdown-vol">
+          <IconVolume size={16} />
+          <input
+            type="range"
+            className="range thin"
+            min={0}
+            max={1}
+            step={0.01}
+            value={snap.muted ? 0 : snap.volume}
+            onChange={(e) => player.setVolume(Number(e.target.value))}
+            aria-label="Громкость"
+          />
+        </div>
+      </DropdownMenu>
 
       {lyricsOpen && (
           <div className="pb-lyrics">
           <div className="pb-lyrics-head">
             <b>Текст песни</b>
-            <button className="icon-btn" onClick={() => setLyricsOpen(false)} title="Закрыть" aria-label="Закрыть текст песни">
+            <button className="panel-close" onClick={() => setLyricsOpen(false)} title="Закрыть" aria-label="Закрыть текст песни">
               <IconX size={16} />
             </button>
           </div>

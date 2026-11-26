@@ -33,6 +33,7 @@ export interface PlayerSnapshot {
   muted: boolean
   shuffle: boolean
   repeat: 'off' | 'all' | 'one'
+  playbackRate: number
   error: string | null
   buffering: boolean
   sleepTimer: SleepTimerState
@@ -53,6 +54,7 @@ const EMPTY: PlayerSnapshot = {
   muted: false,
   shuffle: false,
   repeat: 'off',
+  playbackRate: 1,
   error: null,
   buffering: false,
   sleepTimer: { mode: 'off', endsAt: null, totalMs: null },
@@ -67,6 +69,7 @@ class Player {
   private muted = false
   private shuffle = false
   private repeat: 'off' | 'all' | 'one' = 'off'
+  private playbackRate: number = 1
   private error: string | null = null
   private buffering = false
   private listeners = new Set<SnapshotListener>()
@@ -166,6 +169,7 @@ class Player {
       muted: this.muted,
       shuffle: this.shuffle,
       repeat: this.repeat,
+      playbackRate: this.playbackRate,
       error: this.error,
       buffering: this.buffering,
       sleepTimer: { ...this.sleepTimer },
@@ -312,6 +316,14 @@ class Player {
 
   setRepeat(r: 'off' | 'all' | 'one'): void {
     this.repeat = r
+    this.saveSettings()
+    this.emit()
+  }
+
+  setPlaybackRate(rate: number): void {
+    const r = [0.5, 0.75, 1, 1.25, 1.5, 2].includes(rate) ? rate : 1
+    this.playbackRate = r
+    this.audio.playbackRate = r
     this.saveSettings()
     this.emit()
   }

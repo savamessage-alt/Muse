@@ -47,7 +47,7 @@ export default function SleepTimerSheet({ snap, onClose }: Props) {
           <span className="st-title">
             <IconMoon size={18} /> Таймер сна
           </span>
-          <button className="icon-btn" onClick={onClose} title="Закрыть">
+          <button className="panel-close" onClick={onClose} title="Закрыть" aria-label="Закрыть таймер сна">
             <IconX size={16} />
           </button>
         </div>
