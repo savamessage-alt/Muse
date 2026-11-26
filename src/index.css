@@ -98,6 +98,62 @@
 :root[data-theme="light"] .confirm-box { background: var(--bg-panel); }
 :root[data-theme="light"] .dropdown-menu { background: var(--bg-panel); border-color: var(--border); box-shadow: 0 12px 40px rgba(0,0,0,.20); }
 
+/* --- Доп. перекрытия по результатам полного аудита --- */
+/* Поиск: подсказки */
+:root[data-theme="light"] .search-suggest { background: var(--bg-panel); border-color: var(--border); box-shadow: 0 20px 50px rgba(0,0,0,.18); }
+:root[data-theme="light"] .search-suggest-item + .search-suggest-item { border-top-color: var(--border); }
+/* Меню: разделители/счётчики */
+:root[data-theme="light"] .dropdown-count { background: var(--surface-2); }
+:root[data-theme="light"] .dropdown-sep { background: var(--border); }
+/* Очередь */
+:root[data-theme="light"] .queue-row:hover,
+:root[data-theme="light"] .queue-row.menu-open { background: var(--surface-2); }
+:root[data-theme="light"] .queue-row.current { background: rgba(230,0,45,.10); }
+:root[data-theme="light"] .queue-more.active { background: rgba(230,0,45,.14); }
+/* Текст песни */
+:root[data-theme="light"] .lyrics-word:hover { background: var(--surface-2); }
+:root[data-theme="light"] .lyrics-word-active { background: rgba(230,0,45,.14); color: var(--accent); box-shadow: none; }
+/* Таймер сна / волна */
+:root[data-theme="light"] .st-chip,
+:root[data-theme="light"] .st-input { background: var(--surface-1); border-color: var(--border); }
+:root[data-theme="light"] .st-chip:hover { background: var(--surface-2); }
+:root[data-theme="light"] .st-chip--danger { color: #c62828; border-color: rgba(214,41,74,.4); }
+:root[data-theme="light"] .ws-head { border-bottom-color: var(--border); }
+:root[data-theme="light"] .ws-tab { background: var(--surface-1); }
+:root[data-theme="light"] .ws-tab:hover { background: var(--surface-2); }
+:root[data-theme="light"] .ws-section { border-bottom-color: var(--border); }
+:root[data-theme="light"] .ws-tile,
+:root[data-theme="light"] .ws-chip { background: var(--surface-1); border-color: var(--border); }
+:root[data-theme="light"] .ws-tile:hover,
+:root[data-theme="light"] .ws-chip:hover { background: var(--surface-2); border-color: var(--border); }
+:root[data-theme="light"] .ws-tile.active,
+:root[data-theme="light"] .ws-chip.active,
+:root[data-theme="light"] .ws-tab.active,
+:root[data-theme="light"] .st-preset.active { color: var(--accent); background: rgba(230,0,45,.10); }
+:root[data-theme="light"] .ws-clear--all:hover { background: var(--surface-2); color: var(--text); }
+/* Тосты */
+:root[data-theme="light"] .toast { background: var(--bg-panel); border-color: var(--border); box-shadow: 0 12px 40px rgba(0,0,0,.18); }
+:root[data-theme="light"] .toast-error { color: #c62828; border-color: var(--danger); }
+/* Кнопка удаления плейлиста */
+:root[data-theme="light"] .delete-playlist-btn { color: #c62828; border-color: rgba(214,41,74,.4); background: rgba(214,41,74,.06); }
+:root[data-theme="light"] .delete-playlist-btn:hover { background: rgba(214,41,74,.14); }
+:root[data-theme="light"] .fav-create-btn { border-color: var(--border); background: var(--surface-1); }
+/* Артист / соц / more */
+:root[data-theme="light"] .artist-chip,
+:root[data-theme="light"] .artist-social,
+:root[data-theme="light"] .artist-more { background: var(--surface-1); border-color: var(--border); }
+:root[data-theme="light"] .artist-social:hover { background: var(--surface-2); }
+:root[data-theme="light"] .wave-settings-btn { background: var(--surface-1); border-color: var(--border); }
+:root[data-theme="light"] .more-btn { background: var(--surface-1); border-color: var(--border); }
+:root[data-theme="light"] .more-btn:hover { background: var(--surface-2); }
+:root[data-theme="light"] .pb-error-btn { background: rgba(214,41,74,.10); border-color: rgba(214,41,74,.4); color: #c62828; }
+:root[data-theme="light"] .pb-error-btn:hover { background: rgba(214,41,74,.18); }
+/* О приложении */
+:root[data-theme="light"] .about-stat { background: var(--surface-1); border-color: var(--border); }
+:root[data-theme="light"] .about-row { border-bottom-color: var(--border); }
+:root[data-theme="light"] .about-copyright.small { color: var(--text-faint); }
+:root[data-theme="light"] .ws-body { background: transparent; }
+
 * { box-sizing: border-box; }
 
 html, body, #root {
