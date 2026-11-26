@@ -32,6 +32,7 @@ import {
   IconSleepTimer,
   IconMore,
   IconCheck,
+  IconDislike,
 } from './icons'
 
 function useSnapshot(): PlayerSnapshot {
@@ -359,6 +360,34 @@ export default function PlayerBar() {
         </button>
 
         <div className="dropdown-sep" />
+
+        {snap.isRadio && (
+          <>
+            <button
+              className="dropdown-item"
+              onClick={() => {
+                player.likeCurrentRadio()
+                showToast('Нравится — учтём в радио')
+                closeMenu()
+              }}
+            >
+              <IconHeart size={16} />
+              <span className="dropdown-item-name">Нравится</span>
+            </button>
+            <button
+              className="dropdown-item"
+              onClick={() => {
+                void player.dislikeCurrent()
+                showToast('Не нравится — пропускаем')
+                closeMenu()
+              }}
+            >
+              <IconDislike size={16} />
+              <span className="dropdown-item-name">Не нравится</span>
+            </button>
+            <div className="dropdown-sep" />
+          </>
+        )}
 
         <button
           className="dropdown-item"

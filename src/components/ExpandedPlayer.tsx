@@ -23,6 +23,7 @@ import {
   IconSleepTimer,
   IconMore,
   IconCheck,
+  IconDislike,
 } from './icons'
 
 function formatRemaining(ms: number | null): string {
@@ -262,6 +263,32 @@ export default function ExpandedPlayer({ onClose, onLyrics, onQueue, onSimilar, 
           </button>
 
           <div className="dropdown-sep" />
+
+          {snap.isRadio && (
+            <>
+              <button
+                className="dropdown-item"
+                onClick={() => {
+                  player.likeCurrentRadio()
+                  setMenuOpen(false)
+                }}
+              >
+                <IconHeart size={16} />
+                <span className="dropdown-item-name">Нравится</span>
+              </button>
+              <button
+                className="dropdown-item"
+                onClick={() => {
+                  void player.dislikeCurrent()
+                  setMenuOpen(false)
+                }}
+              >
+                <IconDislike size={16} />
+                <span className="dropdown-item-name">Не нравится</span>
+              </button>
+              <div className="dropdown-sep" />
+            </>
+          )}
 
           <button
             className="dropdown-item"

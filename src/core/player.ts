@@ -39,6 +39,8 @@ export interface PlayerSnapshot {
   sleepTimer: SleepTimerState
   /** остаток таймера сна в ms (для mode='time'); null если не активен */
   sleepRemainingMs: number | null
+  /** true, если играет радио-станция (доступны лайк/дизлайк) */
+  isRadio: boolean
 }
 
 type SnapshotListener = (s: PlayerSnapshot) => void
@@ -59,6 +61,7 @@ const EMPTY: PlayerSnapshot = {
   buffering: false,
   sleepTimer: { mode: 'off', endsAt: null, totalMs: null },
   sleepRemainingMs: null,
+  isRadio: false,
 }
 
 class Player {
@@ -174,6 +177,7 @@ class Player {
       buffering: this.buffering,
       sleepTimer: { ...this.sleepTimer },
       sleepRemainingMs: remaining,
+      isRadio: !!this.radio,
     }
   }
 
@@ -764,6 +768,17 @@ class Player {
         .catch(() => {})
     }
     return this.next()
+  }
+
+  /** «Нравится» в радио: фидбек станции (без перехода) */
+  likeCurrentRadio(): void {
+    if (!this.radio) return
+    const cur = this.queue[this.index]
+    if (!cur) return
+    const played = this.audio && !isNaN(this.audio.currentTime) ? Math.round(this.audio.currentTime) : undefined
+    void ymClient
+      .radioFeedback(this.radio.type, this.radio.tag, 'like', new Date().toISOString(), cur.track.id, played)
+      .catch(() => {})
   }
 
   private updateMediaSession(item: PlayableTrack): void {
