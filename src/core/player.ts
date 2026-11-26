@@ -4,6 +4,7 @@
 // ============================================================
 
 import { resolveStreamUrl } from './stream'
+import { cachedObjectUrl } from './offlineCache'
 import { ymClient } from './client'
 import type { RadioSessionResume, Track } from './types'
 
@@ -578,6 +579,31 @@ class Player {
   private async loadAndPlay(item: PlayableTrack): Promise<boolean> {
     try {
       const t0 = Date.now()
+      // Сначала пробуем офлайн-кэш — играем без сети, если трек скачан.
+      let src: string | null = null
+      try {
+        src = await cachedObjectUrl(item.track.id)
+      } catch {
+        /* кэш недоступен — идём в сеть */
+      }
+      if (src) {
+        void this.diagPlay('cache-hit ' + item.track.id)
+        this.audio.src = src
+        this.audio.volume = this.muted ? 0 : this.volume
+        this.updateMediaSession(item)
+        this.buffering = true
+        this.error = null
+        this.emit()
+        try {
+          await this.audio.play()
+          this.consecutiveFailures = 0
+          this.sendRadioFeedback('trackStarted')
+          return true
+        } catch (p) {
+          void this.diagPlay('cache-play-reject ' + String((p as Error)?.name ?? p))
+          // не удалось из кэша — падаем в сетевую загрузку ниже
+        }
+      }
       const choice = await resolveStreamUrl(item.track)
       void this.diagPlay('resolve-ok ' + (Date.now() - t0) + 'ms url=' + (choice?.url ?? 'NULL').slice(0, 110))
       if (!choice) {

@@ -7,7 +7,7 @@ import { ArtistLink } from './ArtistLink'
 import LoadingBlock from './LoadingBlock'
 import DropdownMenu from './DropdownMenu'
 import type { Track } from '../core/types'
-import { IconPlay, IconHeart, IconHeartFilled, IconMore, IconList, IconPlus, IconTrash } from './icons'
+import { IconPlay, IconHeart, IconHeartFilled, IconMore, IconList, IconPlus, IconTrash, IconDownload } from './icons'
 
 interface Props {
   tracks: Track[]
@@ -46,9 +46,11 @@ function TrackMenu({
 }) {
   const playlists = useApp((s) => s.playlists)
   const addToPlaylist = useApp((s) => s.addToPlaylist)
+  const showToast = useApp((s) => s.showToast)
   const nav = useNavigate()
   const [open, setOpen] = useState(false)
   const [anchor, setAnchor] = useState<HTMLElement | null>(null)
+  const [caching, setCaching] = useState(false)
   const btnRef = useRef<HTMLButtonElement | null>(null)
 
   useEffect(() => {
@@ -61,6 +63,22 @@ function TrackMenu({
   const pick = (kind: string) => {
     setOpen(false)
     void addToPlaylist(track, kind)
+  }
+
+  const saveOffline = async () => {
+    setOpen(false)
+    if (caching) return
+    setCaching(true)
+    showToast('Скачиваем трек для офлайна…')
+    try {
+      const { cacheTrack } = await import('../core/offlineCache')
+      const ok = await cacheTrack(track)
+      showToast(ok ? 'Трек сохранён для офлайна' : 'Не удалось скачать трек', ok ? 'success' : 'error')
+    } catch (e) {
+      showToast('Ошибка кэширования: ' + (e as Error).message, 'error')
+    } finally {
+      setCaching(false)
+    }
   }
 
   return (
@@ -108,6 +126,13 @@ function TrackMenu({
           ))}
         </div>
         <div className="dropdown-sep" />
+        <button
+          className="dropdown-item"
+          role="menuitem"
+          onClick={() => void saveOffline()}
+        >
+          <IconDownload size={15} /> Скачать для офлайна
+        </button>
         <button
           className="dropdown-item"
           role="menuitem"

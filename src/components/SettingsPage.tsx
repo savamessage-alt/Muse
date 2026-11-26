@@ -16,6 +16,40 @@ export default function SettingsPage() {
   const token = tokenManager.getToken()
   const [quality, setQuality] = useState(() => localStorage.getItem('ym.quality') ?? 'mp3-320')
   const [refreshingToken, setRefreshingToken] = useState(false)
+  const [cacheBusy, setCacheBusy] = useState(false)
+  const [cacheLabel, setCacheLabel] = useState('0 МБ')
+
+  const fmtSize = (b: number) => (b >= 1024 * 1024 ? (b / 1024 / 1024).toFixed(1) + ' МБ' : Math.round(b / 1024) + ' КБ')
+
+  const refreshCacheSize = async () => {
+    setCacheBusy(true)
+    try {
+      const { cacheSize } = await import('../core/offlineCache')
+      setCacheLabel(fmtSize(await cacheSize()))
+    } catch {
+      setCacheLabel('—')
+    } finally {
+      setCacheBusy(false)
+    }
+  }
+
+  const clearOfflineCache = async () => {
+    setCacheBusy(true)
+    try {
+      const { clearCache } = await import('../core/offlineCache')
+      await clearCache()
+      setCacheLabel('0 МБ')
+      showToast('Офлайн-кэш очищен', 'success')
+    } catch (e) {
+      showToast('Не удалось очистить кэш: ' + (e as Error).message, 'error')
+    } finally {
+      setCacheBusy(false)
+    }
+  }
+
+  useEffect(() => {
+    void refreshCacheSize()
+  }, [])
 
   const setQualityLocal = (q: string) => {
     localStorage.setItem('ym.quality', q)
@@ -109,6 +143,22 @@ export default function SettingsPage() {
           </label>
         ))}
         <p className="hint">Изменение применится к новому треку; текущий трек будет перезапущен в новом качестве.</p>
+      </section>
+
+      <section className="settings-card">
+        <h2>Офлайн-кэш</h2>
+        <p className="hint">
+          Скачанные треки («Скачать для офлайна» в меню трека) доступны без интернета.
+          Кэш ограничен 500 МБ — старые записи удаляются автоматически.
+        </p>
+        <div className="settings-actions">
+          <button className="btn" onClick={() => void refreshCacheSize()} disabled={cacheBusy}>
+            {cacheBusy ? 'Считаем…' : `Занято: ${cacheLabel}`}
+          </button>
+          <button className="btn danger" onClick={() => void clearOfflineCache()} disabled={cacheBusy}>
+            Очистить кэш
+          </button>
+        </div>
       </section>
 
       <section className="settings-card">
