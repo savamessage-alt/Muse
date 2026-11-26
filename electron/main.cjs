@@ -56,6 +56,16 @@ ipcMain.handle('safe-decrypt', async (_event, base64Cipher) => {
   }
 })
 
+// Доступно ли системное шифрование (safeStorage) — чтобы рендер не хранил
+// токен открытым текстом, если ОС умеет шифровать.
+ipcMain.handle('safe-available', async () => {
+  try {
+    return { ok: true, data: require('electron').safeStorage.isEncryptionAvailable() }
+  } catch (err) {
+    return { ok: false, error: String(err) }
+  }
+})
+
 // Запросы из рендера → net.fetch в main-процессе (обход CORS)
 ipcMain.handle('ym-request', async (_event, url, init) => {
   const controller = new AbortController()

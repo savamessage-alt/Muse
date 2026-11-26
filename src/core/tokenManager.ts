@@ -11,6 +11,8 @@ import { refreshOAuthToken } from './auth'
 import { diag } from './diag'
 
 const STORAGE_KEY = 'ym.oauth'
+/** Префикс для зашифрованного safeStorage значения (отличаем от plain JSON) */
+const ENC_PREFIX = 'enc:'
 
 export interface StoredToken {
   accessToken: string
@@ -47,14 +49,29 @@ function isCapacitor(): boolean {
 async function saveTokenToStorage(key: string, value: string): Promise<void> {
   if (isElectron()) {
     const api = (window as any).ymElectronAPI
-    if (api?.safeEncrypt) {
+    // Шифруем только если ОС реально умеет (safeStorage.isEncryptionAvailable).
+    // Значение помечаем префиксом enc:, чтобы при чтении отличить шифртекст
+    // от старого plain-JSON и не сломать загрузку.
+    let available = false
+    if (api?.safeAvailable) {
+      try {
+        const r = await api.safeAvailable()
+        available = !!(r && r.ok && r.data)
+      } catch {
+        available = false
+      }
+    }
+    if (available && api?.safeEncrypt) {
       const result = await api.safeEncrypt(value)
       if (result.ok) {
-        localStorage.setItem(key, result.data)
+        localStorage.setItem(key, ENC_PREFIX + result.data)
         return
       }
       console.warn('[tokenManager] safeEncrypt failed, fallback to localStorage:', result.error)
     }
+    // Шифрование недоступно — сохраняем как есть (plain), не падаем.
+    localStorage.setItem(key, value)
+    return
   } else if (isCapacitor()) {
     // Android: Capacitor Preferences (надёжнее localStorage в WebView).
     // Дополнительно дублируем в localStorage — если мост ещё не готов
@@ -77,8 +94,10 @@ async function loadTokenFromStorage(key: string): Promise<string | null> {
   if (isElectron()) {
     const api = (window as any).ymElectronAPI
     const raw = localStorage.getItem(key)
-    if (raw && api?.safeDecrypt) {
-      const result = await api.safeDecrypt(raw)
+    if (!raw) return null
+    // Зашифрованное значение помечено префиксом — расшифровываем.
+    if (raw.startsWith(ENC_PREFIX) && api?.safeDecrypt) {
+      const result = await api.safeDecrypt(raw.slice(ENC_PREFIX.length))
       if (result.ok) return result.data
       console.warn('[tokenManager] safeDecrypt failed, fallback to plain localStorage:', result.error)
     }
